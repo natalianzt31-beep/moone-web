@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Nav } from "@/components/Nav";
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Categoria, EstadoProducto, Product } from "@/lib/supabase/types";
 
 const CATEGORIAS: Categoria[] = ["vestido", "sandalias", "cartera"];
@@ -50,19 +50,25 @@ export default function StockPage() {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("nombre", { ascending: true });
+      try {
+        const { data, error } = await getSupabaseClient()
+          .from("products")
+          .select("*")
+          .order("nombre", { ascending: true });
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (error) {
-        setError(error.message);
-      } else {
-        setProducts(data ?? []);
+        if (error) {
+          setError(error.message);
+        } else {
+          setProducts(data ?? []);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Error desconocido");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     }
 
     fetchProducts();
