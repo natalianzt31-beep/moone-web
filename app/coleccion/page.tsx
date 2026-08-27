@@ -2,11 +2,11 @@ import Image from "next/image";
 import { Nav } from "@/components/Nav";
 
 const ARTICULOS: { nombre: string; foto: string | null }[] = [
-  { nombre: "Vestidos", foto: "/coleccion/vestidos.jpg" },
+  { nombre: "Vestidos", foto: "/images/categorias/vestidos.jpg" },
   { nombre: "Monos", foto: null },
-  { nombre: "Sandalias", foto: "/coleccion/sandalias.jpg" },
-  { nombre: "Carteras", foto: "/coleccion/carteras.jpg" },
-  { nombre: "Tapados", foto: "/coleccion/tapados.jpg" },
+  { nombre: "Sandalias", foto: "/images/categorias/sandalias.jpg" },
+  { nombre: "Carteras", foto: "/images/categorias/carteras.jpg" },
+  { nombre: "Tapados", foto: "/images/categorias/tapados.jpg" },
 ];
 
 export default function ColeccionPage() {
