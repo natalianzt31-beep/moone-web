@@ -1,6 +1,13 @@
+import Image from "next/image";
 import { Nav } from "@/components/Nav";
 
-const ARTICULOS = ["Vestidos", "Monos", "Sandalias", "Carteras", "Tapados"];
+const ARTICULOS: { nombre: string; foto: string | null }[] = [
+  { nombre: "Vestidos", foto: "/coleccion/vestidos.jpg" },
+  { nombre: "Monos", foto: null },
+  { nombre: "Sandalias", foto: "/coleccion/sandalias.jpg" },
+  { nombre: "Carteras", foto: "/coleccion/carteras.jpg" },
+  { nombre: "Tapados", foto: "/coleccion/tapados.jpg" },
+];
 
 export default function ColeccionPage() {
   return (
@@ -15,14 +22,28 @@ export default function ColeccionPage() {
             Elegí una categoría para ver las piezas disponibles.
           </p>
 
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {ARTICULOS.map((articulo) => (
-              <div
-                key={articulo}
-                className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-[3px] border border-arena bg-blanco text-center transition-colors hover:border-chocolate"
-              >
-                <span className="text-base font-medium text-negro">
-                  {articulo}
+          <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+            {ARTICULOS.map(({ nombre, foto }) => (
+              <div key={nombre} className="flex flex-col gap-3">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena bg-blanco transition-colors hover:border-chocolate">
+                  {foto ? (
+                    <Image
+                      src={foto}
+                      alt={nombre}
+                      fill
+                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-crema">
+                      <span className="text-xs uppercase tracking-wider text-taupe">
+                        Próximamente
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <span className="text-center text-sm font-medium uppercase tracking-wider text-negro">
+                  {nombre}
                 </span>
               </div>
             ))}
