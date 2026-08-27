@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Nav } from "@/components/Nav";
 import { supabase } from "@/lib/supabase/client";
 import type { Categoria, EstadoProducto, Product } from "@/lib/supabase/types";
 
@@ -81,8 +82,9 @@ export default function StockPage() {
   }, [products, categoriaFiltro, estadoFiltro]);
 
   return (
-    <div className="min-h-full bg-zinc-50 px-4 py-10 dark:bg-black sm:px-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
+      <Nav />
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-8">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           Stock
         </h1>
