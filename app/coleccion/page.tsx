@@ -3,7 +3,7 @@ import { Nav } from "@/components/Nav";
 
 const ARTICULOS: { nombre: string; foto: string | null }[] = [
   { nombre: "Vestidos", foto: "/images/categorias/vestidos.jpg" },
-  { nombre: "Monos", foto: null },
+  { nombre: "Monos", foto: "/images/categorias/monos.jpg" },
   { nombre: "Sandalias", foto: "/images/categorias/sandalias.jpg" },
   { nombre: "Carteras", foto: "/images/categorias/carteras.jpg" },
   { nombre: "Tapados", foto: "/images/categorias/tapados.jpg" },
