@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Nav } from "@/components/Nav";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { currencyFormatter } from "@/lib/site-config";
 import type { Categoria, EstadoProducto, Product } from "@/lib/supabase/types";
 
-const CATEGORIAS: Categoria[] = ["vestido", "sandalias", "cartera"];
+const CATEGORIAS: Categoria[] = ["vestido", "mono", "sandalias", "cartera", "tapado"];
 const ESTADOS: EstadoProducto[] = [
   "disponible",
   "reservado",
@@ -29,12 +30,6 @@ const ESTADO_BADGE: Record<EstadoProducto, string> = {
   en_reparacion: "bg-arena text-negro",
   baja_definitiva: "bg-crema text-taupe",
 };
-
-const currencyFormatter = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 0,
-});
 
 export default function StockPage() {
   const [products, setProducts] = useState<Product[]>([]);

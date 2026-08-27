@@ -20,6 +20,12 @@ export function Nav() {
           <Link href="/nosotras" className="transition-colors hover:text-chocolate">
             Nosotras
           </Link>
+          <Link href="/sale" className="transition-colors hover:text-chocolate">
+            On Sale
+          </Link>
+          <Link href="/faq" className="transition-colors hover:text-chocolate">
+            FAQ
+          </Link>
           <a
             href={WHATSAPP_URL}
             target="_blank"

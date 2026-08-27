@@ -6,3 +6,17 @@ export const MAPS_EMBED_SRC = `https://www.google.com/maps?q=${encodeURIComponen
 export const WHATSAPP_URL = "https://wa.me/59893787376";
 export const WHATSAPP_DISPLAY = "093 787 376";
 export const EMAIL_CONTACTO = "contacto@moone.com.uy";
+
+export const currencyFormatter = new Intl.NumberFormat("es-UY", {
+  style: "currency",
+  currency: "UYU",
+  maximumFractionDigits: 0,
+});
+
+export const CATEGORIAS = [
+  { slug: "vestidos", label: "Vestidos", db: "vestido" },
+  { slug: "monos", label: "Monos", db: "mono" },
+  { slug: "sandalias", label: "Sandalias", db: "sandalias" },
+  { slug: "carteras", label: "Carteras", db: "cartera" },
+  { slug: "tapados", label: "Tapados", db: "tapado" },
+] as const;

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
+import { DIRECCION } from "@/lib/site-config";
 
 export default function Home() {
   return (
@@ -42,6 +43,24 @@ export default function Home() {
               className="object-cover"
               priority
             />
+          </div>
+        </section>
+
+        <section className="bg-crema">
+          <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12 sm:flex-row sm:justify-between sm:px-8">
+            <div>
+              <h2 className="text-sm font-medium uppercase tracking-wider text-taupe">
+                Dirección
+              </h2>
+              <p className="mt-1 text-base text-negro">{DIRECCION}</p>
+            </div>
+            <div>
+              <h2 className="text-sm font-medium uppercase tracking-wider text-taupe">
+                Horario
+              </h2>
+              <p className="mt-1 text-base text-negro">Lunes a viernes de 14 a 20hs</p>
+              <p className="text-base text-negro">Sábados de 10 a 16hs</p>
+            </div>
           </div>
         </section>
       </main>

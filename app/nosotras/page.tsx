@@ -24,6 +24,27 @@ export default function NosotrasPage() {
           </p>
         </section>
 
+        <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-8">
+          <h2 className="text-xl font-normal tracking-tight text-negro">
+            El equipo
+          </h2>
+          <p className="mt-1 text-sm text-chocolate">
+            Las mujeres que hacemos Môone realidad.
+          </p>
+
+          <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col items-center gap-3 text-center">
+                <div className="flex aspect-square w-full items-center justify-center rounded-full border border-arena bg-crema">
+                  <span className="text-xs uppercase tracking-wider text-taupe">
+                    Foto próximamente
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section id="contacto" className="bg-crema">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
             <h2 className="text-xl font-normal tracking-tight text-negro">

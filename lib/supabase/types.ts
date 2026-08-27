@@ -1,4 +1,4 @@
-export type Categoria = "vestido" | "sandalias" | "cartera";
+export type Categoria = "vestido" | "mono" | "sandalias" | "cartera" | "tapado";
 
 export type EstadoProducto =
   | "disponible"
@@ -18,5 +18,7 @@ export type Product = {
   valor_reposicion: number | null;
   estado: EstadoProducto;
   foto_url: string | null;
+  en_venta: boolean;
+  precio_venta: number | null;
   created_at: string;
 };

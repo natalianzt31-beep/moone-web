@@ -1,13 +1,15 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Nav } from "@/components/Nav";
+import { CATEGORIAS } from "@/lib/site-config";
 
-const ARTICULOS: { nombre: string; foto: string | null }[] = [
-  { nombre: "Vestidos", foto: "/images/categorias/vestidos.jpg" },
-  { nombre: "Monos", foto: "/images/categorias/monos.jpg" },
-  { nombre: "Sandalias", foto: "/images/categorias/sandalias.jpg" },
-  { nombre: "Carteras", foto: "/images/categorias/carteras.jpg" },
-  { nombre: "Tapados", foto: "/images/categorias/tapados.jpg" },
-];
+const FOTOS: Record<string, string> = {
+  vestidos: "/images/categorias/vestidos.jpg",
+  monos: "/images/categorias/monos.jpg",
+  sandalias: "/images/categorias/sandalias.jpg",
+  carteras: "/images/categorias/carteras.jpg",
+  tapados: "/images/categorias/tapados.jpg",
+};
 
 export default function ColeccionPage() {
   return (
@@ -23,29 +25,21 @@ export default function ColeccionPage() {
           </p>
 
           <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
-            {ARTICULOS.map(({ nombre, foto }) => (
-              <div key={nombre} className="flex flex-col gap-3">
+            {CATEGORIAS.map(({ slug, label }) => (
+              <Link key={slug} href={`/coleccion/${slug}`} className="flex flex-col gap-3">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena bg-blanco transition-colors hover:border-chocolate">
-                  {foto ? (
-                    <Image
-                      src={foto}
-                      alt={nombre}
-                      fill
-                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-crema">
-                      <span className="text-xs uppercase tracking-wider text-taupe">
-                        Próximamente
-                      </span>
-                    </div>
-                  )}
+                  <Image
+                    src={FOTOS[slug]}
+                    alt={label}
+                    fill
+                    sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+                    className="object-cover"
+                  />
                 </div>
                 <span className="text-center text-sm font-medium uppercase tracking-wider text-negro">
-                  {nombre}
+                  {label}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
