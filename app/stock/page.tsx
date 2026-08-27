@@ -23,11 +23,11 @@ const ESTADO_LABEL: Record<EstadoProducto, string> = {
 };
 
 const ESTADO_BADGE: Record<EstadoProducto, string> = {
-  disponible: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  reservado: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  alquilado: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  en_reparacion: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
-  baja_definitiva: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
+  disponible: "border border-chocolate text-chocolate",
+  reservado: "border border-taupe text-taupe",
+  alquilado: "bg-negro text-blanco",
+  en_reparacion: "bg-arena text-negro",
+  baja_definitiva: "bg-crema text-taupe",
 };
 
 const currencyFormatter = new Intl.NumberFormat("es-AR", {
@@ -82,25 +82,21 @@ export default function StockPage() {
   }, [products, categoriaFiltro, estadoFiltro]);
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
+    <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Stock
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Productos cargados en Supabase.
-        </p>
+        <h1 className="text-2xl font-normal tracking-tight text-negro">Stock</h1>
+        <p className="mt-1 text-sm text-chocolate">Productos cargados en Supabase.</p>
 
-        <div className="mt-6 flex flex-wrap gap-4">
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+        <div className="mt-6 flex flex-wrap gap-4 rounded-[3px] bg-arena p-4">
+          <label className="flex flex-col gap-1 text-sm text-negro">
             Categoría
             <select
               value={categoriaFiltro}
               onChange={(e) =>
                 setCategoriaFiltro(e.target.value as Categoria | "todas")
               }
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none"
             >
               <option value="todas">Todas</option>
               {CATEGORIAS.map((categoria) => (
@@ -111,14 +107,14 @@ export default function StockPage() {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+          <label className="flex flex-col gap-1 text-sm text-negro">
             Estado
             <select
               value={estadoFiltro}
               onChange={(e) =>
                 setEstadoFiltro(e.target.value as EstadoProducto | "todos")
               }
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none"
             >
               <option value="todos">Todos</option>
               {ESTADOS.map((estado) => (
@@ -130,37 +126,34 @@ export default function StockPage() {
           </label>
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-            <thead className="bg-zinc-100 dark:bg-zinc-900">
+        <div className="mt-6 overflow-x-auto rounded-[3px] border border-arena">
+          <table className="min-w-full divide-y divide-arena">
+            <thead className="bg-crema">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe">
                   Nombre
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe">
                   Categoría
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe">
                   Talle
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe">
                   Color
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe">
                   Precio alquiler
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe">
                   Estado
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
+            <tbody className="divide-y divide-arena bg-blanco">
               {loading && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
-                  >
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-taupe">
                     Cargando productos...
                   </td>
                 </tr>
@@ -168,10 +161,7 @@ export default function StockPage() {
 
               {!loading && error && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-sm text-red-600 dark:text-red-400"
-                  >
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-chocolate">
                     Error al cargar productos: {error}
                   </td>
                 </tr>
@@ -179,10 +169,7 @@ export default function StockPage() {
 
               {!loading && !error && filteredProducts.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
-                  >
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-taupe">
                     No hay productos que coincidan con los filtros.
                   </td>
                 </tr>
@@ -192,24 +179,24 @@ export default function StockPage() {
                 !error &&
                 filteredProducts.map((product) => (
                   <tr key={product.id}>
-                    <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    <td className="px-4 py-3 text-sm font-medium text-negro">
                       {product.nombre}
                     </td>
-                    <td className="px-4 py-3 text-sm capitalize text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-sm capitalize text-chocolate">
                       {product.categoria}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-sm text-chocolate">
                       {product.talle ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-sm text-chocolate">
                       {product.color ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+                    <td className="px-4 py-3 text-sm text-negro">
                       {currencyFormatter.format(product.precio_alquiler)}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTADO_BADGE[product.estado]}`}
+                        className={`inline-flex rounded-[3px] px-2.5 py-0.5 text-xs font-medium ${ESTADO_BADGE[product.estado]}`}
                       >
                         {ESTADO_LABEL[product.estado]}
                       </span>
@@ -221,7 +208,7 @@ export default function StockPage() {
         </div>
 
         {!loading && !error && (
-          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-3 text-sm text-taupe">
             {filteredProducts.length} de {products.length} productos
           </p>
         )}

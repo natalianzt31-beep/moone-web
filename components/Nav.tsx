@@ -4,22 +4,20 @@ import { WHATSAPP_URL } from "@/lib/site-config";
 
 export function Nav() {
   return (
-    <header className="border-b border-zinc-200 dark:border-zinc-800">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-8">
-        <Link
-          href="/"
-          className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
-        >
-          Môone
+    <header className="border-b border-arena bg-blanco">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-8">
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Môone Rental Boutique" className="h-12 w-auto" />
         </Link>
-        <nav className="flex items-center gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          <Link href="/" className="hover:text-zinc-900 dark:hover:text-zinc-50">
+        <nav className="flex items-center gap-6 text-xs font-medium uppercase tracking-[0.15em] text-negro">
+          <Link href="/" className="transition-colors hover:text-chocolate">
             Home
           </Link>
-          <Link href="/coleccion" className="hover:text-zinc-900 dark:hover:text-zinc-50">
+          <Link href="/coleccion" className="transition-colors hover:text-chocolate">
             Colección
           </Link>
-          <Link href="/nosotras" className="hover:text-zinc-900 dark:hover:text-zinc-50">
+          <Link href="/nosotras" className="transition-colors hover:text-chocolate">
             Nosotras
           </Link>
           <a
@@ -27,7 +25,7 @@ export function Nav() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Escribinos por WhatsApp"
-            className="text-[#25D366] hover:opacity-80"
+            className="text-chocolate transition-colors hover:text-negro"
           >
             <WhatsAppIcon />
           </a>
