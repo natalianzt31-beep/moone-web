@@ -9,6 +9,7 @@ import type { Client } from "@/lib/supabase/types";
 type AuthContextValue = {
   user: User | null;
   client: Client | null;
+  isStaff: boolean;
   loading: boolean;
   refreshClient: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -17,26 +18,39 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   client: null,
+  isStaff: false,
   loading: true,
   refreshClient: async () => {},
   signOut: async () => {},
 });
 
+async function fetchIsStaff(): Promise<boolean> {
+  try {
+    const { data, error } = await getSupabaseClient().rpc("is_staff");
+    if (error) return false;
+    return Boolean(data);
+  } catch {
+    return false;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [client, setClient] = useState<Client | null>(null);
+  const [isStaff, setIsStaff] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadClient(u: User) {
-      try {
-        const c = await ensureClientRow(u);
-        if (!cancelled) setClient(c);
-      } catch {
-        if (!cancelled) setClient(null);
-      }
+    async function loadUserContext(u: User) {
+      const [clientResult, staffResult] = await Promise.allSettled([
+        ensureClientRow(u),
+        fetchIsStaff(),
+      ]);
+      if (cancelled) return;
+      setClient(clientResult.status === "fulfilled" ? clientResult.value : null);
+      setIsStaff(staffResult.status === "fulfilled" ? staffResult.value : false);
     }
 
     async function init() {
@@ -47,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         const sessionUser = data.session?.user ?? null;
         setUser(sessionUser);
-        if (sessionUser) await loadClient(sessionUser);
+        if (sessionUser) await loadUserContext(sessionUser);
         if (!cancelled) setLoading(false);
 
         const {
@@ -57,9 +71,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const nextUser = session?.user ?? null;
           setUser(nextUser);
           if (nextUser) {
-            loadClient(nextUser);
+            loadUserContext(nextUser);
           } else {
             setClient(null);
+            setIsStaff(false);
           }
         });
 
@@ -89,7 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, client, loading, refreshClient, signOut }}>
+    <AuthContext.Provider
+      value={{ user, client, isStaff, loading, refreshClient, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

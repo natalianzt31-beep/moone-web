@@ -54,6 +54,7 @@ export type Reservation = {
   senia: number;
   deposito_garantia: number | null;
   contrato_aceptado: boolean;
+  medio_pago: string | null;
   created_at: string;
   products: Product | null;
 };
