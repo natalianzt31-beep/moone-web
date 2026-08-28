@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { WHATSAPP_URL } from "@/lib/site-config";
 
 const LINKS = [
@@ -15,6 +16,9 @@ const LINKS = [
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const miCuentaHref = user ? "/mi-cuenta/historial" : "/mi-cuenta/login";
+  const allLinks = [...LINKS, { href: miCuentaHref, label: "Mi Cuenta" }];
 
   return (
     <header className="border-b border-arena bg-blanco">
@@ -29,7 +33,7 @@ export function Nav() {
         </Link>
 
         <nav className="hidden items-center gap-6 text-xs font-medium uppercase tracking-[0.15em] text-negro lg:flex">
-          {LINKS.map(({ href, label }) => (
+          {allLinks.map(({ href, label }) => (
             <Link key={href} href={href} className="transition-colors hover:text-chocolate">
               {label}
             </Link>
@@ -82,7 +86,7 @@ export function Nav() {
       {open && (
         <nav className="border-t border-arena bg-blanco lg:hidden">
           <div className="mx-auto flex max-w-6xl flex-col px-4 sm:px-8">
-            {LINKS.map(({ href, label }) => (
+            {allLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
