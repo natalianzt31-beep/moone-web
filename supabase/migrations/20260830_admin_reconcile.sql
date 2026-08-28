@@ -19,14 +19,13 @@ create policy "una staff ve su propia fila"
 --    seguridad de Supabase).
 alter function is_staff() set search_path = public;
 
--- 3. products: categorías mono/tapado y campos de venta, de la
---    migración 20260828 que nunca se aplicó.
+-- 3. products: categorías mono/tapado, de la migración 20260828 que
+--    nunca se aplicó (el resto de esa migración, en_venta/precio_venta,
+--    quedó obsoleto: la tabla real ya trae precio_venta y "en venta"
+--    se define como precio_venta is not null, sin columna aparte).
 alter table products drop constraint products_categoria_check;
 alter table products add constraint products_categoria_check
   check (categoria in ('vestido', 'mono', 'sandalias', 'cartera', 'tapado'));
-
-alter table products add column if not exists en_venta boolean not null default false;
-alter table products add column if not exists precio_venta numeric;
 
 -- 4. cart_items: el carrito distingue alquiler vs. venta por ítem; la
 --    tabla real no tenía esa columna (de la migración 20260829).

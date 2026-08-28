@@ -22,7 +22,7 @@ export default function SalePage() {
         const { data, error } = await getSupabaseClient()
           .from("products")
           .select("*")
-          .eq("en_venta", true)
+          .not("precio_venta", "is", null)
           .neq("estado", "baja_definitiva")
           .order("nombre", { ascending: true });
 

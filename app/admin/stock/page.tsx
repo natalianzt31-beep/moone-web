@@ -44,7 +44,6 @@ const emptyForm = {
   precio_alquiler: "",
   valor_reposicion: "",
   foto_url: "",
-  en_venta: false,
   precio_venta: "",
 };
 
@@ -115,8 +114,7 @@ function StockContent() {
         precio_alquiler: Number(form.precio_alquiler),
         valor_reposicion: form.valor_reposicion ? Number(form.valor_reposicion) : null,
         foto_url: form.foto_url || null,
-        en_venta: form.en_venta,
-        precio_venta: form.en_venta && form.precio_venta ? Number(form.precio_venta) : null,
+        precio_venta: form.precio_venta ? Number(form.precio_venta) : null,
       });
 
       if (error) {
@@ -271,28 +269,16 @@ function StockContent() {
             />
           </label>
 
-          <label className="flex min-h-11 items-center gap-2 text-sm text-negro">
+          <label className="flex flex-col gap-1 text-sm text-negro">
+            Precio de venta (opcional — completalo para mostrarla en On Sale)
             <input
-              type="checkbox"
-              checked={form.en_venta}
-              onChange={(e) => setForm((f) => ({ ...f, en_venta: e.target.checked }))}
-              className="h-5 w-5"
+              type="number"
+              min="0"
+              value={form.precio_venta}
+              onChange={(e) => setForm((f) => ({ ...f, precio_venta: e.target.value }))}
+              className={inputClass}
             />
-            En venta (On Sale)
           </label>
-
-          {form.en_venta && (
-            <label className="flex flex-col gap-1 text-sm text-negro">
-              Precio de venta
-              <input
-                type="number"
-                min="0"
-                value={form.precio_venta}
-                onChange={(e) => setForm((f) => ({ ...f, precio_venta: e.target.value }))}
-                className={inputClass}
-              />
-            </label>
-          )}
 
           {formError && <p className="text-sm text-chocolate sm:col-span-2">{formError}</p>}
 
@@ -387,7 +373,7 @@ function StockContent() {
                 <tr key={product.id}>
                   <td className="px-4 py-3 text-sm font-medium text-negro">
                     {product.nombre}
-                    {product.en_venta && (
+                    {product.precio_venta != null && (
                       <span className="ml-2 text-xs uppercase tracking-wider text-taupe">
                         Sale
                       </span>
