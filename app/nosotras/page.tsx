@@ -10,7 +10,7 @@ import {
 const EQUIPO = [
   {
     nombre: "Natalia Núñez Tricarico",
-    rol: "Directora",
+    rol: "Fundadora",
     fotoUrl: "/images/equipo/natalia.jpg" as string | null,
     linkedin: "https://www.linkedin.com/in/natalia-nuñez-tricarico-69129b109",
   },
