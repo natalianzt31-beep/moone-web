@@ -49,21 +49,21 @@ export default function FaqPage() {
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
-        <section className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-          <h1 className="text-2xl font-normal tracking-tight text-negro">
+        <section className="mx-auto max-w-3xl px-4 py-10 sm:px-8 sm:py-16">
+          <h1 className="text-xl font-normal tracking-tight text-negro sm:text-2xl">
             Preguntas frecuentes
           </h1>
 
-          <div className="mt-8 flex flex-col divide-y divide-arena border-y border-arena">
+          <div className="mt-6 flex flex-col divide-y divide-arena border-y border-arena sm:mt-8">
             {PREGUNTAS.map(({ pregunta, respuesta }) => (
-              <details key={pregunta} className="group py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-negro">
+              <details key={pregunta} className="group py-3 sm:py-4">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-negro sm:text-base">
                   {pregunta}
                   <span className="shrink-0 text-taupe transition-transform group-open:rotate-45">
                     +
                   </span>
                 </summary>
-                <p className="mt-3 text-sm leading-6 text-chocolate">{respuesta}</p>
+                <p className="mt-2 text-sm leading-6 text-chocolate sm:mt-3">{respuesta}</p>
               </details>
             ))}
           </div>

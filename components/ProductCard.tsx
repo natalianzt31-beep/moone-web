@@ -42,7 +42,7 @@ export function ProductCard({
 
       <Link
         href={`/reservar/${product.id}?tipo=${tipo}`}
-        className="rounded-[3px] bg-negro px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
+        className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
       >
         {tipo === "venta" ? "Comprar" : "Reservar"}
       </Link>

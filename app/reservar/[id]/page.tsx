@@ -72,10 +72,10 @@ export default function ReservarPage() {
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
-        <section className="mx-auto max-w-xl px-4 py-16 sm:px-8">
+        <section className="mx-auto max-w-xl px-4 py-10 sm:px-8 sm:py-16">
           <Link
             href="/coleccion"
-            className="text-xs uppercase tracking-wider text-taupe transition-colors hover:text-chocolate"
+            className="flex min-h-11 w-fit items-center text-xs uppercase tracking-wider text-taupe transition-colors hover:text-chocolate"
           >
             ← Volver
           </Link>
@@ -90,12 +90,12 @@ export default function ReservarPage() {
 
           {!loading && product && (
             <>
-              <h1 className="mt-2 text-2xl font-normal tracking-tight text-negro">
+              <h1 className="mt-1 text-xl font-normal tracking-tight text-negro sm:text-2xl">
                 {tipo === "venta" ? "Confirmar compra" : "Confirmar reserva"}
               </h1>
 
-              <div className="mt-6 rounded-[3px] border border-arena bg-blanco p-6">
-                <div className="flex items-start justify-between gap-4">
+              <div className="mt-6 rounded-[3px] border border-arena bg-blanco p-4 sm:p-6">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div>
                     <p className="text-base font-medium text-negro">{product.nombre}</p>
                     <p className="mt-1 text-sm text-taupe">

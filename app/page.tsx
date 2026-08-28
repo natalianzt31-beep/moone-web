@@ -8,26 +8,26 @@ export default function Home() {
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
-        <section className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-8 lg:grid-cols-2 lg:items-center lg:py-24">
-          <div className="flex flex-col items-start gap-6">
-            <h1 className="text-4xl font-normal tracking-tight text-negro sm:text-5xl">
+        <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-8 sm:py-16 lg:grid-cols-2 lg:items-center lg:gap-12 lg:py-24">
+          <div className="flex flex-col items-start gap-5 sm:gap-6">
+            <h1 className="text-3xl font-normal tracking-tight text-negro sm:text-4xl lg:text-5xl">
               Vestí un momento único.
             </h1>
-            <p className="max-w-xl text-lg leading-8 text-chocolate">
+            <p className="max-w-xl text-base leading-7 text-chocolate sm:text-lg sm:leading-8">
               Alquilá vestidos, monos, sandalias, carteras y tapados de
               diseño para tu próximo evento. Reservá online y retirá en
               Punta Carretas.
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:gap-4">
               <Link
                 href="/coleccion"
-                className="rounded-[3px] bg-negro px-6 py-3 text-sm font-medium text-blanco transition-colors hover:bg-chocolate"
+                className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-6 py-3 text-center text-sm font-medium text-blanco transition-colors hover:bg-chocolate sm:flex-none"
               >
                 Ver colección
               </Link>
               <Link
                 href="/nosotras"
-                className="rounded-[3px] border border-negro px-6 py-3 text-sm font-medium text-negro transition-colors hover:border-chocolate hover:text-chocolate"
+                className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] border border-negro px-6 py-3 text-center text-sm font-medium text-negro transition-colors hover:border-chocolate hover:text-chocolate sm:flex-none"
               >
                 Conocenos
               </Link>
@@ -47,7 +47,7 @@ export default function Home() {
         </section>
 
         <section className="bg-crema">
-          <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12 sm:flex-row sm:justify-between sm:px-8">
+          <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:flex-row sm:justify-between sm:gap-8 sm:px-8 sm:py-12">
             <div>
               <h2 className="text-sm font-medium uppercase tracking-wider text-taupe">
                 Dirección

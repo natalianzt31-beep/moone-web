@@ -12,8 +12,8 @@ export default function NosotrasPage() {
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
-        <section className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-          <h1 className="text-2xl font-normal tracking-tight text-negro">
+        <section className="mx-auto max-w-3xl px-4 py-10 sm:px-8 sm:py-16">
+          <h1 className="text-xl font-normal tracking-tight text-negro sm:text-2xl">
             Nosotras
           </h1>
           <p className="mt-4 text-base leading-7 text-chocolate">
@@ -24,19 +24,19 @@ export default function NosotrasPage() {
           </p>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-8">
-          <h2 className="text-xl font-normal tracking-tight text-negro">
+        <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-8 sm:pb-16">
+          <h2 className="text-lg font-normal tracking-tight text-negro sm:text-xl">
             El equipo
           </h2>
           <p className="mt-1 text-sm text-chocolate">
             Las mujeres que hacemos Môone realidad.
           </p>
 
-          <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3">
+          <div className="mt-6 grid grid-cols-3 gap-4 sm:mt-8 sm:gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex flex-col items-center gap-3 text-center">
-                <div className="flex aspect-square w-full items-center justify-center rounded-full border border-arena bg-crema">
-                  <span className="text-xs uppercase tracking-wider text-taupe">
+                <div className="flex aspect-square w-full items-center justify-center rounded-full border border-arena bg-crema p-2">
+                  <span className="text-[10px] uppercase tracking-wider text-taupe sm:text-xs">
                     Foto próximamente
                   </span>
                 </div>
@@ -46,12 +46,12 @@ export default function NosotrasPage() {
         </section>
 
         <section id="contacto" className="bg-crema">
-          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
-            <h2 className="text-xl font-normal tracking-tight text-negro">
+          <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
+            <h2 className="text-lg font-normal tracking-tight text-negro sm:text-xl">
               Visitanos
             </h2>
 
-            <div className="mt-8 grid gap-8 sm:grid-cols-2">
+            <div className="mt-6 grid gap-8 sm:mt-8 sm:grid-cols-2">
               <div className="flex flex-col gap-6">
                 <div>
                   <h3 className="text-sm font-medium uppercase tracking-wider text-taupe">

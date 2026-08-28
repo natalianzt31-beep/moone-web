@@ -63,14 +63,14 @@ export default function CategoriaPage() {
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
+        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
           <Link
             href="/coleccion"
-            className="text-xs uppercase tracking-wider text-taupe transition-colors hover:text-chocolate"
+            className="flex min-h-11 w-fit items-center text-xs uppercase tracking-wider text-taupe transition-colors hover:text-chocolate"
           >
             ← Colección
           </Link>
-          <h1 className="mt-2 text-2xl font-normal tracking-tight text-negro">
+          <h1 className="mt-1 text-xl font-normal tracking-tight text-negro sm:text-2xl">
             {categoria.label}
           </h1>
 
@@ -87,7 +87,7 @@ export default function CategoriaPage() {
           )}
 
           {!loading && !error && products.length > 0 && (
-            <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} tipo="alquiler" />
               ))}

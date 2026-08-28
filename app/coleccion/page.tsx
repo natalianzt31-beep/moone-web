@@ -16,15 +16,15 @@ export default function ColeccionPage() {
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
-          <h1 className="text-2xl font-normal tracking-tight text-negro">
+        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
+          <h1 className="text-xl font-normal tracking-tight text-negro sm:text-2xl">
             Colección
           </h1>
           <p className="mt-1 text-sm text-chocolate">
             Elegí una categoría para ver las piezas disponibles.
           </p>
 
-          <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-5">
             {CATEGORIAS.map(({ slug, label }) => (
               <Link key={slug} href={`/coleccion/${slug}`} className="flex flex-col gap-3">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena bg-blanco transition-colors hover:border-chocolate">

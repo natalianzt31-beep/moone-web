@@ -85,19 +85,19 @@ export default function StockPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-8">
-        <h1 className="text-2xl font-normal tracking-tight text-negro">Stock</h1>
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
+        <h1 className="text-xl font-normal tracking-tight text-negro sm:text-2xl">Stock</h1>
         <p className="mt-1 text-sm text-chocolate">Productos cargados en Supabase.</p>
 
-        <div className="mt-6 flex flex-wrap gap-4 rounded-[3px] bg-arena p-4">
-          <label className="flex flex-col gap-1 text-sm text-negro">
+        <div className="mt-6 flex flex-col gap-4 rounded-[3px] bg-arena p-4 sm:flex-row sm:flex-wrap">
+          <label className="flex flex-1 flex-col gap-1 text-sm text-negro sm:flex-none">
             Categoría
             <select
               value={categoriaFiltro}
               onChange={(e) =>
                 setCategoriaFiltro(e.target.value as Categoria | "todas")
               }
-              className="rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none"
+              className="min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none"
             >
               <option value="todas">Todas</option>
               {CATEGORIAS.map((categoria) => (
@@ -108,14 +108,14 @@ export default function StockPage() {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-negro">
+          <label className="flex flex-1 flex-col gap-1 text-sm text-negro sm:flex-none">
             Estado
             <select
               value={estadoFiltro}
               onChange={(e) =>
                 setEstadoFiltro(e.target.value as EstadoProducto | "todos")
               }
-              className="rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none"
+              className="min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none"
             >
               <option value="todos">Todos</option>
               {ESTADOS.map((estado) => (
