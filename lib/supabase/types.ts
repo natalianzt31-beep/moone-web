@@ -15,6 +15,7 @@ export type Product = {
   talle: string | null;
   color: string | null;
   largo_tipo: string | null;
+  descripcion_web: string | null;
   precio_alquiler: number;
   valor_reposicion: number | null;
   estado: EstadoProducto;

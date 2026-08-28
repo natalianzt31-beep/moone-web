@@ -107,6 +107,12 @@ export default function ReservarPage() {
                   </span>
                 </div>
 
+                {product.descripcion_web && (
+                  <p className="mt-4 text-sm leading-relaxed text-chocolate">
+                    {product.descripcion_web}
+                  </p>
+                )}
+
                 <div className="mt-6 flex flex-col gap-2 border-t border-arena pt-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-chocolate">
