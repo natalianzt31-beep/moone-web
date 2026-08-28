@@ -16,13 +16,13 @@ const EQUIPO = [
   },
   {
     nombre: "Belén",
-    rol: "Asesora en tienda",
+    rol: "Asesora en tienda / fotógrafa & creadora de contenido",
     fotoUrl: null as string | null,
     linkedin: null as string | null,
   },
   {
     nombre: "Maia",
-    rol: "Asesora en tienda",
+    rol: "Asesora en tienda / modelo",
     fotoUrl: null as string | null,
     linkedin: null as string | null,
   },
