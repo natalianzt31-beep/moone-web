@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Nav } from "@/components/Nav";
 import { MiCuentaNav } from "@/components/MiCuentaNav";
 import { RequireAuth } from "@/components/RequireAuth";
+import { LoyaltyCard } from "@/components/LoyaltyCard";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchReservations } from "@/lib/supabase/account";
 import { currencyFormatter } from "@/lib/site-config";
@@ -80,6 +81,12 @@ function HistorialContent() {
       <p className="mt-1 text-sm text-chocolate">
         Tus reservas activas y pasadas.
       </p>
+
+      {!authLoading && client && (
+        <div className="mt-6">
+          <LoyaltyCard completados={client.alquileres_completados} />
+        </div>
+      )}
 
       {(authLoading || loading) && (
         <p className="mt-8 text-sm text-taupe">Cargando reservas...</p>

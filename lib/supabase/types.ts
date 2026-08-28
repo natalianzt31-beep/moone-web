@@ -34,6 +34,7 @@ export type Client = {
   consiente_promos: boolean;
   notas: string | null;
   created_at: string;
+  alquileres_completados: number;
 };
 
 export type EstadoReserva =

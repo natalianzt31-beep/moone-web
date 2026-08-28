@@ -40,6 +40,21 @@ function addDays(iso: string, days: number) {
   return toISODate(d);
 }
 
+/** El local no abre los domingos. */
+function isSunday(iso: string) {
+  return new Date(`${iso}T00:00:00`).getDay() === 0;
+}
+
+/** Si cae domingo, la corre al lunes siguiente (día hábil más cercano hacia adelante). */
+function nextBusinessDay(iso: string) {
+  return isSunday(iso) ? addDays(iso, 1) : iso;
+}
+
+/** Sugerencia de devolución: ~4 días desde el retiro, ajustada a día hábil. */
+function sugerirDevolucion(fechaRetiro: string) {
+  return nextBusinessDay(addDays(fechaRetiro, 4));
+}
+
 function getMonthMatrix(year: number, month: number) {
   const firstOfMonth = new Date(year, month, 1);
   const startWeekday = firstOfMonth.getDay();
@@ -68,7 +83,12 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [clientId, setClientId] = useState("");
   const [newNombre, setNewNombre] = useState("");
   const [newCelular, setNewCelular] = useState("");
-  const [fechaRetiro, setFechaRetiro] = useState(toISODate(new Date()));
+  const [fechaRetiro, setFechaRetiroState] = useState(nextBusinessDay(toISODate(new Date())));
+  const [fechaDevolucion, setFechaDevolucion] = useState(() =>
+    sugerirDevolucion(nextBusinessDay(toISODate(new Date())))
+  );
+  const [devolucionManual, setDevolucionManual] = useState(false);
+  const [retiroAjustado, setRetiroAjustado] = useState(false);
   const [precioTotal, setPrecioTotal] = useState("");
   const [senia, setSenia] = useState("");
   const [depositoGarantia, setDepositoGarantia] = useState("");
@@ -101,6 +121,20 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       (c) => c.nombre.toLowerCase().includes(q) || c.celular.includes(q)
     );
   }, [clients, clientSearch]);
+
+  function handleFechaRetiroChange(value: string) {
+    const ajustada = nextBusinessDay(value);
+    setRetiroAjustado(ajustada !== value);
+    setFechaRetiroState(ajustada);
+    if (!devolucionManual) {
+      setFechaDevolucion(sugerirDevolucion(ajustada));
+    }
+  }
+
+  function handleFechaDevolucionChange(value: string) {
+    setDevolucionManual(true);
+    setFechaDevolucion(value);
+  }
 
   function handleProductChange(id: string) {
     setProductId(id);
@@ -156,6 +190,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
         product_id: productId,
         client_id: finalClientId,
         fecha_retiro: fechaRetiro,
+        fecha_devolucion: fechaDevolucion,
         precio_total: precioTotal ? Number(precioTotal) : 0,
         senia: senia ? Number(senia) : 0,
         deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
@@ -183,6 +218,11 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       setDepositoGarantia("");
       setMedioPago("");
       setContratoAceptado(false);
+      const retiroReset = nextBusinessDay(toISODate(new Date()));
+      setFechaRetiroState(retiroReset);
+      setFechaDevolucion(sugerirDevolucion(retiroReset));
+      setDevolucionManual(false);
+      setRetiroAjustado(false);
       onCreated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -194,7 +234,14 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   if (loadingData) return <p className="text-sm text-taupe">Cargando...</p>;
 
   const clienteElegida = clients.find((c) => c.id === clientId);
-  const fechaDevolucion = fechaRetiro ? addDays(fechaRetiro, 4) : "";
+  const avisoDescuento =
+    clientMode === "existing" && clienteElegida
+      ? clienteElegida.alquileres_completados === 2
+        ? "Esta clienta tiene 25% OFF disponible: este va a ser su 3er alquiler."
+        : clienteElegida.alquileres_completados === 5
+          ? "Esta clienta tiene 50% OFF disponible: este va a ser su 6to alquiler."
+          : null
+      : null;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -290,6 +337,12 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
             </label>
           </div>
         )}
+
+        {avisoDescuento && (
+          <p className="mt-2 rounded-[3px] bg-crema px-3 py-2 text-sm text-chocolate">
+            {avisoDescuento}
+          </p>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -299,16 +352,28 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
             type="date"
             required
             value={fechaRetiro}
-            onChange={(e) => setFechaRetiro(e.target.value)}
+            onChange={(e) => handleFechaRetiroChange(e.target.value)}
             className={inputClass}
           />
+          {retiroAjustado && (
+            <span className="text-xs text-taupe">
+              Ajustada: no abrimos los domingos.
+            </span>
+          )}
         </label>
-        <div className="flex flex-col gap-1 text-sm text-negro">
+        <label className="flex flex-col gap-1 text-sm text-negro">
           Fecha de devolución
-          <p className={`${inputClass} flex items-center bg-crema text-taupe`}>
-            {fechaDevolucion || "—"}
-          </p>
-        </div>
+          <input
+            type="date"
+            required
+            value={fechaDevolucion}
+            onChange={(e) => handleFechaDevolucionChange(e.target.value)}
+            className={inputClass}
+          />
+          <span className="text-xs text-taupe">
+            Sugerida automáticamente, se puede editar para acordar un período mayor.
+          </span>
+        </label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -526,22 +591,177 @@ function Calendario() {
   );
 }
 
+const ESTADOS_RESERVA = [
+  "reservado",
+  "confirmado_retiro",
+  "retirado",
+  "devuelto",
+  "vencido",
+  "cancelado",
+] as const;
+
+const ESTADO_RESERVA_LABEL: Record<(typeof ESTADOS_RESERVA)[number], string> = {
+  reservado: "Reservado",
+  confirmado_retiro: "Confirmado para retiro",
+  retirado: "Retirado",
+  devuelto: "Devuelto",
+  vencido: "Vencido",
+  cancelado: "Cancelado",
+};
+
+type ReservaActiva = {
+  id: string;
+  client_id: string;
+  fecha_retiro: string;
+  fecha_devolucion: string;
+  estado: (typeof ESTADOS_RESERVA)[number];
+  products: { nombre: string } | null;
+  clients: { nombre: string } | null;
+};
+
+function ReservasActivas({ refreshKey }: { refreshKey: number }) {
+  const [reservas, setReservas] = useState<ReservaActiva[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    const { data, error } = await getSupabaseClient()
+      .from("reservations")
+      .select("id, client_id, fecha_retiro, fecha_devolucion, estado, products(nombre), clients(nombre)")
+      .neq("estado", "cancelado")
+      .order("fecha_retiro", { ascending: true });
+    if (error) setError(error.message);
+    setReservas((data ?? []) as unknown as ReservaActiva[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
+  async function handleEstadoChange(reserva: ReservaActiva, nuevoEstado: (typeof ESTADOS_RESERVA)[number]) {
+    setUpdatingId(reserva.id);
+    setError(null);
+    try {
+      const supabase = getSupabaseClient();
+      const { error: updateError } = await supabase
+        .from("reservations")
+        .update({ estado: nuevoEstado })
+        .eq("id", reserva.id);
+
+      if (updateError) {
+        setError(updateError.message);
+        return;
+      }
+
+      if (nuevoEstado === "devuelto" && reserva.estado !== "devuelto") {
+        const { error: rpcError } = await supabase.rpc("increment_alquileres_completados", {
+          p_client_id: reserva.client_id,
+        });
+        if (rpcError) setError(rpcError.message);
+      }
+
+      setReservas((prev) =>
+        prev.map((r) => (r.id === reserva.id ? { ...r, estado: nuevoEstado } : r))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  if (loading) return <p className="text-sm text-taupe">Cargando reservas...</p>;
+
+  return (
+    <div>
+      {error && <p className="mb-3 text-sm text-chocolate">{error}</p>}
+      {reservas.length === 0 ? (
+        <p className="text-sm text-taupe">No hay reservas activas.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-[3px] border border-arena">
+          <table className="min-w-full divide-y divide-arena">
+            <thead className="bg-crema">
+              <tr>
+                {["Prenda", "Clienta", "Retiro", "Devolución", "Estado"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-arena bg-blanco">
+              {reservas.map((r) => (
+                <tr key={r.id}>
+                  <td className="px-4 py-3 text-sm font-medium text-negro">
+                    {r.products?.nombre ?? "Prenda"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-chocolate">
+                    {r.clients?.nombre ?? "Clienta"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-chocolate">{r.fecha_retiro}</td>
+                  <td className="px-4 py-3 text-sm text-chocolate">{r.fecha_devolucion}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <select
+                      value={r.estado}
+                      disabled={updatingId === r.id}
+                      onChange={(e) =>
+                        handleEstadoChange(r, e.target.value as (typeof ESTADOS_RESERVA)[number])
+                      }
+                      className={`${inputClass} py-1`}
+                    >
+                      {ESTADOS_RESERVA.map((estado) => (
+                        <option key={estado} value={estado}>
+                          {ESTADO_RESERVA_LABEL[estado]}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReservasContent() {
   const [calendarKey, setCalendarKey] = useState(0);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-2">
-      <section>
-        <h2 className="text-lg font-normal tracking-tight text-negro">Cargar reserva</h2>
-        <div className="mt-4">
-          <CargarReservaForm onCreated={() => setCalendarKey((k) => k + 1)} />
-        </div>
-      </section>
+    <div className="flex flex-col gap-10">
+      <div className="grid gap-10 lg:grid-cols-2">
+        <section>
+          <h2 className="text-lg font-normal tracking-tight text-negro">Cargar reserva</h2>
+          <div className="mt-4">
+            <CargarReservaForm onCreated={() => setCalendarKey((k) => k + 1)} />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-normal tracking-tight text-negro">Calendario</h2>
+          <div className="mt-4">
+            <Calendario key={calendarKey} />
+          </div>
+        </section>
+      </div>
 
       <section>
-        <h2 className="text-lg font-normal tracking-tight text-negro">Calendario</h2>
+        <h2 className="text-lg font-normal tracking-tight text-negro">Reservas activas</h2>
+        <p className="mt-1 text-sm text-chocolate">
+          Cambiá el estado a medida que se retiran y devuelven las prendas. Al marcar
+          &quot;Devuelto&quot; se suma un sellito a la tarjeta de fidelidad de la clienta.
+        </p>
         <div className="mt-4">
-          <Calendario key={calendarKey} />
+          <ReservasActivas refreshKey={calendarKey} />
         </div>
       </section>
     </div>
