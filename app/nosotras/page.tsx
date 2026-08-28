@@ -11,7 +11,7 @@ const EQUIPO = [
   {
     nombre: "Natalia Núñez Tricarico",
     rol: "Directora",
-    fotoUrl: null as string | null,
+    fotoUrl: "/images/equipo/natalia.jpg" as string | null,
     linkedin: "https://www.linkedin.com/in/natalia-nuñez-tricarico-69129b109",
   },
   { nombre: null, rol: null, fotoUrl: null as string | null, linkedin: null },
