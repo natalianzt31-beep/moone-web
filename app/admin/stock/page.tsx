@@ -47,11 +47,18 @@ const emptyForm = {
   precio_venta: "",
 };
 
+const emptyEditForm = {
+  ...emptyForm,
+  estado: "disponible" as EstadoProducto,
+};
+
 function StockContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | "todas">("todas");
+  const [talleFiltro, setTalleFiltro] = useState<string>("todos");
+  const [colorFiltro, setColorFiltro] = useState<string>("todos");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoProducto | "todos">("todos");
 
   const [showForm, setShowForm] = useState(false);
@@ -59,6 +66,11 @@ function StockContent() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(emptyEditForm);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   async function loadProducts() {
     setLoading(true);
@@ -85,14 +97,25 @@ function StockContent() {
     loadProducts();
   }, []);
 
+  const talleOpciones = useMemo(
+    () => Array.from(new Set(products.map((p) => p.talle).filter((v): v is string => !!v))).sort(),
+    [products]
+  );
+  const colorOpciones = useMemo(
+    () => Array.from(new Set(products.map((p) => p.color).filter((v): v is string => !!v))).sort(),
+    [products]
+  );
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesCategoria =
         categoriaFiltro === "todas" || product.categoria === categoriaFiltro;
+      const matchesTalle = talleFiltro === "todos" || product.talle === talleFiltro;
+      const matchesColor = colorFiltro === "todos" || product.color === colorFiltro;
       const matchesEstado = estadoFiltro === "todos" || product.estado === estadoFiltro;
-      return matchesCategoria && matchesEstado;
+      return matchesCategoria && matchesTalle && matchesColor && matchesEstado;
     });
-  }, [products, categoriaFiltro, estadoFiltro]);
+  }, [products, categoriaFiltro, talleFiltro, colorFiltro, estadoFiltro]);
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -153,6 +176,66 @@ function StockContent() {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  function startEdit(product: Product) {
+    setEditingId(product.id);
+    setEditError(null);
+    setEditForm({
+      sku: product.sku,
+      nombre: product.nombre,
+      categoria: product.categoria,
+      talle: product.talle ?? "",
+      color: product.color ?? "",
+      precio_alquiler: String(product.precio_alquiler),
+      valor_reposicion: product.valor_reposicion != null ? String(product.valor_reposicion) : "",
+      foto_url: product.foto_url ?? "",
+      precio_venta: product.precio_venta != null ? String(product.precio_venta) : "",
+      estado: product.estado,
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditError(null);
+  }
+
+  async function handleSaveEdit(productId: string) {
+    if (!editForm.nombre || !editForm.precio_alquiler) {
+      setEditError("Nombre y precio de alquiler son obligatorios.");
+      return;
+    }
+
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const { error } = await getSupabaseClient()
+        .from("products")
+        .update({
+          nombre: editForm.nombre,
+          categoria: editForm.categoria,
+          talle: editForm.talle || null,
+          color: editForm.color || null,
+          precio_alquiler: Number(editForm.precio_alquiler),
+          valor_reposicion: editForm.valor_reposicion ? Number(editForm.valor_reposicion) : null,
+          foto_url: editForm.foto_url || null,
+          precio_venta: editForm.precio_venta ? Number(editForm.precio_venta) : null,
+          estado: editForm.estado,
+        })
+        .eq("id", productId);
+
+      if (error) {
+        setEditError(error.message);
+        return;
+      }
+
+      await loadProducts();
+      setEditingId(null);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -310,6 +393,38 @@ function StockContent() {
         </label>
 
         <label className="flex flex-1 flex-col gap-1 text-sm text-negro sm:flex-none">
+          Talle
+          <select
+            value={talleFiltro}
+            onChange={(e) => setTalleFiltro(e.target.value)}
+            className={inputClass}
+          >
+            <option value="todos">Todos</option>
+            {talleOpciones.map((talle) => (
+              <option key={talle} value={talle}>
+                {talle}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-1 flex-col gap-1 text-sm text-negro sm:flex-none">
+          Color
+          <select
+            value={colorFiltro}
+            onChange={(e) => setColorFiltro(e.target.value)}
+            className={inputClass}
+          >
+            <option value="todos">Todos</option>
+            {colorOpciones.map((color) => (
+              <option key={color} value={color}>
+                {color}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-1 flex-col gap-1 text-sm text-negro sm:flex-none">
           Estado
           <select
             value={estadoFiltro}
@@ -369,54 +484,171 @@ function StockContent() {
 
             {!loading &&
               !error &&
-              filteredProducts.map((product) => (
-                <tr key={product.id}>
-                  <td className="px-4 py-3 text-sm font-medium text-negro">
-                    {product.nombre}
-                    {product.precio_venta != null && (
-                      <span className="ml-2 text-xs uppercase tracking-wider text-taupe">
-                        Sale
+              filteredProducts.map((product) =>
+                editingId === product.id ? (
+                  <tr key={product.id} className="bg-crema">
+                    <td className="px-4 py-3">
+                      <input
+                        type="text"
+                        value={editForm.nombre}
+                        onChange={(e) =>
+                          setEditForm((f) => ({ ...f, nombre: e.target.value }))
+                        }
+                        className={`${inputClass} w-full`}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={editForm.categoria}
+                        onChange={(e) =>
+                          setEditForm((f) => ({ ...f, categoria: e.target.value as Categoria }))
+                        }
+                        className={`${inputClass} w-full`}
+                      >
+                        {CATEGORIAS.map((c) => (
+                          <option key={c} value={c}>
+                            {c.charAt(0).toUpperCase() + c.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="text"
+                        value={editForm.talle}
+                        onChange={(e) => setEditForm((f) => ({ ...f, talle: e.target.value }))}
+                        className={`${inputClass} w-20`}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="text"
+                        value={editForm.color}
+                        onChange={(e) => setEditForm((f) => ({ ...f, color: e.target.value }))}
+                        className={`${inputClass} w-24`}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="number"
+                        min="0"
+                        value={editForm.precio_alquiler}
+                        onChange={(e) =>
+                          setEditForm((f) => ({ ...f, precio_alquiler: e.target.value }))
+                        }
+                        className={`${inputClass} w-24`}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={editForm.estado}
+                        onChange={(e) =>
+                          setEditForm((f) => ({
+                            ...f,
+                            estado: e.target.value as EstadoProducto,
+                          }))
+                        }
+                        className={`${inputClass} w-full`}
+                      >
+                        {ESTADOS.map((estado) => (
+                          <option key={estado} value={estado}>
+                            {ESTADO_LABEL[estado]}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-2">
+                        {editError && <p className="text-xs text-chocolate">{editError}</p>}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={editSaving}
+                            onClick={() => handleSaveEdit(product.id)}
+                            className="flex min-h-11 items-center rounded-[3px] bg-negro px-3 text-xs uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+                          >
+                            {editSaving ? "Guardando..." : "Guardar"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={editSaving}
+                            onClick={cancelEdit}
+                            className="flex min-h-11 items-center rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate transition-colors hover:border-chocolate disabled:opacity-60"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={product.id}>
+                    <td className="px-4 py-3 text-sm font-medium text-negro">
+                      {product.nombre}
+                      {product.precio_venta != null && (
+                        <span className="ml-2 text-xs uppercase tracking-wider text-taupe">
+                          Sale
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm capitalize text-chocolate">
+                      {product.categoria}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-chocolate">{product.talle ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-chocolate">{product.color ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-negro">
+                      {currencyFormatter.format(product.precio_alquiler)}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex rounded-[3px] px-2.5 py-0.5 text-xs font-medium ${ESTADO_BADGE[product.estado]}`}
+                      >
+                        {ESTADO_LABEL[product.estado]}
                       </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm capitalize text-chocolate">
-                    {product.categoria}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-chocolate">{product.talle ?? "—"}</td>
-                  <td className="px-4 py-3 text-sm text-chocolate">{product.color ?? "—"}</td>
-                  <td className="px-4 py-3 text-sm text-negro">
-                    {currencyFormatter.format(product.precio_alquiler)}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <span
-                      className={`inline-flex rounded-[3px] px-2.5 py-0.5 text-xs font-medium ${ESTADO_BADGE[product.estado]}`}
-                    >
-                      {ESTADO_LABEL[product.estado]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {product.estado === "baja_definitiva" ? (
-                      <button
-                        type="button"
-                        disabled={updatingId === product.id}
-                        onClick={() => handleEstadoChange(product, "disponible")}
-                        className="flex min-h-11 items-center rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate transition-colors hover:border-chocolate disabled:opacity-60"
-                      >
-                        Reactivar
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={updatingId === product.id}
-                        onClick={() => handleEstadoChange(product, "baja_definitiva")}
-                        className="flex min-h-11 items-center rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate transition-colors hover:border-chocolate disabled:opacity-60"
-                      >
-                        Dar de baja
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(product)}
+                          className="flex min-h-11 items-center rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate transition-colors hover:border-chocolate"
+                        >
+                          Editar
+                        </button>
+                        {product.estado === "baja_definitiva" ? (
+                          <button
+                            type="button"
+                            disabled={updatingId === product.id}
+                            onClick={() => handleEstadoChange(product, "disponible")}
+                            className="flex min-h-11 items-center rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate transition-colors hover:border-chocolate disabled:opacity-60"
+                          >
+                            Reactivar
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={updatingId === product.id}
+                              onClick={() => handleEstadoChange(product, "en_reparacion")}
+                              className="flex min-h-11 items-center rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate transition-colors hover:border-chocolate disabled:opacity-60"
+                            >
+                              En reparación
+                            </button>
+                            <button
+                              type="button"
+                              disabled={updatingId === product.id}
+                              onClick={() => handleEstadoChange(product, "baja_definitiva")}
+                              className="flex min-h-11 items-center rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate transition-colors hover:border-chocolate disabled:opacity-60"
+                            >
+                              Dar de baja
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              )}
           </tbody>
         </table>
       </div>
