@@ -7,6 +7,17 @@ import {
   WHATSAPP_URL,
 } from "@/lib/site-config";
 
+const EQUIPO = [
+  {
+    nombre: "Natalia Núñez Tricarico",
+    rol: "Directora",
+    fotoUrl: null as string | null,
+    linkedin: "https://www.linkedin.com/in/natalia-nuñez-tricarico-69129b109",
+  },
+  { nombre: null, rol: null, fotoUrl: null as string | null, linkedin: null },
+  { nombre: null, rol: null, fotoUrl: null as string | null, linkedin: null },
+];
+
 export default function NosotrasPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
@@ -33,13 +44,42 @@ export default function NosotrasPage() {
           </p>
 
           <div className="mt-6 grid grid-cols-3 gap-4 sm:mt-8 sm:gap-6">
-            {[1, 2, 3].map((i) => (
+            {EQUIPO.map((persona, i) => (
               <div key={i} className="flex flex-col items-center gap-3 text-center">
-                <div className="flex aspect-square w-full items-center justify-center rounded-full border border-arena bg-crema p-2">
-                  <span className="text-[10px] uppercase tracking-wider text-taupe sm:text-xs">
-                    Foto próximamente
-                  </span>
+                <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-full border border-arena bg-crema p-2">
+                  {persona.fotoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={persona.fotoUrl}
+                      alt={persona.nombre ?? ""}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[10px] uppercase tracking-wider text-taupe sm:text-xs">
+                      Foto próximamente
+                    </span>
+                  )}
                 </div>
+                {persona.nombre && (
+                  <div>
+                    <p className="text-sm font-medium text-negro">{persona.nombre}</p>
+                    {persona.rol && (
+                      <p className="text-xs uppercase tracking-wider text-taupe">
+                        {persona.rol}
+                      </p>
+                    )}
+                    {persona.linkedin && (
+                      <a
+                        href={persona.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-block min-h-11 text-xs text-taupe underline-offset-2 transition-colors hover:text-chocolate hover:underline"
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
