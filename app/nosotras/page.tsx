@@ -14,8 +14,24 @@ const EQUIPO = [
     fotoUrl: "/images/equipo/natalia.jpg" as string | null,
     linkedin: "https://www.linkedin.com/in/natalia-nuñez-tricarico-69129b109",
   },
-  { nombre: null, rol: null, fotoUrl: null as string | null, linkedin: null },
-  { nombre: null, rol: null, fotoUrl: null as string | null, linkedin: null },
+  {
+    nombre: "Belén",
+    rol: "Asesora en tienda",
+    fotoUrl: null as string | null,
+    linkedin: null as string | null,
+  },
+  {
+    nombre: "Maia",
+    rol: "Asesora en tienda",
+    fotoUrl: null as string | null,
+    linkedin: null as string | null,
+  },
+  {
+    nombre: "Celina",
+    rol: "Modista",
+    fotoUrl: null as string | null,
+    linkedin: null as string | null,
+  },
 ];
 
 export default function NosotrasPage() {
@@ -43,7 +59,7 @@ export default function NosotrasPage() {
             Las mujeres que hacemos Môone realidad.
           </p>
 
-          <div className="mt-6 grid grid-cols-3 gap-4 sm:mt-8 sm:gap-6">
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-4 sm:gap-6">
             {EQUIPO.map((persona, i) => (
               <div key={i} className="flex flex-col items-center gap-3 text-center">
                 <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-full border border-arena bg-crema p-2">
