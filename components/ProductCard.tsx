@@ -54,6 +54,9 @@ export function ProductCard({
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-medium text-negro">{product.nombre}</span>
         {detalle && <span className="text-xs text-taupe">{detalle}</span>}
+        {product.descripcion_web && (
+          <p className="line-clamp-2 text-xs text-taupe">{product.descripcion_web}</p>
+        )}
         <span className="text-sm text-negro">
           {precio != null ? currencyFormatter.format(precio) : "Consultar"}
         </span>
