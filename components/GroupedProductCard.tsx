@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
+import { compararTalles } from "@/lib/talles";
 import type { Product } from "@/lib/supabase/types";
 
 function nombreSinTalle(nombre: string) {
-  return nombre.replace(/\s*talle\s*\d+\s*$/i, "").trim();
+  return nombre.replace(/\s*talle\s*\S+\s*$/i, "").trim();
 }
 
 export function GroupedProductCard({
@@ -19,15 +20,7 @@ export function GroupedProductCard({
   tipo: "alquiler" | "venta";
 }) {
   const ordenadas = useMemo(
-    () =>
-      [...variantes].sort((a, b) => {
-        const talleA = Number(a.talle);
-        const talleB = Number(b.talle);
-        if (Number.isNaN(talleA) || Number.isNaN(talleB)) {
-          return (a.talle ?? "").localeCompare(b.talle ?? "");
-        }
-        return talleA - talleB;
-      }),
+    () => [...variantes].sort((a, b) => compararTalles(a.talle, b.talle)),
     [variantes]
   );
 

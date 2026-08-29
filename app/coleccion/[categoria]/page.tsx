@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { CATEGORIAS } from "@/lib/site-config";
+import { compararTalles } from "@/lib/talles";
 import type { Product } from "@/lib/supabase/types";
 
 const SELECT_CLASSES =
@@ -79,7 +80,10 @@ export default function CategoriaPage() {
     [products],
   );
   const opcionesTalle = useMemo(
-    () => Array.from(new Set(products.map((p) => p.talle).filter((v): v is string => !!v))).sort(),
+    () =>
+      Array.from(new Set(products.map((p) => p.talle).filter((v): v is string => !!v))).sort(
+        compararTalles
+      ),
     [products],
   );
 

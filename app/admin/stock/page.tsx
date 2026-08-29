@@ -5,6 +5,7 @@ import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
+import { compararTalles } from "@/lib/talles";
 import type { Categoria, EstadoProducto, Product } from "@/lib/supabase/types";
 
 const CATEGORIAS: Categoria[] = ["vestido", "mono", "sandalias", "cartera", "tapado", "accesorio"];
@@ -98,7 +99,10 @@ function StockContent() {
   }, []);
 
   const talleOpciones = useMemo(
-    () => Array.from(new Set(products.map((p) => p.talle).filter((v): v is string => !!v))).sort(),
+    () =>
+      Array.from(new Set(products.map((p) => p.talle).filter((v): v is string => !!v))).sort(
+        compararTalles
+      ),
     [products]
   );
   const colorOpciones = useMemo(
