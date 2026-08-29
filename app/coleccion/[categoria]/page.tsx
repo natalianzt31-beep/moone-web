@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { ProductCard } from "@/components/ProductCard";
+import { GroupedProductCard } from "@/components/GroupedProductCard";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { CATEGORIAS } from "@/lib/site-config";
 import type { Product } from "@/lib/supabase/types";
@@ -94,6 +95,28 @@ export default function CategoriaPage() {
   );
 
   const hayFiltrosActivos = !!(largoFiltro || colorFiltro || talleFiltro);
+
+  const { grupos, individuales } = useMemo(() => {
+    const gruposMap = new Map<string, Product[]>();
+    const individuales: Product[] = [];
+
+    for (const product of productosFiltrados) {
+      if (product.grupo_producto) {
+        const variantes = gruposMap.get(product.grupo_producto) ?? [];
+        variantes.push(product);
+        gruposMap.set(product.grupo_producto, variantes);
+      } else {
+        individuales.push(product);
+      }
+    }
+
+    const grupos = Array.from(gruposMap.entries()).map(([key, variantes]) => ({
+      key,
+      variantes,
+    }));
+
+    return { grupos, individuales };
+  }, [productosFiltrados]);
 
   if (!categoria) {
     notFound();
@@ -200,7 +223,10 @@ export default function CategoriaPage() {
 
           {!loading && !error && productosFiltrados.length > 0 && (
             <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
-              {productosFiltrados.map((product) => (
+              {grupos.map(({ key, variantes }) => (
+                <GroupedProductCard key={key} variantes={variantes} tipo="alquiler" />
+              ))}
+              {individuales.map((product) => (
                 <ProductCard key={product.id} product={product} tipo="alquiler" />
               ))}
             </div>
