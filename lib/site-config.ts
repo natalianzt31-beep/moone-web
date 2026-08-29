@@ -19,4 +19,5 @@ export const CATEGORIAS = [
   { slug: "sandalias", label: "Sandalias", db: "sandalias" },
   { slug: "carteras", label: "Carteras", db: "cartera" },
   { slug: "tapados", label: "Tapados", db: "tapado" },
+  { slug: "accesorios", label: "Accesorios", db: "accesorio" },
 ] as const;

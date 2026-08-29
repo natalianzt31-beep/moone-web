@@ -7,7 +7,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import type { Categoria, EstadoProducto, Product } from "@/lib/supabase/types";
 
-const CATEGORIAS: Categoria[] = ["vestido", "mono", "sandalias", "cartera", "tapado"];
+const CATEGORIAS: Categoria[] = ["vestido", "mono", "sandalias", "cartera", "tapado", "accesorio"];
 const ESTADOS: EstadoProducto[] = [
   "disponible",
   "reservado",

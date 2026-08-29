@@ -1,4 +1,4 @@
-export type Categoria = "vestido" | "mono" | "sandalias" | "cartera" | "tapado";
+export type Categoria = "vestido" | "mono" | "sandalias" | "cartera" | "tapado" | "accesorio";
 
 export type EstadoProducto =
   | "disponible"

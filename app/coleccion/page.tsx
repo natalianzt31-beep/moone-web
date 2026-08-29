@@ -9,6 +9,7 @@ const FOTOS: Record<string, string> = {
   sandalias: "/images/categorias/sandalias.jpg",
   carteras: "/images/categorias/carteras.jpg",
   tapados: "/images/categorias/tapados.jpg",
+  accesorios: "/images/categorias/accesorios.jpg",
 };
 
 export default function ColeccionPage() {
@@ -24,7 +25,7 @@ export default function ColeccionPage() {
             Elegí una categoría para ver las piezas disponibles.
           </p>
 
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-5">
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-6">
             {CATEGORIAS.map(({ slug, label }) => (
               <Link key={slug} href={`/coleccion/${slug}`} className="flex flex-col gap-3">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena bg-blanco transition-colors hover:border-chocolate">
