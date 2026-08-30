@@ -21,6 +21,7 @@ export type Product = {
   valor_reposicion: number | null;
   estado: EstadoProducto;
   foto_url: string | null;
+  fotos: string[] | null;
   precio_venta: number | null;
   created_at: string;
 };

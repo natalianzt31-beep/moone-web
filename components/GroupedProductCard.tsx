@@ -7,6 +7,7 @@ import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
 import { compararTalles } from "@/lib/talles";
 import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
+import { ProductImageCarousel } from "@/components/ProductImageCarousel";
 import type { Product } from "@/lib/supabase/types";
 
 function nombreSinTalle(nombre: string) {
@@ -49,6 +50,12 @@ export function GroupedProductCard({
 
   const precio = tipo === "venta" ? producto.precio_venta : producto.precio_alquiler;
   const cta = tipo === "venta" ? "Comprar" : "Reservar";
+  const fotos =
+    producto.fotos && producto.fotos.length > 0
+      ? producto.fotos
+      : producto.foto_url
+        ? [producto.foto_url]
+        : [];
   // La venta definitiva no tiene calendario de retiro/devolución: se compra directo.
   const fechaElegida = tipo === "venta" || Boolean(fechaRetiro);
   const hrefReservar =
@@ -70,19 +77,7 @@ export function GroupedProductCard({
   return (
     <div className="flex flex-col gap-3">
       <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena bg-blanco">
-        {primero.foto_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={primero.foto_url}
-            alt={nombreBase}
-            loading="lazy"
-            className="h-full w-full object-contain"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-crema">
-            <span className="text-xs uppercase tracking-wider text-taupe">Sin foto</span>
-          </div>
-        )}
+        <ProductImageCarousel key={producto.id} fotos={fotos} alt={nombreBase} />
       </div>
 
       <div className="flex flex-col gap-0.5">
