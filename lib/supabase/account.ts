@@ -22,7 +22,12 @@ export async function ensureClientRow(user: User): Promise<Client> {
   const existing = await fetchClientForUser(user.id);
   if (existing) return existing;
 
-  const nombre = (user.user_metadata?.nombre as string | undefined) || user.email || "Clienta";
+  const nombre =
+    (user.user_metadata?.nombre as string | undefined) ||
+    (user.user_metadata?.full_name as string | undefined) ||
+    (user.user_metadata?.name as string | undefined) ||
+    user.email ||
+    "Clienta";
   const celular = (user.user_metadata?.celular as string | undefined) || "";
 
   const { data, error } = await getSupabaseClient()

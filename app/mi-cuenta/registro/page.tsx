@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Nav } from "@/components/Nav";
+import { ContinuarConGoogle } from "@/components/ContinuarConGoogle";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
@@ -89,7 +90,12 @@ export default function RegistroPage() {
               .
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+            <>
+              <div className="mt-8">
+                <ContinuarConGoogle />
+              </div>
+
+              <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
               <label className="flex flex-col gap-1 text-sm text-negro">
                 Nombre
                 <input
@@ -157,7 +163,8 @@ export default function RegistroPage() {
               >
                 {submitting ? "Creando cuenta..." : "Crear cuenta"}
               </button>
-            </form>
+              </form>
+            </>
           )}
 
           <p className="mt-6 text-sm text-taupe">
