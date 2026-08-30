@@ -40,6 +40,7 @@ export default function CategoriaPage() {
           .select("*")
           .eq("categoria", categoria!.db)
           .eq("estado", "disponible")
+          .gt("precio_alquiler", 0)
           .order("nombre", { ascending: true });
 
         if (cancelled) return;
