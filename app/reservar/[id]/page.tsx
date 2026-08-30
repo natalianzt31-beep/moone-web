@@ -12,6 +12,8 @@ export default function ReservarPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const tipo = searchParams.get("tipo") === "venta" ? "venta" : "alquiler";
+  const fechaRetiro = searchParams.get("retiro");
+  const fechaDevolucion = searchParams.get("devolucion");
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,11 @@ export default function ReservarPage() {
   const mensajeWhatsapp = product
     ? `Hola! Quiero ${tipo === "venta" ? "comprar" : "reservar"}: ${product.nombre}${
         product.talle ? ` (talle ${product.talle})` : ""
-      }. ${
+      }.${
+        fechaRetiro && tipo === "alquiler"
+          ? ` Retiro: ${fechaRetiro}${fechaDevolucion ? `, devolución: ${fechaDevolucion}` : ""}.`
+          : ""
+      } ${
         tipo === "venta"
           ? `Precio: ${precioTotal != null ? currencyFormatter.format(precioTotal) : "a consultar"}.`
           : `Seña (50%): ${montoAhora != null ? currencyFormatter.format(montoAhora) : "a consultar"}.`
@@ -111,6 +117,21 @@ export default function ReservarPage() {
                   <p className="mt-4 text-sm leading-relaxed text-chocolate">
                     {product.descripcion_web}
                   </p>
+                )}
+
+                {tipo === "alquiler" && fechaRetiro && (
+                  <div className="mt-4 flex flex-col gap-1 border-t border-arena pt-4 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-chocolate">Retiro</span>
+                      <span className="text-negro">{fechaRetiro}</span>
+                    </div>
+                    {fechaDevolucion && (
+                      <div className="flex justify-between">
+                        <span className="text-chocolate">Devolución</span>
+                        <span className="text-negro">{fechaDevolucion}</span>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <div className="mt-6 flex flex-col gap-2 border-t border-arena pt-4 text-sm">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
+import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import type { Product } from "@/lib/supabase/types";
 
 export function ProductCard({
@@ -16,9 +17,16 @@ export function ProductCard({
 }) {
   const { user, client, loading: authLoading } = useAuth();
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
+  const [fechaRetiro, setFechaRetiro] = useState<string | null>(null);
+  const [fechaDevolucion, setFechaDevolucion] = useState<string | null>(null);
 
   const precio = tipo === "venta" ? product.precio_venta : product.precio_alquiler;
   const detalle = [product.talle, product.color].filter(Boolean).join(" · ");
+  const fechaElegida = Boolean(fechaRetiro);
+  const hrefReservar =
+    fechaRetiro && fechaDevolucion
+      ? `/reservar/${product.id}?tipo=${tipo}&retiro=${fechaRetiro}&devolucion=${fechaDevolucion}`
+      : `/reservar/${product.id}?tipo=${tipo}`;
 
   async function handleAddToCart() {
     if (!client) return;
@@ -62,18 +70,32 @@ export function ProductCard({
         </span>
       </div>
 
-      <Link
-        href={`/reservar/${product.id}?tipo=${tipo}`}
-        className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
-      >
-        {tipo === "venta" ? "Comprar" : "Reservar"}
-      </Link>
+      <DisponibilidadCalendar
+        productId={product.id}
+        onSelect={(retiro, devolucion) => {
+          setFechaRetiro(retiro);
+          setFechaDevolucion(devolucion);
+        }}
+      />
+
+      {fechaElegida ? (
+        <Link
+          href={hrefReservar}
+          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
+        >
+          {tipo === "venta" ? "Comprar" : "Reservar"}
+        </Link>
+      ) : (
+        <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
+          {tipo === "venta" ? "Comprar" : "Reservar"}
+        </span>
+      )}
 
       {!authLoading && user && (
         <button
           type="button"
           onClick={handleAddToCart}
-          disabled={!client || cartState === "adding" || cartState === "added"}
+          disabled={!fechaElegida || !client || cartState === "adding" || cartState === "added"}
           className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
         >
           {cartState === "adding" && "Agregando..."}
