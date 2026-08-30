@@ -81,3 +81,17 @@ export type CartItem = {
   created_at: string;
   products: Product | null;
 };
+
+export type PromoCode = {
+  id: string;
+  codigo: string;
+  porcentaje: number;
+  activo: boolean;
+  requiere_combo: boolean;
+  categorias_requeridas: Categoria[];
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  usos_maximos: number | null;
+  usos_actuales: number;
+  created_at: string;
+};
