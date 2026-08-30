@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
+import { Footer } from "@/components/Footer";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-marfil text-negro">
         <AuthProvider>{children}</AuthProvider>
+        <Footer />
       </body>
     </html>
   );
