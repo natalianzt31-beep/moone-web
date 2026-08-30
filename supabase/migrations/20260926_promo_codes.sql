@@ -1,12 +1,17 @@
 -- Môone — Códigos de descuento en el carrito
+--
+-- Nota: esta tabla y sus políticas ya fueron creadas directamente en
+-- Supabase antes de trackearlas acá; este archivo documenta el esquema
+-- real para que un clon nuevo del proyecto quede consistente.
 
 create table promo_codes (
   id uuid primary key default gen_random_uuid(),
-  codigo text not null,
-  porcentaje numeric not null check (porcentaje > 0 and porcentaje <= 100),
-  activo boolean not null default true,
+  codigo text not null unique,
+  descripcion text,
+  porcentaje numeric not null,
   requiere_combo boolean not null default false,
-  categorias_requeridas text[] not null default '{}',
+  categorias_requeridas text[],
+  activo boolean not null default true,
   fecha_inicio date,
   fecha_fin date,
   usos_maximos integer,
@@ -14,16 +19,20 @@ create table promo_codes (
   created_at timestamptz not null default now()
 );
 
--- Case-insensitive: "VESTIDOSAND" y "vestidosand" son el mismo código.
-create unique index idx_promo_codes_codigo_lower on promo_codes (lower(codigo));
-
 alter table promo_codes enable row level security;
 
--- Solo clientas logueadas pueden consultar los códigos (se validan en el carrito).
-create policy "clientas autenticadas leen promo_codes"
+create policy "codigos activos son publicos"
   on promo_codes for select
-  using (auth.uid() is not null);
+  using (activo = true);
 
+create policy "solo staff gestiona codigos"
+  on promo_codes for all
+  using (is_staff())
+  with check (is_staff());
+
+-- Incrementa usos_actuales al confirmar una reserva con un código aplicado.
+-- SECURITY DEFINER porque "solo staff gestiona codigos" bloquearía el update
+-- desde una clienta; el incremento atómico evita carreras de select+update.
 create or replace function increment_promo_code_uso(p_codigo text)
 returns void
 language plpgsql
@@ -31,10 +40,6 @@ security definer
 set search_path = public
 as $$
 begin
-  if auth.uid() is null then
-    raise exception 'No autorizado';
-  end if;
-
   update promo_codes
   set usos_actuales = usos_actuales + 1
   where lower(codigo) = lower(p_codigo) and activo = true;

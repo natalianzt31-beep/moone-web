@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin/stock", label: "Stock" },
   { href: "/admin/reportes", label: "Reportes" },
   { href: "/admin/reservas", label: "Reservas" },
+  { href: "/admin/feriados", label: "Feriados" },
 ];
 
 export function AdminNav() {

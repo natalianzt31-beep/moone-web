@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { addDays, getMonthMatrix, sugerirDevolucion, toISODate } from "@/lib/disponibilidad";
+import { fetchClosedDatesSet } from "@/lib/supabase/closedDates";
+import {
+  addDays,
+  getMonthMatrix,
+  isDiaCerrado,
+  sugerirDevolucion,
+  toISODate,
+} from "@/lib/disponibilidad";
 
 type ReservaBloqueo = { fecha_retiro: string; fecha_devolucion: string };
 
@@ -14,6 +21,7 @@ export function DisponibilidadCalendar({
   onSelect: (fechaRetiro: string | null, fechaDevolucion: string | null) => void;
 }) {
   const [bloqueos, setBloqueos] = useState<ReservaBloqueo[]>([]);
+  const [closedDates, setClosedDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
@@ -24,15 +32,19 @@ export function DisponibilidadCalendar({
     onSelect(null, null);
 
     async function load() {
-      const { data } = await getSupabaseClient()
-        .from("reservations")
-        .select("fecha_retiro, fecha_devolucion")
-        .eq("product_id", productId)
-        .neq("estado", "cancelado")
-        .neq("estado", "devuelto");
+      const [{ data: reservas }, closed] = await Promise.all([
+        getSupabaseClient()
+          .from("reservations")
+          .select("fecha_retiro, fecha_devolucion")
+          .eq("product_id", productId)
+          .neq("estado", "cancelado")
+          .neq("estado", "devuelto"),
+        fetchClosedDatesSet(),
+      ]);
 
       if (!cancelled) {
-        setBloqueos((data ?? []) as ReservaBloqueo[]);
+        setBloqueos((reservas ?? []) as ReservaBloqueo[]);
+        setClosedDates(closed);
         setLoading(false);
       }
     }
@@ -69,7 +81,7 @@ export function DisponibilidadCalendar({
   function handleSelect(iso: string) {
     const nueva = selectedDay === iso ? null : iso;
     setSelectedDay(nueva);
-    onSelect(nueva, nueva ? sugerirDevolucion(nueva) : null);
+    onSelect(nueva, nueva ? sugerirDevolucion(nueva, closedDates) : null);
   }
 
   return (
@@ -100,8 +112,9 @@ export function DisponibilidadCalendar({
                     const inMonth = date.getMonth() === month;
                     const isPast = iso < hoy;
                     const isBlocked = bloqueadosSet.has(iso);
+                    const isCerrado = !isBlocked && isDiaCerrado(iso, closedDates);
                     const isSelected = selectedDay === iso;
-                    const disabled = !inMonth || isPast || isBlocked;
+                    const disabled = !inMonth || isPast || isBlocked || isCerrado;
 
                     return (
                       <button
@@ -109,7 +122,9 @@ export function DisponibilidadCalendar({
                         type="button"
                         disabled={disabled}
                         onClick={() => handleSelect(iso)}
-                        title={isBlocked ? "No disponible" : undefined}
+                        title={
+                          isBlocked ? "No disponible" : isCerrado ? "Local cerrado" : undefined
+                        }
                         className={`flex aspect-square items-center justify-center rounded-[3px] border text-xs transition-colors ${
                           !inMonth
                             ? "border-transparent text-transparent"
@@ -117,9 +132,11 @@ export function DisponibilidadCalendar({
                               ? "border-negro bg-negro text-blanco"
                               : isBlocked
                                 ? "border-arena bg-crema text-taupe line-through"
-                                : isPast
+                                : isCerrado
                                   ? "border-arena bg-crema text-taupe/50"
-                                  : "border-arena bg-blanco text-negro hover:border-chocolate cursor-pointer"
+                                  : isPast
+                                    ? "border-arena bg-crema text-taupe/50"
+                                    : "border-arena bg-blanco text-negro hover:border-chocolate cursor-pointer"
                         }`}
                       >
                         {date.getDate()}
@@ -137,13 +154,15 @@ export function DisponibilidadCalendar({
         <p className="text-sm text-chocolate">
           Retiro: <span className="font-medium text-negro">{selectedDay}</span> · Devolución
           sugerida:{" "}
-          <span className="font-medium text-negro">{sugerirDevolucion(selectedDay)}</span>
+          <span className="font-medium text-negro">
+            {sugerirDevolucion(selectedDay, closedDates)}
+          </span>
         </p>
       ) : (
         !loading && (
           <p className="text-xs text-taupe">
             Elegí un día disponible para retirar la prenda. Los días tachados ya están
-            reservados.
+            reservados; los domingos y feriados aparecen atenuados porque el local no abre.
           </p>
         )
       )}

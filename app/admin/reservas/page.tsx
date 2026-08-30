@@ -5,6 +5,7 @@ import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
+import { fetchClosedDatesSet } from "@/lib/supabase/closedDates";
 import {
   addDays,
   getMonthMatrix,
@@ -47,10 +48,9 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [clientId, setClientId] = useState("");
   const [newNombre, setNewNombre] = useState("");
   const [newCelular, setNewCelular] = useState("");
-  const [fechaRetiro, setFechaRetiroState] = useState(nextBusinessDay(toISODate(new Date())));
-  const [fechaDevolucion, setFechaDevolucion] = useState(() =>
-    sugerirDevolucion(nextBusinessDay(toISODate(new Date())))
-  );
+  const [closedDates, setClosedDates] = useState<Set<string>>(new Set());
+  const [fechaRetiro, setFechaRetiroState] = useState(toISODate(new Date()));
+  const [fechaDevolucion, setFechaDevolucion] = useState("");
   const [devolucionManual, setDevolucionManual] = useState(false);
   const [retiroAjustado, setRetiroAjustado] = useState(false);
   const [precioTotal, setPrecioTotal] = useState("");
@@ -67,12 +67,19 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
     async function load() {
       setLoadingData(true);
       const supabase = getSupabaseClient();
-      const [{ data: productsData }, { data: clientsData }] = await Promise.all([
+      const [{ data: productsData }, { data: clientsData }, closed] = await Promise.all([
         supabase.from("products").select("*").neq("estado", "baja_definitiva").order("nombre"),
         supabase.from("clients").select("*").order("nombre"),
+        fetchClosedDatesSet(),
       ]);
       setProducts(productsData ?? []);
       setClients(clientsData ?? []);
+      setClosedDates(closed);
+
+      const retiroDefault = nextBusinessDay(toISODate(new Date()), closed);
+      setFechaRetiroState(retiroDefault);
+      setFechaDevolucion(sugerirDevolucion(retiroDefault, closed));
+
       setLoadingData(false);
     }
     load();
@@ -87,11 +94,11 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   }, [clients, clientSearch]);
 
   function handleFechaRetiroChange(value: string) {
-    const ajustada = nextBusinessDay(value);
+    const ajustada = nextBusinessDay(value, closedDates);
     setRetiroAjustado(ajustada !== value);
     setFechaRetiroState(ajustada);
     if (!devolucionManual) {
-      setFechaDevolucion(sugerirDevolucion(ajustada));
+      setFechaDevolucion(sugerirDevolucion(ajustada, closedDates));
     }
   }
 
@@ -182,9 +189,9 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       setDepositoGarantia("");
       setMedioPago("");
       setContratoAceptado(false);
-      const retiroReset = nextBusinessDay(toISODate(new Date()));
+      const retiroReset = nextBusinessDay(toISODate(new Date()), closedDates);
       setFechaRetiroState(retiroReset);
-      setFechaDevolucion(sugerirDevolucion(retiroReset));
+      setFechaDevolucion(sugerirDevolucion(retiroReset, closedDates));
       setDevolucionManual(false);
       setRetiroAjustado(false);
       onCreated();
@@ -321,7 +328,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
           />
           {retiroAjustado && (
             <span className="text-xs text-taupe">
-              Ajustada: no abrimos los domingos.
+              Ajustada: el local está cerrado ese día (domingo o feriado).
             </span>
           )}
         </label>

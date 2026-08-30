@@ -14,14 +14,23 @@ export function isSunday(iso: string) {
   return new Date(`${iso}T00:00:00`).getDay() === 0;
 }
 
-/** Si cae domingo, la corre al lunes siguiente (día hábil más cercano hacia adelante). */
-export function nextBusinessDay(iso: string) {
-  return isSunday(iso) ? addDays(iso, 1) : iso;
+/** Domingo o feriado/cierre puntual cargado en closed_dates. */
+export function isDiaCerrado(iso: string, closedDates: ReadonlySet<string>) {
+  return isSunday(iso) || closedDates.has(iso);
+}
+
+/** Si cae en un día cerrado, la corre día a día hasta el próximo día hábil. */
+export function nextBusinessDay(iso: string, closedDates: ReadonlySet<string>) {
+  let cursor = iso;
+  while (isDiaCerrado(cursor, closedDates)) {
+    cursor = addDays(cursor, 1);
+  }
+  return cursor;
 }
 
 /** Sugerencia de devolución: ~4 días desde el retiro, ajustada a día hábil. */
-export function sugerirDevolucion(fechaRetiro: string) {
-  return nextBusinessDay(addDays(fechaRetiro, 4));
+export function sugerirDevolucion(fechaRetiro: string, closedDates: ReadonlySet<string>) {
+  return nextBusinessDay(addDays(fechaRetiro, 4), closedDates);
 }
 
 export function getMonthMatrix(year: number, month: number) {

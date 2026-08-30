@@ -85,6 +85,7 @@ export type CartItem = {
 export type PromoCode = {
   id: string;
   codigo: string;
+  descripcion: string | null;
   porcentaje: number;
   activo: boolean;
   requiere_combo: boolean;
@@ -93,5 +94,12 @@ export type PromoCode = {
   fecha_fin: string | null;
   usos_maximos: number | null;
   usos_actuales: number;
+  created_at: string;
+};
+
+export type ClosedDate = {
+  id: string;
+  fecha: string;
+  motivo: string | null;
   created_at: string;
 };
