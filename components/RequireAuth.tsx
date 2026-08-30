@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { TerminosModal } from "@/components/TerminosModal";
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, client, loading } = useAuth();
   const router = useRouter();
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,5 +24,14 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <>{children}</>;
+  const mostrarTerminos = !!client && !client.terminos_aceptados && !dismissed;
+
+  return (
+    <>
+      {children}
+      {mostrarTerminos && (
+        <TerminosModal clientId={client!.id} onClose={() => setDismissed(true)} />
+      )}
+    </>
+  );
 }

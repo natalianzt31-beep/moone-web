@@ -36,6 +36,9 @@ export type Client = {
   notas: string | null;
   created_at: string;
   alquileres_completados: number;
+  terminos_aceptados: boolean;
+  terminos_aceptados_fecha: string | null;
+  fotos_autorizadas: boolean;
 };
 
 export type EstadoReserva =
