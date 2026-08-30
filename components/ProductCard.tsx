@@ -22,9 +22,11 @@ export function ProductCard({
 
   const precio = tipo === "venta" ? product.precio_venta : product.precio_alquiler;
   const detalle = [product.talle, product.color].filter(Boolean).join(" · ");
-  const fechaElegida = Boolean(fechaRetiro);
+  const cta = tipo === "venta" ? "Comprar" : "Reservar";
+  // La venta definitiva no tiene calendario de retiro/devolución: se compra directo.
+  const fechaElegida = tipo === "venta" || Boolean(fechaRetiro);
   const hrefReservar =
-    fechaRetiro && fechaDevolucion
+    tipo === "alquiler" && fechaRetiro && fechaDevolucion
       ? `/reservar/${product.id}?tipo=${tipo}&retiro=${fechaRetiro}&devolucion=${fechaDevolucion}`
       : `/reservar/${product.id}?tipo=${tipo}`;
 
@@ -70,24 +72,26 @@ export function ProductCard({
         </span>
       </div>
 
-      <DisponibilidadCalendar
-        productId={product.id}
-        onSelect={(retiro, devolucion) => {
-          setFechaRetiro(retiro);
-          setFechaDevolucion(devolucion);
-        }}
-      />
+      {tipo === "alquiler" && (
+        <DisponibilidadCalendar
+          productId={product.id}
+          onSelect={(retiro, devolucion) => {
+            setFechaRetiro(retiro);
+            setFechaDevolucion(devolucion);
+          }}
+        />
+      )}
 
       {fechaElegida ? (
         <Link
           href={hrefReservar}
           className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
         >
-          {tipo === "venta" ? "Comprar" : "Reservar"}
+          {cta}
         </Link>
       ) : (
         <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
-          {tipo === "venta" ? "Comprar" : "Reservar"}
+          {cta}
         </span>
       )}
 

@@ -28,8 +28,19 @@ export function GroupedProductCard({
   const primero = ordenadas[0];
   const nombreBase = nombreSinTalle(primero.nombre);
 
-  const [talleSeleccionado, setTalleSeleccionado] = useState(primero.id);
-  const producto = ordenadas.find((p) => p.id === talleSeleccionado) ?? primero;
+  // Puede haber más de una unidad del mismo talle (ej. 2 unidades de S):
+  // el selector muestra un talle una sola vez, y al elegirlo se resuelve
+  // a una unidad disponible de ese talle.
+  const tallesUnicos = useMemo(
+    () => Array.from(new Set(ordenadas.map((p) => p.talle))),
+    [ordenadas]
+  );
+
+  const [talleSeleccionado, setTalleSeleccionado] = useState(primero.talle);
+  const producto =
+    ordenadas.find((p) => p.talle === talleSeleccionado && p.estado === "disponible") ??
+    ordenadas.find((p) => p.talle === talleSeleccionado) ??
+    primero;
 
   const { user, client, loading: authLoading } = useAuth();
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
@@ -37,9 +48,11 @@ export function GroupedProductCard({
   const [fechaDevolucion, setFechaDevolucion] = useState<string | null>(null);
 
   const precio = tipo === "venta" ? producto.precio_venta : producto.precio_alquiler;
-  const fechaElegida = Boolean(fechaRetiro);
+  const cta = tipo === "venta" ? "Comprar" : "Reservar";
+  // La venta definitiva no tiene calendario de retiro/devolución: se compra directo.
+  const fechaElegida = tipo === "venta" || Boolean(fechaRetiro);
   const hrefReservar =
-    fechaRetiro && fechaDevolucion
+    tipo === "alquiler" && fechaRetiro && fechaDevolucion
       ? `/reservar/${producto.id}?tipo=${tipo}&retiro=${fechaRetiro}&devolucion=${fechaDevolucion}`
       : `/reservar/${producto.id}?tipo=${tipo}`;
 
@@ -86,7 +99,7 @@ export function GroupedProductCard({
       <label className="flex flex-col gap-1 text-xs uppercase tracking-wider text-taupe">
         Talle
         <select
-          value={talleSeleccionado}
+          value={talleSeleccionado ?? ""}
           onChange={(e) => {
             setTalleSeleccionado(e.target.value);
             setCartState("idle");
@@ -95,33 +108,35 @@ export function GroupedProductCard({
           }}
           className="min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 text-sm normal-case tracking-normal text-negro focus:border-negro focus:outline-none"
         >
-          {ordenadas.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.talle}
+          {tallesUnicos.map((talle) => (
+            <option key={talle} value={talle ?? ""}>
+              {talle}
             </option>
           ))}
         </select>
       </label>
 
-      <DisponibilidadCalendar
-        key={producto.id}
-        productId={producto.id}
-        onSelect={(retiro, devolucion) => {
-          setFechaRetiro(retiro);
-          setFechaDevolucion(devolucion);
-        }}
-      />
+      {tipo === "alquiler" && (
+        <DisponibilidadCalendar
+          key={producto.id}
+          productId={producto.id}
+          onSelect={(retiro, devolucion) => {
+            setFechaRetiro(retiro);
+            setFechaDevolucion(devolucion);
+          }}
+        />
+      )}
 
       {fechaElegida ? (
         <Link
           href={hrefReservar}
           className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
         >
-          {tipo === "venta" ? "Comprar" : "Reservar"}
+          {cta}
         </Link>
       ) : (
         <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
-          {tipo === "venta" ? "Comprar" : "Reservar"}
+          {cta}
         </span>
       )}
 
