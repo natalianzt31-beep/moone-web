@@ -3,17 +3,22 @@
 -- fecha_devolucion arrancó como columna generada (fecha_retiro + 4 fijo);
 -- la lógica de negocio hoy la calcula la app respetando domingos y
 -- feriados de closed_dates, así que necesita ser una columna normal
--- escribible. DROP EXPRESSION IF EXISTS es un no-op si ya se convirtió
--- a mano en algún ambiente.
+-- escribible. DROP EXPRESSION IF EXISTS es un no-op: en producción ya
+-- se había convertido a mano.
 alter table reservations alter column fecha_devolucion drop expression if exists;
 
--- Antes solo staff insertaba reservas desde /admin/reservas. Ahora una
--- clienta puede crear su propia reserva al pagar la seña con Mercado Pago.
+-- senia_confirmada ya existía en producción (agregada out-of-band,
+-- junto con senia_avisada/senia_avisada_fecha que no tocamos acá);
+-- IF NOT EXISTS por si algún otro ambiente todavía no la tiene.
+alter table reservations add column if not exists senia_confirmada boolean not null default false;
+
+-- Antes solo staff insertaba reservas desde /admin/reservas (política
+-- real en producción: "clienta ve sus reservas" + "solo staff gestiona
+-- reservas", sin INSERT para clientas). Ahora una clienta puede crear
+-- su propia reserva al pagar la seña con Mercado Pago.
 create policy "una clienta crea su propia reserva"
   on reservations for insert
   with check (client_id in (select id from clients where auth_user_id = auth.uid()));
-
-alter table reservations add column senia_confirmada boolean not null default false;
 
 create table payments (
   id uuid primary key default gen_random_uuid(),
