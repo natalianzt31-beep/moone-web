@@ -58,11 +58,25 @@ export type Reservation = {
   estado: EstadoReserva;
   precio_total: number;
   senia: number;
+  senia_confirmada: boolean;
   deposito_garantia: number | null;
   contrato_aceptado: boolean;
   medio_pago: string | null;
   created_at: string;
   products: Product | null;
+};
+
+export type MedioPago = "efectivo" | "transferencia" | "mercado_pago" | "tarjeta" | "otro";
+export type TipoPago = "seña" | "saldo" | "venta";
+
+export type Payment = {
+  id: string;
+  reservation_id: string;
+  medio: MedioPago;
+  tipo: TipoPago;
+  monto: number;
+  mp_payment_id: string | null;
+  created_at: string;
 };
 
 export type Cart = {

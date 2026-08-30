@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
 import type { Product } from "@/lib/supabase/types";
@@ -15,9 +16,12 @@ export default function ReservarPage() {
   const fechaRetiro = searchParams.get("retiro");
   const fechaDevolucion = searchParams.get("devolucion");
 
+  const { user, client, loading: authLoading } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [payingMp, setPayingMp] = useState(false);
+  const [mpError, setMpError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +77,41 @@ export default function ReservarPage() {
           : `Seña (50%): ${montoAhora != null ? currencyFormatter.format(montoAhora) : "a consultar"}.`
       } ¿Cómo sigo con el pago?`
     : "";
+
+  const puedeAbrirMercadoPago =
+    tipo === "alquiler" && Boolean(fechaRetiro) && Boolean(fechaDevolucion) && Boolean(product);
+
+  async function handlePagarMercadoPago() {
+    if (!product || !fechaRetiro || !fechaDevolucion) return;
+    setMpError(null);
+    setPayingMp(true);
+    try {
+      const { data: sessionData } = await getSupabaseClient().auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        setMpError("Tu sesión expiró. Volvé a iniciar sesión e intentá de nuevo.");
+        return;
+      }
+
+      const res = await fetch("/api/mercadopago/crear-preferencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ productId: product.id, fechaRetiro, fechaDevolucion }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setMpError(json.error ?? "No se pudo iniciar el pago.");
+        return;
+      }
+
+      window.location.href = json.initPoint;
+    } catch (err) {
+      setMpError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setPayingMp(false);
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col bg-marfil">
@@ -155,9 +194,36 @@ export default function ReservarPage() {
               </div>
 
               <div className="mt-6 rounded-[3px] bg-crema p-4 text-sm text-chocolate">
-                El pago online está próximamente. Mientras tanto, coordiná tu{" "}
-                {tipo === "venta" ? "compra" : "reserva"} y el pago por WhatsApp.
+                Elegí cómo pagar la seña{tipo === "venta" ? " y coordinar tu compra" : ""}: online
+                con Mercado Pago (queda confirmada al instante) o coordinando por WhatsApp.
               </div>
+
+              {puedeAbrirMercadoPago && (
+                <>
+                  {authLoading ? null : user && client ? (
+                    <button
+                      type="button"
+                      onClick={handlePagarMercadoPago}
+                      disabled={payingMp}
+                      className="mt-4 flex min-h-11 w-full items-center justify-center rounded-[3px] bg-[#009EE3] px-6 text-center text-sm font-medium text-blanco transition-colors hover:opacity-90 disabled:opacity-60"
+                    >
+                      {payingMp
+                        ? "Redirigiendo a Mercado Pago..."
+                        : `Pagar seña con Mercado Pago (${
+                            montoAhora != null ? currencyFormatter.format(montoAhora) : ""
+                          })`}
+                    </button>
+                  ) : (
+                    <Link
+                      href="/mi-cuenta/login"
+                      className="mt-4 flex min-h-11 w-full items-center justify-center rounded-[3px] border border-negro px-6 text-center text-sm font-medium text-negro transition-colors hover:border-chocolate hover:text-chocolate"
+                    >
+                      Iniciá sesión para pagar con Mercado Pago
+                    </Link>
+                  )}
+                  {mpError && <p className="mt-2 text-sm text-chocolate">{mpError}</p>}
+                </>
+              )}
 
               <a
                 href={`${WHATSAPP_URL}?text=${encodeURIComponent(mensajeWhatsapp)}`}
