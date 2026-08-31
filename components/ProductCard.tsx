@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
+import { crearPreferenciaReserva } from "@/lib/mercadopago-client";
 import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
 import type { Product } from "@/lib/supabase/types";
@@ -20,10 +21,12 @@ export function ProductCard({
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
   const [fechaRetiro, setFechaRetiro] = useState<string | null>(null);
   const [fechaDevolucion, setFechaDevolucion] = useState<string | null>(null);
+  const [payingMp, setPayingMp] = useState(false);
+  const [mpError, setMpError] = useState<string | null>(null);
 
   const precio = tipo === "venta" ? product.precio_venta : product.precio_alquiler;
   const detalle = [product.talle, product.color].filter(Boolean).join(" · ");
-  const cta = tipo === "venta" ? "Comprar" : "Reservar";
+  const cta = tipo === "venta" ? "Comprar" : "Reservar y pagar seña";
   const fotos =
     product.fotos && product.fotos.length > 0
       ? product.fotos
@@ -32,10 +35,6 @@ export function ProductCard({
         : [];
   // La venta definitiva no tiene calendario de retiro/devolución: se compra directo.
   const fechaElegida = tipo === "venta" || Boolean(fechaRetiro);
-  const hrefReservar =
-    tipo === "alquiler" && fechaRetiro && fechaDevolucion
-      ? `/reservar/${product.id}?tipo=${tipo}&retiro=${fechaRetiro}&devolucion=${fechaDevolucion}`
-      : `/reservar/${product.id}?tipo=${tipo}`;
 
   async function handleAddToCart() {
     if (!client) return;
@@ -45,6 +44,23 @@ export function ProductCard({
       setCartState("added");
     } catch {
       setCartState("error");
+    }
+  }
+
+  async function handleReservarYPagar() {
+    if (!fechaRetiro || !fechaDevolucion) return;
+    setMpError(null);
+    setPayingMp(true);
+    try {
+      const initPoint = await crearPreferenciaReserva({
+        productId: product.id,
+        fechaRetiro,
+        fechaDevolucion,
+      });
+      window.location.href = initPoint;
+    } catch (err) {
+      setMpError(err instanceof Error ? err.message : "Error desconocido");
+      setPayingMp(false);
     }
   }
 
@@ -75,18 +91,35 @@ export function ProductCard({
         />
       )}
 
-      {fechaElegida ? (
+      {tipo === "venta" ? (
         <Link
-          href={hrefReservar}
+          href={`/reservar/${product.id}?tipo=venta`}
           className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
         >
           {cta}
         </Link>
+      ) : !authLoading && !user ? (
+        <Link
+          href="/mi-cuenta/login"
+          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
+        >
+          Iniciá sesión para reservar
+        </Link>
+      ) : fechaElegida ? (
+        <button
+          type="button"
+          onClick={handleReservarYPagar}
+          disabled={payingMp}
+          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+        >
+          {payingMp ? "Redirigiendo a Mercado Pago..." : cta}
+        </button>
       ) : (
         <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
           {cta}
         </span>
       )}
+      {tipo === "alquiler" && mpError && <p className="text-xs text-chocolate">{mpError}</p>}
 
       {!authLoading && user && (
         <button

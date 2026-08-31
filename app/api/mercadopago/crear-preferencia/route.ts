@@ -59,37 +59,11 @@ export async function POST(req: Request) {
 
   const precioTotal = product.precio_alquiler;
   const senia = Math.round(precioTotal * 0.5);
-
-  const { data: reservation, error: reservationError } = await supabase
-    .from("reservations")
-    .insert({
-      product_id: product.id,
-      client_id: client.id,
-      fecha_retiro: fechaRetiro,
-      fecha_devolucion: fechaDevolucion,
-      estado: "reservado",
-      precio_total: precioTotal,
-      senia,
-      medio_pago: "mercado_pago",
-    })
-    .select("id")
-    .single();
-
-  if (reservationError || !reservation) {
-    if (reservationError?.code === "23P01") {
-      return NextResponse.json(
-        { error: "Esas fechas ya no están disponibles para esta prenda." },
-        { status: 409 }
-      );
-    }
-    return NextResponse.json(
-      { error: reservationError?.message ?? "No se pudo crear la reserva." },
-      { status: 500 }
-    );
-  }
-
   const origin = new URL(req.url).origin;
 
+  // La reserva todavía no existe: se crea recién cuando el webhook confirma
+  // el pago. Toda la información necesaria para crearla en ese momento
+  // viaja en metadata, que Mercado Pago devuelve tal cual en el Payment.
   try {
     const preference = await new Preference(getMercadoPagoConfig()).create({
       body: {
@@ -102,18 +76,25 @@ export async function POST(req: Request) {
             currency_id: "UYU",
           },
         ],
-        external_reference: reservation.id,
+        metadata: {
+          product_id: product.id,
+          client_id: client.id,
+          fecha_retiro: fechaRetiro,
+          fecha_devolucion: fechaDevolucion,
+          precio_total: precioTotal,
+          senia,
+        },
         back_urls: {
-          success: `${origin}/mi-cuenta/reserva-confirmada?reserva=${reservation.id}`,
-          pending: `${origin}/mi-cuenta/reserva-confirmada?reserva=${reservation.id}`,
-          failure: `${origin}/mi-cuenta/reserva-confirmada?reserva=${reservation.id}`,
+          success: `${origin}/mi-cuenta/reserva-confirmada`,
+          pending: `${origin}/mi-cuenta/reserva-confirmada`,
+          failure: `${origin}/mi-cuenta/reserva-confirmada`,
         },
         auto_return: "approved",
         notification_url: `${origin}/api/webhooks/mercadopago`,
       },
     });
 
-    return NextResponse.json({ initPoint: preference.init_point, reservationId: reservation.id });
+    return NextResponse.json({ initPoint: preference.init_point });
   } catch (err) {
     console.error("Error creando la preferencia de Mercado Pago", err);
     return NextResponse.json(
