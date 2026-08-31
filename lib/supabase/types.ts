@@ -7,6 +7,8 @@ export type EstadoProducto =
   | "en_reparacion"
   | "baja_definitiva";
 
+export type Condicion = "nuevo" | "usado";
+
 export type Product = {
   id: string;
   sku: string;
@@ -23,6 +25,7 @@ export type Product = {
   foto_url: string | null;
   fotos: string[] | null;
   precio_venta: number | null;
+  condicion: Condicion | null;
   created_at: string;
 };
 

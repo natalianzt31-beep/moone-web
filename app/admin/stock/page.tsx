@@ -6,7 +6,10 @@ import { RequireStaff } from "@/components/RequireStaff";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import { compararTalles } from "@/lib/talles";
-import type { Categoria, EstadoProducto, Product } from "@/lib/supabase/types";
+import type { Categoria, Condicion, EstadoProducto, Product } from "@/lib/supabase/types";
+
+const CONDICIONES: Condicion[] = ["nuevo", "usado"];
+const CONDICION_LABEL: Record<Condicion, string> = { nuevo: "Nuevo", usado: "Usado" };
 
 const CATEGORIAS: Categoria[] = ["vestido", "mono", "sandalias", "cartera", "tapado", "accesorio"];
 const ESTADOS: EstadoProducto[] = [
@@ -46,6 +49,7 @@ const emptyForm = {
   valor_reposicion: "",
   foto_url: "",
   precio_venta: "",
+  condicion: "" as Condicion | "",
 };
 
 const emptyEditForm = {
@@ -129,6 +133,10 @@ function StockContent() {
       setFormError("SKU, nombre y precio de alquiler son obligatorios.");
       return;
     }
+    if (form.precio_venta && !form.condicion) {
+      setFormError("La condición (Nuevo/Usado) es obligatoria para productos en venta.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -142,6 +150,7 @@ function StockContent() {
         valor_reposicion: form.valor_reposicion ? Number(form.valor_reposicion) : null,
         foto_url: form.foto_url || null,
         precio_venta: form.precio_venta ? Number(form.precio_venta) : null,
+        condicion: form.precio_venta ? form.condicion : null,
       });
 
       if (error) {
@@ -196,6 +205,7 @@ function StockContent() {
       valor_reposicion: product.valor_reposicion != null ? String(product.valor_reposicion) : "",
       foto_url: product.foto_url ?? "",
       precio_venta: product.precio_venta != null ? String(product.precio_venta) : "",
+      condicion: product.condicion ?? "",
       estado: product.estado,
     });
   }
@@ -208,6 +218,10 @@ function StockContent() {
   async function handleSaveEdit(productId: string) {
     if (!editForm.nombre || !editForm.precio_alquiler) {
       setEditError("Nombre y precio de alquiler son obligatorios.");
+      return;
+    }
+    if (editForm.precio_venta && !editForm.condicion) {
+      setEditError("La condición (Nuevo/Usado) es obligatoria para productos en venta.");
       return;
     }
 
@@ -225,6 +239,7 @@ function StockContent() {
           valor_reposicion: editForm.valor_reposicion ? Number(editForm.valor_reposicion) : null,
           foto_url: editForm.foto_url || null,
           precio_venta: editForm.precio_venta ? Number(editForm.precio_venta) : null,
+          condicion: editForm.precio_venta ? editForm.condicion : null,
           estado: editForm.estado,
         })
         .eq("id", productId);
@@ -366,6 +381,27 @@ function StockContent() {
               className={inputClass}
             />
           </label>
+
+          {form.precio_venta && (
+            <label className="flex flex-col gap-1 text-sm text-negro">
+              Condición
+              <select
+                required
+                value={form.condicion}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, condicion: e.target.value as Condicion }))
+                }
+                className={inputClass}
+              >
+                <option value="">Elegir...</option>
+                {CONDICIONES.map((c) => (
+                  <option key={c} value={c}>
+                    {CONDICION_LABEL[c]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           {formError && <p className="text-sm text-chocolate sm:col-span-2">{formError}</p>}
 
@@ -563,6 +599,29 @@ function StockContent() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-2">
+                        {product.precio_venta != null && (
+                          <label className="flex flex-col gap-1 text-xs text-negro">
+                            Condición
+                            <select
+                              required
+                              value={editForm.condicion}
+                              onChange={(e) =>
+                                setEditForm((f) => ({
+                                  ...f,
+                                  condicion: e.target.value as Condicion,
+                                }))
+                              }
+                              className={`${inputClass} w-full`}
+                            >
+                              <option value="">Elegir...</option>
+                              {CONDICIONES.map((c) => (
+                                <option key={c} value={c}>
+                                  {CONDICION_LABEL[c]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
                         {editError && <p className="text-xs text-chocolate">{editError}</p>}
                         <div className="flex gap-2">
                           <button
@@ -591,7 +650,7 @@ function StockContent() {
                       {product.nombre}
                       {product.precio_venta != null && (
                         <span className="ml-2 text-xs uppercase tracking-wider text-taupe">
-                          Sale
+                          Sale{product.condicion ? ` · ${CONDICION_LABEL[product.condicion]}` : ""}
                         </span>
                       )}
                     </td>
