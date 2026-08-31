@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
-import { crearPreferenciaReserva } from "@/lib/mercadopago-client";
+import { crearPreferenciaReserva, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { compararTalles } from "@/lib/talles";
 import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
@@ -74,15 +74,18 @@ export function GroupedProductCard({
   }
 
   async function handleReservarYPagar() {
-    if (!fechaRetiro || !fechaDevolucion) return;
+    if (tipo === "alquiler" && (!fechaRetiro || !fechaDevolucion)) return;
     setMpError(null);
     setPayingMp(true);
     try {
-      const initPoint = await crearPreferenciaReserva({
-        productId: producto.id,
-        fechaRetiro,
-        fechaDevolucion,
-      });
+      const initPoint =
+        tipo === "venta"
+          ? await crearPreferenciaVenta({ productId: producto.id })
+          : await crearPreferenciaReserva({
+              productId: producto.id,
+              fechaRetiro: fechaRetiro!,
+              fechaDevolucion: fechaDevolucion!,
+            });
       window.location.href = initPoint;
     } catch (err) {
       setMpError(err instanceof Error ? err.message : "Error desconocido");
@@ -138,19 +141,12 @@ export function GroupedProductCard({
         />
       )}
 
-      {tipo === "venta" ? (
-        <Link
-          href={`/reservar/${producto.id}?tipo=venta`}
-          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
-        >
-          {cta}
-        </Link>
-      ) : !authLoading && !user ? (
+      {!authLoading && !user ? (
         <Link
           href="/mi-cuenta/login"
           className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
         >
-          Iniciá sesión para reservar
+          {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
         </Link>
       ) : fechaElegida ? (
         <button
@@ -166,7 +162,7 @@ export function GroupedProductCard({
           {cta}
         </span>
       )}
-      {tipo === "alquiler" && mpError && <p className="text-xs text-chocolate">{mpError}</p>}
+      {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
 
       {!authLoading && user && (
         <button

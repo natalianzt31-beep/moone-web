@@ -72,7 +72,9 @@ export type TipoPago = "seña" | "saldo" | "venta";
 
 export type Payment = {
   id: string;
-  reservation_id: string;
+  reservation_id: string | null;
+  product_id: string | null;
+  client_id: string | null;
   medio: MedioPago;
   tipo: TipoPago;
   monto: number;

@@ -8,6 +8,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart } from "@/lib/supabase/account";
 import { registrarUsoPromoCode, validatePromoCode } from "@/lib/supabase/promo";
+import { crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
 import type { Categoria, CartItem, PromoCode } from "@/lib/supabase/types";
 
@@ -21,6 +22,8 @@ function CarritoContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payError, setPayError] = useState<{ itemId: string; message: string } | null>(null);
 
   const [codigoInput, setCodigoInput] = useState("");
   const [promoAplicado, setPromoAplicado] = useState<PromoCode | null>(null);
@@ -107,6 +110,21 @@ function CarritoContent() {
     };
   }, [client, authLoading]);
 
+  async function handlePagarVenta(item: CartItem) {
+    setPayError(null);
+    setPayingId(item.id);
+    try {
+      const initPoint = await crearPreferenciaVenta({ productId: item.product_id });
+      window.location.href = initPoint;
+    } catch (err) {
+      setPayError({
+        itemId: item.id,
+        message: err instanceof Error ? err.message : "Error desconocido",
+      });
+      setPayingId(null);
+    }
+  }
+
   async function handleRemove(itemId: string) {
     setRemovingId(itemId);
     try {
@@ -176,12 +194,23 @@ function CarritoContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Link
-                    href={`/reservar/${item.product_id}?tipo=${item.tipo}`}
-                    className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate sm:flex-none"
-                  >
-                    Continuar reserva
-                  </Link>
+                  {item.tipo === "venta" ? (
+                    <button
+                      type="button"
+                      onClick={() => handlePagarVenta(item)}
+                      disabled={payingId === item.id}
+                      className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60 sm:flex-none"
+                    >
+                      {payingId === item.id ? "Redirigiendo..." : "Comprar con Mercado Pago"}
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/reservar/${item.product_id}?tipo=${item.tipo}`}
+                      className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate sm:flex-none"
+                    >
+                      Continuar reserva
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleRemove(item.id)}
@@ -191,6 +220,9 @@ function CarritoContent() {
                     {removingId === item.id ? "Quitando..." : "Eliminar"}
                   </button>
                 </div>
+                {item.tipo === "venta" && payError?.itemId === item.id && (
+                  <p className="text-xs text-chocolate">{payError.message}</p>
+                )}
               </div>
             );
           })}
