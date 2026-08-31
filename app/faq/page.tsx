@@ -25,7 +25,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Qué pasa si la prenda se mancha o se daña?",
     respuesta:
-      "Al retirar la prenda coordinamos un depósito de garantía. Si hay daños más allá del uso normal, se descuenta de ese depósito el costo de arreglo o limpieza especial; te avisamos antes de aplicar cualquier descuento.",
+      "Si la prenda se mancha o se daña más allá del uso normal, nos avisás de inmediato y te hacés cargo del costo de reparación o limpieza especial que corresponda. En caso de pérdida o daño irreparable, se abona el valor de reposición de la prenda — no cobramos ningún depósito de garantía por adelantado.",
   },
   {
     pregunta: "¿Puedo cancelar o cambiar mi reserva?",
@@ -35,7 +35,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Qué medios de pago aceptan?",
     respuesta:
-      "Por ahora coordinamos el pago directamente por WhatsApp. Muy pronto vas a poder pagar la seña o la compra online desde la web.",
+      "La seña (o el total, si comprás una prenda en venta definitiva) se paga online con Mercado Pago al momento de reservar. El saldo restante del alquiler se abona al retirar la prenda en el local.",
   },
   {
     pregunta: "¿Cómo retiro y devuelvo la prenda?",
