@@ -14,8 +14,8 @@ export default function Home() {
               Vestí un momento único.
             </h1>
             <p className="max-w-xl text-base leading-7 text-chocolate sm:text-lg sm:leading-8">
-              Alquilá vestidos, monos, sandalias, carteras y tapados de
-              diseño para tu próximo evento. Reservá online y retirá en
+              Alquilá vestidos, monos, sandalias, carteras y tapados de una
+              colección elegida pieza por pieza. Reservá online y retirá en
               Punta Carretas.
             </p>
             <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:gap-4">

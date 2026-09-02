@@ -17,7 +17,8 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: "Môone",
-  description: "Alquiler de vestidos, sandalias y carteras.",
+  description:
+    "Alquiler de vestidos, monos, sandalias, carteras y tapados para eventos. Colección elegida pieza por pieza. Reservá online y retirá en Punta Carretas.",
 };
 
 export const viewport: Viewport = {
