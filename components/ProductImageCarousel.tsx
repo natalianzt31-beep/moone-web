@@ -34,23 +34,10 @@ export function ProductImageCarousel({ fotos, alt }: { fotos: string[]; alt: str
           }
         }}
         aria-label="Ver otra foto"
-        className="relative h-full w-full cursor-pointer overflow-hidden"
+        className="h-full w-full cursor-pointer bg-blanco"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={fotos[index]}
-          alt=""
-          aria-hidden="true"
-          loading="lazy"
-          className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={fotos[index]}
-          alt={alt}
-          loading="lazy"
-          className="relative h-full w-full object-contain"
-        />
+        <img src={fotos[index]} alt={alt} loading="lazy" className="h-full w-full object-contain" />
       </div>
 
       {fotos.length > 1 && (
