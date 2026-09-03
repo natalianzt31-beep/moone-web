@@ -89,7 +89,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
     if (!clientSearch) return clients;
     const q = clientSearch.toLowerCase();
     return clients.filter(
-      (c) => c.nombre.toLowerCase().includes(q) || c.celular.includes(q)
+      (c) => c.nombre.toLowerCase().includes(q) || (c.celular ?? "").includes(q)
     );
   }, [clients, clientSearch]);
 

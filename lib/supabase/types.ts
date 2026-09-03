@@ -33,7 +33,7 @@ export type Client = {
   id: string;
   auth_user_id: string | null;
   nombre: string;
-  celular: string;
+  celular: string | null;
   email: string | null;
   documento: string | null;
   consiente_promos: boolean;

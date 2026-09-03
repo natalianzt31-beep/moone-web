@@ -15,7 +15,7 @@ type ReservaReporte = {
   precio_total: number;
   medio_pago: string | null;
   products: { nombre: string } | null;
-  clients: { nombre: string; celular: string } | null;
+  clients: { nombre: string; celular: string | null } | null;
 };
 
 const MEDIO_PAGO_LABEL: Record<string, string> = {
