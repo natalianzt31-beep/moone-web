@@ -15,7 +15,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Por cuántos días es el alquiler?",
     respuesta:
-      "El alquiler estándar es por 4 días, contados desde la fecha de retiro. Si necesitás más días, contanos por WhatsApp y vemos disponibilidad.",
+      "La cantidad de días varía según la fecha de retiro que elijas — al reservar te confirmamos hasta cuándo tenés la prenda. Si necesitás más días, contanos por WhatsApp y vemos disponibilidad.",
   },
   {
     pregunta: "¿Puedo comprar una prenda en vez de alquilarla?",
@@ -35,12 +35,12 @@ const PREGUNTAS = [
   {
     pregunta: "¿Qué medios de pago aceptan?",
     respuesta:
-      "La seña (o el total, si comprás una prenda en venta definitiva) se paga online con Mercado Pago al momento de reservar. El saldo restante del alquiler se abona al retirar la prenda en el local.",
+      "La seña (o el total, si comprás una prenda en venta definitiva) podés abonarla online con Mercado Pago al reservar, o en el local. En el local aceptamos efectivo, débito, transferencia o crédito en un pago. El saldo restante del alquiler se abona al retirar la prenda, con los mismos medios de pago.",
   },
   {
     pregunta: "¿Cómo retiro y devuelvo la prenda?",
     respuesta:
-      `Ambas cosas se hacen en el local de Punta Carretas, dentro de nuestro horario de atención. Coordinamos el horario exacto por WhatsApp al ${WHATSAPP_DISPLAY}.`,
+      `El retiro se hace en el local de Punta Carretas, dentro de nuestro horario de atención. La devolución también podés hacerla en el local, o enviarnos la prenda por Uber — en ese caso tiene que llegarnos los lunes. Coordinamos el horario exacto por WhatsApp al ${WHATSAPP_DISPLAY}.`,
   },
 ];
 
