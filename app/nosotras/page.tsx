@@ -23,7 +23,7 @@ const EQUIPO = [
   {
     nombre: "Maia",
     rol: "Asesora en tienda / modelo",
-    fotoUrl: null as string | null,
+    fotoUrl: "/images/equipo/maia.jpg" as string | null,
     linkedin: null as string | null,
   },
   {
