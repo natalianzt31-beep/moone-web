@@ -1,16 +1,98 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { MiCuentaNav } from "@/components/MiCuentaNav";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { fetchCartItems, removeFromCart } from "@/lib/supabase/account";
+import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
 import { registrarUsoPromoCode, validatePromoCode } from "@/lib/supabase/promo";
 import { crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
 import type { Categoria, CartItem, PromoCode } from "@/lib/supabase/types";
+
+const inputClass =
+  "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none";
+
+function DatosClienteForm({
+  clientId,
+  nombreActual,
+}: {
+  clientId: string;
+  nombreActual: string;
+}) {
+  const { refreshClient } = useAuth();
+  const [nombre, setNombre] = useState(/@/.test(nombreActual) ? "" : nombreActual);
+  const [celular, setCelular] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!nombre.trim() || !celular.trim()) {
+      setError("Completá nombre y celular para continuar.");
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      await updateClientDatos(clientId, { nombre: nombre.trim(), celular: celular.trim() });
+      await refreshClient();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      setError(
+        message.includes("duplicate") || message.includes("clients_celular_key")
+          ? "Ya existe una cuenta con ese celular."
+          : message
+      );
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <div className="mt-8 max-w-md rounded-[3px] border border-arena bg-blanco p-4 sm:p-6">
+      <h2 className="text-base font-medium text-negro">Completá tus datos</h2>
+      <p className="mt-1 text-sm text-chocolate">
+        Nos falta tu celular para poder coordinar el retiro y la devolución de la prenda.
+      </p>
+      <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
+        <label className="flex flex-col gap-1 text-sm text-negro">
+          Nombre completo
+          <input
+            type="text"
+            required
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className={inputClass}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-negro">
+          Celular
+          <input
+            type="tel"
+            required
+            value={celular}
+            onChange={(e) => setCelular(e.target.value)}
+            placeholder="093 787 376"
+            className={inputClass}
+          />
+        </label>
+        {error && <p className="text-sm text-chocolate">{error}</p>}
+        <button
+          type="submit"
+          disabled={guardando}
+          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-6 text-sm font-medium text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+        >
+          {guardando ? "Guardando..." : "Guardar y continuar"}
+        </button>
+      </form>
+    </div>
+  );
+}
 
 function precioItem(item: CartItem) {
   return item.tipo === "venta" ? item.products?.precio_venta ?? null : item.products?.precio_alquiler ?? null;
@@ -36,6 +118,7 @@ function CarritoContent() {
   );
   const descuento = promoAplicado ? Math.round((subtotal * promoAplicado.porcentaje) / 100) : 0;
   const totalFinal = subtotal - descuento;
+  const datosCompletos = Boolean(client?.celular?.trim());
 
   async function handleAplicarCodigo() {
     setPromoError(null);
@@ -194,7 +277,11 @@ function CarritoContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  {item.tipo === "venta" ? (
+                  {!datosCompletos ? (
+                    <span className="flex min-h-11 flex-1 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40 sm:flex-none">
+                      {item.tipo === "venta" ? "Comprar con Mercado Pago" : "Continuar reserva"}
+                    </span>
+                  ) : item.tipo === "venta" ? (
                     <button
                       type="button"
                       onClick={() => handlePagarVenta(item)}
@@ -285,16 +372,26 @@ function CarritoContent() {
               </div>
             </div>
 
-            <a
-              href={`${WHATSAPP_URL}?text=${encodeURIComponent(mensajeWhatsapp)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={handleConfirmarClick}
-              className="mt-4 flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-6 text-center text-sm font-medium text-blanco transition-colors hover:bg-chocolate"
-            >
-              Confirmar reserva por WhatsApp
-            </a>
+            {datosCompletos ? (
+              <a
+                href={`${WHATSAPP_URL}?text=${encodeURIComponent(mensajeWhatsapp)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleConfirmarClick}
+                className="mt-4 flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-6 text-center text-sm font-medium text-blanco transition-colors hover:bg-chocolate"
+              >
+                Confirmar reserva por WhatsApp
+              </a>
+            ) : (
+              <p className="mt-4 text-sm text-chocolate">
+                Completá tus datos abajo para poder confirmar la reserva.
+              </p>
+            )}
           </div>
+
+          {!datosCompletos && client && (
+            <DatosClienteForm clientId={client.id} nombreActual={client.nombre} />
+          )}
         </div>
       )}
     </section>

@@ -45,6 +45,21 @@ export async function ensureClientRow(user: User): Promise<Client> {
   return data;
 }
 
+export async function updateClientDatos(
+  clientId: string,
+  datos: { nombre: string; celular: string }
+): Promise<Client> {
+  const { data, error } = await getSupabaseClient()
+    .from("clients")
+    .update({ nombre: datos.nombre, celular: datos.celular })
+    .eq("id", clientId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchReservations(clientId: string): Promise<Reservation[]> {
   const { data, error } = await getSupabaseClient()
     .from("reservations")
