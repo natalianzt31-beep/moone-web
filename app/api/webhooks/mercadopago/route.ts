@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Payment } from "mercadopago";
 import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
+import { facturarYEnviar } from "@/lib/facturacion";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function procesarPagoAlquiler(
@@ -86,14 +87,20 @@ async function procesarPagoVenta(
     return;
   }
 
-  const { error: insertPaymentError } = await supabase.from("payments").insert({
-    product_id: productId,
-    client_id: clientId,
-    medio: "mercado_pago",
-    tipo: "venta",
-    monto: payment.transaction_amount ?? precioVenta,
-    mp_payment_id: String(payment.id),
-  });
+  const monto = payment.transaction_amount ?? precioVenta;
+
+  const { data: pagoInsertado, error: insertPaymentError } = await supabase
+    .from("payments")
+    .insert({
+      product_id: productId,
+      client_id: clientId,
+      medio: "mercado_pago",
+      tipo: "venta",
+      monto,
+      mp_payment_id: String(payment.id),
+    })
+    .select("id")
+    .single();
 
   if (insertPaymentError) {
     console.error("No se pudo registrar el pago de venta", insertPaymentError);
@@ -108,15 +115,49 @@ async function procesarPagoVenta(
     .update({ estado: "baja_definitiva" })
     .eq("id", productId)
     .eq("estado", "disponible")
-    .select("id");
+    .select("id, sku, nombre");
 
   if (updateError) {
     console.error("No se pudo marcar la prenda como vendida", updateError);
-  } else if (!actualizado || actualizado.length === 0) {
+    return;
+  }
+
+  if (!actualizado || actualizado.length === 0) {
     console.error(
       "Pago de venta aprobado pero la prenda ya no estaba disponible — posible doble venta, revisar manualmente",
       { paymentId: payment.id, productId, clientId }
     );
+    return;
+  }
+
+  // Venta = 100% pagado ya: es "el final" de la operación, así que se
+  // factura de inmediato (a diferencia del alquiler, que factura recién al
+  // pagar el saldo).
+  if (pagoInsertado) {
+    const { data: cliente } = await supabase
+      .from("clients")
+      .select("nombre, email, documento")
+      .eq("id", clientId)
+      .single();
+
+    const producto = actualizado[0];
+    const resultado = await facturarYEnviar({
+      cliente: { nombre: cliente?.nombre ?? "Clienta", documento: cliente?.documento ?? null },
+      clienteEmail: cliente?.email ?? null,
+      medioPago: "mercado_pago",
+      codigoProducto: producto.sku ?? "VENTA",
+      descripcion: `Venta — ${producto.nombre ?? "prenda"}`,
+      total: monto,
+    });
+
+    await supabase
+      .from("payments")
+      .update({
+        eticket_generado: resultado.eticket_generado,
+        eticket_url: resultado.eticket_url,
+        eticket_numero: resultado.eticket_numero,
+      })
+      .eq("id", pagoInsertado.id);
   }
 }
 

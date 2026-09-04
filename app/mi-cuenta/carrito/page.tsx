@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
 import { registrarUsoPromoCode, validatePromoCode } from "@/lib/supabase/promo";
 import { crearPreferenciaVenta } from "@/lib/mercadopago-client";
+import { crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
 import type { Categoria, CartItem, PromoCode } from "@/lib/supabase/types";
 
@@ -106,6 +107,9 @@ function CarritoContent() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payError, setPayError] = useState<{ itemId: string; message: string } | null>(null);
+  const [payingLocalId, setPayingLocalId] = useState<string | null>(null);
+  const [localOkIds, setLocalOkIds] = useState<Set<string>>(new Set());
+  const [localError, setLocalError] = useState<{ itemId: string; message: string } | null>(null);
 
   const [codigoInput, setCodigoInput] = useState("");
   const [promoAplicado, setPromoAplicado] = useState<PromoCode | null>(null);
@@ -208,6 +212,22 @@ function CarritoContent() {
     }
   }
 
+  async function handlePagarLocalVenta(item: CartItem) {
+    setLocalError(null);
+    setPayingLocalId(item.id);
+    try {
+      await crearPedidoLocalVenta({ productId: item.product_id });
+      setLocalOkIds((prev) => new Set(prev).add(item.id));
+    } catch (err) {
+      setLocalError({
+        itemId: item.id,
+        message: err instanceof Error ? err.message : "Error desconocido",
+      });
+    } finally {
+      setPayingLocalId(null);
+    }
+  }
+
   async function handleRemove(itemId: string) {
     setRemovingId(itemId);
     try {
@@ -281,15 +301,29 @@ function CarritoContent() {
                     <span className="flex min-h-11 flex-1 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40 sm:flex-none">
                       {item.tipo === "venta" ? "Comprar con Mercado Pago" : "Continuar reserva"}
                     </span>
+                  ) : item.tipo === "venta" && localOkIds.has(item.id) ? (
+                    <span className="flex min-h-11 flex-1 items-center justify-center text-center text-xs text-chocolate sm:flex-none">
+                      Pedido registrado — pagá en el local ✓
+                    </span>
                   ) : item.tipo === "venta" ? (
-                    <button
-                      type="button"
-                      onClick={() => handlePagarVenta(item)}
-                      disabled={payingId === item.id}
-                      className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60 sm:flex-none"
-                    >
-                      {payingId === item.id ? "Redirigiendo..." : "Comprar con Mercado Pago"}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handlePagarVenta(item)}
+                        disabled={payingId === item.id || payingLocalId === item.id}
+                        className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60 sm:flex-none"
+                      >
+                        {payingId === item.id ? "Redirigiendo..." : "Comprar con Mercado Pago"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePagarLocalVenta(item)}
+                        disabled={payingId === item.id || payingLocalId === item.id}
+                        className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60 sm:flex-none"
+                      >
+                        {payingLocalId === item.id ? "Registrando..." : "Pagar en el local"}
+                      </button>
+                    </>
                   ) : (
                     <Link
                       href={`/reservar/${item.product_id}?tipo=${item.tipo}`}
@@ -309,6 +343,9 @@ function CarritoContent() {
                 </div>
                 {item.tipo === "venta" && payError?.itemId === item.id && (
                   <p className="text-xs text-chocolate">{payError.message}</p>
+                )}
+                {item.tipo === "venta" && localError?.itemId === item.id && (
+                  <p className="text-xs text-chocolate">{localError.message}</p>
                 )}
               </div>
             );

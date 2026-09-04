@@ -586,9 +586,159 @@ type ReservaActiva = {
   fecha_retiro: string;
   fecha_devolucion: string;
   estado: (typeof ESTADOS_RESERVA)[number];
+  senia: number;
+  senia_confirmada: boolean;
+  precio_total: number;
+  saldo_pagado: boolean;
+  eticket_generado: boolean;
+  eticket_url: string | null;
   products: { nombre: string } | null;
   clients: { nombre: string } | null;
 };
+
+async function getAccessTokenOrThrow(): Promise<string> {
+  const { data } = await getSupabaseClient().auth.getSession();
+  const accessToken = data.session?.access_token;
+  if (!accessToken) throw new Error("Tu sesión expiró. Volvé a iniciar sesión.");
+  return accessToken;
+}
+
+function ConfirmarSeniaControl({
+  reserva,
+  onConfirmada,
+}: {
+  reserva: ReservaActiva;
+  onConfirmada: () => void;
+}) {
+  const [medio, setMedio] = useState("efectivo");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConfirmar() {
+    setSaving(true);
+    setError(null);
+    try {
+      const accessToken = await getAccessTokenOrThrow();
+      const res = await fetch("/api/admin/confirmar-senia-local", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ reservationId: reserva.id, medioPago: medio }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "No se pudo confirmar la seña.");
+      onConfirmada();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex gap-1">
+        <select
+          value={medio}
+          onChange={(e) => setMedio(e.target.value)}
+          disabled={saving}
+          className={`${inputClass} py-1 text-xs`}
+        >
+          {MEDIOS_PAGO.filter((m) => m.value).map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={handleConfirmar}
+          disabled={saving}
+          className="whitespace-nowrap rounded-[3px] bg-negro px-3 py-1 text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+        >
+          {saving ? "..." : "Confirmar seña"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-chocolate">{error}</p>}
+    </div>
+  );
+}
+
+function MarcarSaldoControl({
+  reserva,
+  onMarcado,
+}: {
+  reserva: ReservaActiva;
+  onMarcado: () => void;
+}) {
+  const [medio, setMedio] = useState("efectivo");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleMarcar() {
+    setSaving(true);
+    setError(null);
+    try {
+      const accessToken = await getAccessTokenOrThrow();
+      const res = await fetch("/api/admin/marcar-saldo-pagado", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ reservationId: reserva.id, medioPago: medio }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "No se pudo marcar el saldo como pagado.");
+      onMarcado();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (reserva.eticket_generado) {
+    return (
+      <a
+        href={reserva.eticket_url ?? "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-chocolate underline-offset-2 hover:underline"
+      >
+        Ver comprobante
+      </a>
+    );
+  }
+
+  if (reserva.saldo_pagado) {
+    return <span className="text-xs text-taupe">Saldo pagado · factura pendiente</span>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex gap-1">
+        <select
+          value={medio}
+          onChange={(e) => setMedio(e.target.value)}
+          disabled={saving}
+          className={`${inputClass} py-1 text-xs`}
+        >
+          {MEDIOS_PAGO.filter((m) => m.value).map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={handleMarcar}
+          disabled={saving}
+          className="whitespace-nowrap rounded-[3px] border border-negro px-3 py-1 text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+        >
+          {saving ? "..." : "Marcar saldo pagado"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-chocolate">{error}</p>}
+    </div>
+  );
+}
 
 function ReservasActivas({ refreshKey }: { refreshKey: number }) {
   const [reservas, setReservas] = useState<ReservaActiva[]>([]);
@@ -600,7 +750,9 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
     setLoading(true);
     const { data, error } = await getSupabaseClient()
       .from("reservations")
-      .select("id, client_id, fecha_retiro, fecha_devolucion, estado, products(nombre), clients(nombre)")
+      .select(
+        "id, client_id, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(nombre), clients(nombre)"
+      )
       .neq("estado", "cancelado")
       .order("fecha_retiro", { ascending: true });
     if (error) setError(error.message);
@@ -657,7 +809,7 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
           <table className="min-w-full divide-y divide-arena">
             <thead className="bg-crema">
               <tr>
-                {["Prenda", "Clienta", "Retiro", "Devolución", "Estado"].map((h) => (
+                {["Prenda", "Clienta", "Retiro", "Devolución", "Estado", "Seña", "Saldo / Factura"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe"
@@ -693,6 +845,18 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {r.senia_confirmada ? (
+                      <span className="text-xs text-taupe">
+                        Confirmada · {currencyFormatter.format(r.senia)}
+                      </span>
+                    ) : (
+                      <ConfirmarSeniaControl reserva={r} onConfirmada={load} />
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <MarcarSaldoControl reserva={r} onMarcado={load} />
                   </td>
                 </tr>
               ))}

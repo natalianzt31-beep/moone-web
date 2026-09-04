@@ -18,6 +18,138 @@ type ReservaReporte = {
   clients: { nombre: string; celular: string | null } | null;
 };
 
+type VentaPendiente = {
+  id: string;
+  monto: number;
+  eticket_generado: boolean;
+  eticket_url: string | null;
+  products: { nombre: string } | null;
+  clients: { nombre: string; celular: string | null } | null;
+};
+
+async function getAccessTokenOrThrow(): Promise<string> {
+  const { data } = await getSupabaseClient().auth.getSession();
+  const accessToken = data.session?.access_token;
+  if (!accessToken) throw new Error("Tu sesión expiró. Volvé a iniciar sesión.");
+  return accessToken;
+}
+
+function ConfirmarVentaControl({
+  venta,
+  onConfirmada,
+}: {
+  venta: VentaPendiente;
+  onConfirmada: () => void;
+}) {
+  const [medio, setMedio] = useState("efectivo");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConfirmar() {
+    setSaving(true);
+    setError(null);
+    try {
+      const accessToken = await getAccessTokenOrThrow();
+      const res = await fetch("/api/admin/confirmar-pago-venta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ paymentId: venta.id, medioPago: medio }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "No se pudo confirmar el pago.");
+      onConfirmada();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1 sm:items-end">
+      <div className="flex gap-2">
+        <select
+          value={medio}
+          onChange={(e) => setMedio(e.target.value)}
+          disabled={saving}
+          className="min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-1 text-sm text-negro focus:border-negro focus:outline-none"
+        >
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="otro">Otro</option>
+        </select>
+        <button
+          type="button"
+          onClick={handleConfirmar}
+          disabled={saving}
+          className="whitespace-nowrap rounded-[3px] bg-negro px-3 py-2 text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+        >
+          {saving ? "Confirmando..." : "Confirmar pago"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-chocolate">{error}</p>}
+    </div>
+  );
+}
+
+function VentasPendientes() {
+  const [ventas, setVentas] = useState<VentaPendiente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    const { data, error } = await getSupabaseClient()
+      .from("payments")
+      .select("id, monto, eticket_generado, eticket_url, products(nombre), clients(nombre, celular)")
+      .eq("tipo", "venta")
+      .eq("confirmado", false)
+      .order("created_at", { ascending: true });
+    if (error) setError(error.message);
+    setVentas((data ?? []) as unknown as VentaPendiente[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  if (loading) return <p className="mt-3 text-sm text-taupe">Cargando...</p>;
+
+  return (
+    <section>
+      <h2 className="text-lg font-normal tracking-tight text-negro">Ventas pendientes de confirmar</h2>
+      <p className="mt-1 text-sm text-chocolate">
+        Pedidos de la sección On Sale con &quot;Pagar en el local&quot;. Confirmá cuando recibas el
+        pago para completar la venta y emitir el comprobante.
+      </p>
+      {error && <p className="mt-3 text-sm text-chocolate">{error}</p>}
+      {ventas.length === 0 ? (
+        <p className="mt-3 text-sm text-taupe">No hay ventas pendientes de confirmar.</p>
+      ) : (
+        <div className="mt-3 flex flex-col gap-3">
+          {ventas.map((v) => (
+            <div
+              key={v.id}
+              className="flex flex-col gap-3 rounded-[3px] border border-arena bg-blanco p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p className="text-sm font-medium text-negro">{v.products?.nombre ?? "Prenda"}</p>
+                <p className="text-sm text-taupe">
+                  {v.clients?.nombre ?? "Clienta"} · {v.clients?.celular ?? ""} ·{" "}
+                  {currencyFormatter.format(v.monto)}
+                </p>
+              </div>
+              <ConfirmarVentaControl venta={v} onConfirmada={load} />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 const MEDIO_PAGO_LABEL: Record<string, string> = {
   efectivo: "Efectivo",
   transferencia: "Transferencia",
@@ -94,6 +226,8 @@ function ReportesContent() {
 
   return (
     <div className="flex flex-col gap-10">
+      <VentasPendientes />
+
       <ReporteSeccion
         titulo="Salen hoy"
         vacio="Ninguna prenda sale hoy."

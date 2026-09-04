@@ -67,10 +67,19 @@ export type Reservation = {
   contrato_aceptado: boolean;
   medio_pago: string | null;
   created_at: string;
+  eticket_generado: boolean;
+  eticket_url: string | null;
+  eticket_numero: string | null;
   products: Product | null;
 };
 
-export type MedioPago = "efectivo" | "transferencia" | "mercado_pago" | "tarjeta" | "otro";
+export type MedioPago =
+  | "efectivo"
+  | "transferencia"
+  | "mercado_pago"
+  | "tarjeta"
+  | "otro"
+  | "pendiente";
 export type TipoPago = "seña" | "saldo" | "venta";
 
 export type Payment = {
@@ -82,6 +91,10 @@ export type Payment = {
   tipo: TipoPago;
   monto: number;
   mp_payment_id: string | null;
+  confirmado: boolean;
+  eticket_generado: boolean;
+  eticket_url: string | null;
+  eticket_numero: string | null;
   created_at: string;
 };
 
