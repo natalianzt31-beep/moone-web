@@ -112,7 +112,15 @@ export type CartItem = {
   product_id: string;
   tipo: TipoCarrito;
   created_at: string;
+  recordatorio_enviado_at: string | null;
   products: Product | null;
+};
+
+export type PageView = {
+  id: string;
+  session_id: string;
+  path: string;
+  created_at: string;
 };
 
 export type PromoCode = {
