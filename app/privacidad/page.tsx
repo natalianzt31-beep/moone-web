@@ -32,9 +32,9 @@ export default function PrivacidadPage() {
                   producto reservado, fechas, forma de pago, historial de alquileres.
                 </li>
                 <li>
-                  <strong className="font-medium text-negro">Comunicaciones</strong>: si nos
-                  autorizás, te enviamos mensajes por WhatsApp relacionados a tu reserva
-                  (confirmación, recordatorios, e-ticket) y, si lo aceptás, promociones.
+                  <strong className="font-medium text-negro">Comunicaciones</strong>: te
+                  enviamos mails relacionados a tu reserva (confirmación, recordatorios,
+                  e-ticket) y, si nos autorizás, promociones.
                 </li>
               </ul>
             </div>
@@ -60,9 +60,9 @@ export default function PrivacidadPage() {
               <p className="mt-2 text-sm leading-6 text-chocolate">
                 No vendemos ni compartimos tus datos personales con terceros para fines
                 comerciales ajenos a Môone. Usamos proveedores de servicio (como Supabase para
-                almacenamiento de datos, Vercel para el hosting de la web, y Twilio/WhatsApp
-                Business para el envío de mensajes) que procesan datos en nuestro nombre bajo
-                sus propias políticas de seguridad.
+                almacenamiento de datos, Vercel para el hosting de la web, y Resend para el
+                envío de mails) que procesan datos en nuestro nombre bajo sus propias
+                políticas de seguridad.
               </p>
             </div>
 
