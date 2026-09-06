@@ -15,7 +15,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Por cuántos días es el alquiler?",
     respuesta:
-      "La cantidad de días varía según la fecha de retiro que elijas — al reservar te confirmamos hasta cuándo tenés la prenda. Si necesitás más días, contanos por WhatsApp y vemos disponibilidad.",
+      "Las prendas se retiran el mismo día del evento o el día hábil anterior, y se devuelven el día hábil siguiente al evento. Los lunes son el día de devolución por defecto, salvo que acordemos algo diferente — es importante devolver la prenda ese mismo lunes para que todas se retiren juntas para la limpieza.",
   },
   {
     pregunta: "¿Puedo comprar una prenda en vez de alquilarla?",
@@ -40,7 +40,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Cómo retiro y devuelvo la prenda?",
     respuesta:
-      `El retiro se hace en el local de Punta Carretas, dentro de nuestro horario de atención. La devolución también podés hacerla en el local, o enviarnos la prenda por Uber — en ese caso tiene que llegarnos los lunes. Coordinamos el horario exacto por WhatsApp al ${WHATSAPP_DISPLAY}.`,
+      `El retiro se hace en el local de Punta Carretas, dentro de nuestro horario de atención. La devolución también podés hacerla en el local, o enviarnos la prenda por Uber. Coordinamos el horario exacto por WhatsApp al ${WHATSAPP_DISPLAY}.`,
   },
 ];
 
