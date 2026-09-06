@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 
 const TABS = [
   { href: "/admin/stock", label: "Stock" },
+  { href: "/admin/clientas", label: "Clientas" },
   { href: "/admin/reportes", label: "Reportes" },
   { href: "/admin/reservas", label: "Reservas" },
   { href: "/admin/analitica", label: "Analítica" },
