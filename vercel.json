@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/carritos-abandonados",
       "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/recordatorios-retiro",
+      "schedule": "0 12 * * *"
     }
   ]
 }

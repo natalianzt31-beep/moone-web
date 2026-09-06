@@ -3,6 +3,7 @@ import { Payment } from "mercadopago";
 import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { facturarYEnviar } from "@/lib/facturacion";
+import { enviarConfirmacionReserva } from "@/lib/email/reservas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function procesarPagoAlquiler(
@@ -68,6 +69,119 @@ async function procesarPagoAlquiler(
   if (insertPaymentError) {
     console.error("No se pudo registrar el pago", insertPaymentError);
   }
+
+  const [{ data: producto }, { data: cliente }] = await Promise.all([
+    supabase.from("products").select("nombre").eq("id", productId).single(),
+    supabase.from("clients").select("nombre, email").eq("id", clientId).single(),
+  ]);
+
+  if (cliente?.email) {
+    const resultado = await enviarConfirmacionReserva({
+      clienteEmail: cliente.email,
+      clienteNombre: cliente.nombre ?? "Clienta",
+      productoNombre: producto?.nombre ?? "prenda",
+      fechaRetiro,
+      fechaDevolucion,
+      seniaPagada: payment.transaction_amount ?? senia,
+      saldoPendiente: precioTotal - (payment.transaction_amount ?? senia),
+    });
+    await supabase
+      .from("reservations")
+      .update({
+        senia_avisada: resultado.ok,
+        senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
+      })
+      .eq("id", reservation.id);
+  }
+}
+
+async function procesarPagoSaldo(
+  supabase: SupabaseClient,
+  payment: { id?: string | number; transaction_amount?: number },
+  metadata: Record<string, unknown>
+) {
+  const reservationId = metadata.reservation_id as string | undefined;
+
+  if (!reservationId) {
+    console.error("Webhook de Mercado Pago (saldo) aprobado sin metadata completa", {
+      paymentId: payment.id,
+      metadata,
+    });
+    return;
+  }
+
+  const { data: reserva, error: reservaError } = await supabase
+    .from("reservations")
+    .select(
+      "id, precio_total, saldo_pagado, products(sku, nombre), clients(nombre, email, documento)"
+    )
+    .eq("id", reservationId)
+    .single();
+
+  if (reservaError || !reserva) {
+    console.error(
+      "Pago de saldo aprobado pero no encontramos la reserva — revisar manualmente",
+      reservaError,
+      { paymentId: payment.id, reservationId }
+    );
+    return;
+  }
+
+  if (reserva.saldo_pagado) {
+    // Ya estaba marcado (ej. lo cargó la vendedora a mano mientras la
+    // clienta pagaba online) — no duplicar el pago ni la factura.
+    return;
+  }
+
+  const monto = payment.transaction_amount ?? reserva.precio_total;
+
+  const { error: insertPaymentError } = await supabase.from("payments").insert({
+    reservation_id: reservationId,
+    tipo: "saldo",
+    medio: "mercado_pago",
+    monto,
+    mp_payment_id: String(payment.id),
+  });
+
+  if (insertPaymentError) {
+    console.error("No se pudo registrar el pago de saldo", insertPaymentError);
+  }
+
+  const { error: updateError } = await supabase
+    .from("reservations")
+    .update({
+      saldo_pagado: true,
+      saldo_pagado_fecha: new Date().toISOString(),
+      medio_pago: "mercado_pago",
+    })
+    .eq("id", reservationId);
+
+  if (updateError) {
+    console.error("No se pudo marcar el saldo como pagado", updateError);
+    return;
+  }
+
+  const producto = Array.isArray(reserva.products) ? reserva.products[0] : reserva.products;
+  const cliente = Array.isArray(reserva.clients) ? reserva.clients[0] : reserva.clients;
+
+  // El saldo es "el final" del alquiler: recién acá se factura.
+  const resultado = await facturarYEnviar({
+    cliente: { nombre: cliente?.nombre ?? "Clienta", documento: cliente?.documento ?? null },
+    clienteEmail: cliente?.email ?? null,
+    medioPago: "mercado_pago",
+    codigoProducto: producto?.sku ?? "ALQUILER",
+    descripcion: `Alquiler — ${producto?.nombre ?? "prenda"}`,
+    total: reserva.precio_total,
+  });
+
+  await supabase
+    .from("reservations")
+    .update({
+      eticket_generado: resultado.eticket_generado,
+      eticket_url: resultado.eticket_url,
+      eticket_numero: resultado.eticket_numero,
+    })
+    .eq("id", reservationId);
 }
 
 async function procesarPagoVenta(
@@ -207,6 +321,8 @@ export async function POST(req: Request) {
 
     if (metadata.tipo === "venta") {
       await procesarPagoVenta(supabase, payment, metadata);
+    } else if (metadata.tipo === "saldo") {
+      await procesarPagoSaldo(supabase, payment, metadata);
     } else {
       await procesarPagoAlquiler(supabase, payment, metadata);
     }

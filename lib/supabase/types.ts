@@ -63,6 +63,11 @@ export type Reservation = {
   precio_total: number;
   senia: number;
   senia_confirmada: boolean;
+  senia_avisada: boolean;
+  senia_avisada_fecha: string | null;
+  saldo_pagado: boolean;
+  saldo_pagado_fecha: string | null;
+  recordatorio_retiro_enviado_at: string | null;
   deposito_garantia: number | null;
   contrato_aceptado: boolean;
   medio_pago: string | null;
