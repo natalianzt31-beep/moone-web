@@ -35,17 +35,31 @@ export async function enviarEmail(params: {
     return { ok: false, reason: "email_not_configured" };
   }
 
-  const { error } = await resend.emails.send({
-    from,
-    to: params.to,
-    subject: params.subject,
-    html: params.html,
-    attachments: params.attachments,
-  });
+  try {
+    const { error } = await resend.emails.send({
+      from,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+      attachments: params.attachments,
+    });
 
-  if (error) {
-    return { ok: false, reason: error.message ?? "resend_error_desconocido" };
+    if (error) {
+      console.error("[email] Resend rechazó el envío", {
+        to: params.to,
+        subject: params.subject,
+        error,
+      });
+      return { ok: false, reason: error.message ?? "resend_error_desconocido" };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    console.error("[email] Error inesperado llamando a Resend", {
+      to: params.to,
+      subject: params.subject,
+      err,
+    });
+    return { ok: false, reason: err instanceof Error ? err.message : "resend_error_desconocido" };
   }
-
-  return { ok: true };
 }
