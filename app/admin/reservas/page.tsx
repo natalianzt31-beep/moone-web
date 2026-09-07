@@ -780,12 +780,9 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
         return;
       }
 
-      if (nuevoEstado === "devuelto" && reserva.estado !== "devuelto") {
-        const { error: rpcError } = await supabase.rpc("increment_alquileres_completados", {
-          p_client_id: reserva.client_id,
-        });
-        if (rpcError) setError(rpcError.message);
-      }
+      // El sellito de fidelidad ya no se suma acá: se suma solo al facturar
+      // el alquiler (al marcar el saldo pagado), no al cambiar este estado
+      // logístico.
 
       setReservas((prev) =>
         prev.map((r) => (r.id === reserva.id ? { ...r, estado: nuevoEstado } : r))

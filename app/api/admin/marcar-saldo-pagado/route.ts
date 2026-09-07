@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const { data: reserva, error: reservaError } = await supabase
     .from("reservations")
     .select(
-      "id, precio_total, saldo_pagado, eticket_generado, medio_pago, products(sku, nombre), clients(nombre, email, documento)"
+      "id, client_id, precio_total, saldo_pagado, eticket_generado, medio_pago, products(sku, nombre), clients(nombre, email, documento)"
     )
     .eq("id", reservationId)
     .single();
@@ -84,6 +84,15 @@ export async function POST(req: Request) {
       eticket_numero: resultado.eticket_numero,
     })
     .eq("id", reservationId);
+
+  // El sellito de fidelidad se suma acá, al facturar el alquiler — no antes.
+  const { error: sellitoError } = await supabase.rpc(
+    "increment_alquileres_completados_sistema",
+    { p_client_id: reserva.client_id }
+  );
+  if (sellitoError) {
+    console.error("[sellitos] no se pudo sumar el sellito", sellitoError);
+  }
 
   return NextResponse.json({ ok: true, facturacion: resultado });
 }
