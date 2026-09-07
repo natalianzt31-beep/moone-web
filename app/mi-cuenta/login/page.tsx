@@ -102,6 +102,13 @@ export default function LoginPage() {
             >
               {submitting ? "Entrando..." : "Entrar"}
             </button>
+
+            <Link
+              href="/mi-cuenta/recuperar"
+              className="text-center text-sm text-taupe hover:text-chocolate"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
           </form>
 
           <p className="mt-6 text-sm text-taupe">
