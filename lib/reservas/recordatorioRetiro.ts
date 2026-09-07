@@ -80,6 +80,7 @@ export async function enviarRecordatoriosDeRetiro(
       : null;
 
     const resultado = await enviarRecordatorioRetiro({
+      reservationId: reserva.id,
       clienteEmail: cliente.email,
       clienteNombre: cliente.nombre,
       productoNombre: producto?.nombre ?? "tu prenda",

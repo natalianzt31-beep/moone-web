@@ -22,6 +22,8 @@ export async function facturarYEnviar(params: {
   codigoProducto: string;
   descripcion: string;
   total: number;
+  /** null para una venta (no está atada a ninguna reserva). */
+  reservationId?: string | null;
 }): Promise<FacturarResultado> {
   const emision = await emitirETicket({
     cliente: params.cliente,
@@ -58,6 +60,7 @@ export async function facturarYEnviar(params: {
         clienteNombre: params.cliente.nombre,
         numeroComprobante: numero,
         pdfBase64: pdf.pdfBase64,
+        reservationId: params.reservationId ?? null,
       });
       if (!envio.ok) {
         console.error("[facturacion] e-ticket emitido pero no se pudo enviar por mail:", envio.reason);

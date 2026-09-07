@@ -1,5 +1,6 @@
 import "server-only";
 import { enviarEmail } from "@/lib/email/resend";
+import { registrarEnvioEmail } from "@/lib/email/log";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
 
 function formatFecha(iso: string): string {
@@ -11,6 +12,7 @@ function formatFecha(iso: string): string {
 }
 
 export async function enviarConfirmacionReserva(params: {
+  reservationId: string;
   clienteEmail: string;
   clienteNombre: string;
   productoNombre: string;
@@ -33,14 +35,24 @@ export async function enviarConfirmacionReserva(params: {
     <p>¡Te esperamos!</p>
   `.trim();
 
-  return enviarEmail({
+  const resultado = await enviarEmail({
     to: params.clienteEmail,
     subject: `Môone — reserva confirmada: ${params.productoNombre}`,
     html,
   });
+
+  await registrarEnvioEmail({
+    tipo: "confirmacion_reserva",
+    destinatario: params.clienteEmail,
+    reservationId: params.reservationId,
+    resultado,
+  });
+
+  return resultado;
 }
 
 export async function enviarRecordatorioRetiro(params: {
+  reservationId: string;
   clienteEmail: string;
   clienteNombre: string;
   productoNombre: string;
@@ -61,9 +73,18 @@ export async function enviarRecordatorioRetiro(params: {
     <p>Te esperamos en Punta Carretas. ¡Gracias por elegirnos!</p>
   `.trim();
 
-  return enviarEmail({
+  const resultado = await enviarEmail({
     to: params.clienteEmail,
     subject: `Môone — mañana retirás ${params.productoNombre}`,
     html,
   });
+
+  await registrarEnvioEmail({
+    tipo: "recordatorio_retiro",
+    destinatario: params.clienteEmail,
+    reservationId: params.reservationId,
+    resultado,
+  });
+
+  return resultado;
 }

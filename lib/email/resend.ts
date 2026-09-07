@@ -27,7 +27,7 @@ export async function enviarEmail(params: {
   subject: string;
   html: string;
   attachments?: EmailAttachment[];
-}): Promise<{ ok: true } | { ok: false; reason: string }> {
+}): Promise<{ ok: true; id?: string } | { ok: false; reason: string }> {
   const from = process.env.RESEND_FROM_EMAIL;
   const resend = getClient();
 
@@ -36,7 +36,7 @@ export async function enviarEmail(params: {
   }
 
   try {
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from,
       to: params.to,
       subject: params.subject,
@@ -53,7 +53,7 @@ export async function enviarEmail(params: {
       return { ok: false, reason: error.message ?? "resend_error_desconocido" };
     }
 
-    return { ok: true };
+    return { ok: true, id: data?.id };
   } catch (err) {
     console.error("[email] Error inesperado llamando a Resend", {
       to: params.to,

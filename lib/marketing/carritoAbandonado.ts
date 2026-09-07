@@ -1,5 +1,6 @@
 import "server-only";
 import { enviarEmail, resendConfigurado } from "@/lib/email/resend";
+import { registrarEnvioEmail } from "@/lib/email/log";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
 
@@ -104,6 +105,13 @@ export async function enviarRecordatoriosCarritosAbandonados(): Promise<{
       to: email,
       subject: "Te olvidaste algo en tu carrito de Môone",
       html: armarHtml(nombre, itemsClienta),
+    });
+
+    await registrarEnvioEmail({
+      tipo: "promocion",
+      destinatario: email,
+      reservationId: null,
+      resultado,
     });
 
     if (resultado.ok) {

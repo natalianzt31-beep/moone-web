@@ -73,6 +73,7 @@ export async function POST(req: Request) {
     codigoProducto: producto?.sku ?? "ALQUILER",
     descripcion: `Alquiler — ${producto?.nombre ?? "prenda"}`,
     total: reserva.precio_total,
+    reservationId,
   });
 
   await supabase

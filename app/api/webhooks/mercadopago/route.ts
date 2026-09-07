@@ -77,6 +77,7 @@ async function procesarPagoAlquiler(
 
   if (cliente?.email) {
     const resultado = await enviarConfirmacionReserva({
+      reservationId: reservation.id,
       clienteEmail: cliente.email,
       clienteNombre: cliente.nombre ?? "Clienta",
       productoNombre: producto?.nombre ?? "prenda",
@@ -172,6 +173,7 @@ async function procesarPagoSaldo(
     codigoProducto: producto?.sku ?? "ALQUILER",
     descripcion: `Alquiler — ${producto?.nombre ?? "prenda"}`,
     total: reserva.precio_total,
+    reservationId,
   });
 
   await supabase

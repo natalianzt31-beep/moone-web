@@ -1,5 +1,6 @@
 import "server-only";
 import { enviarEmail, resendConfigurado } from "@/lib/email/resend";
+import { registrarEnvioEmail } from "@/lib/email/log";
 
 /**
  * Envío del e-ticket por email. Sin Resend configurada, no envía nada y
@@ -12,16 +13,25 @@ export type EnviarETicketParams = {
   clienteNombre: string;
   numeroComprobante: string;
   pdfBase64: string;
+  /** null para una venta (no está atada a ninguna reserva). */
+  reservationId: string | null;
 };
 
 export async function enviarETicketPorEmail(
   params: EnviarETicketParams
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   if (!resendConfigurado()) {
-    return { ok: false, reason: "email_not_configured" };
+    const resultado = { ok: false as const, reason: "email_not_configured" };
+    await registrarEnvioEmail({
+      tipo: "eticket",
+      destinatario: params.clienteEmail,
+      reservationId: params.reservationId,
+      resultado,
+    });
+    return resultado;
   }
 
-  return enviarEmail({
+  const resultado = await enviarEmail({
     to: params.clienteEmail,
     subject: `Môone — tu comprobante ${params.numeroComprobante}`,
     html: `<p>Hola ${params.clienteNombre},</p><p>Adjuntamos tu comprobante de compra/alquiler en Môone.</p><p>¡Gracias por elegirnos!</p>`,
@@ -32,4 +42,13 @@ export async function enviarETicketPorEmail(
       },
     ],
   });
+
+  await registrarEnvioEmail({
+    tipo: "eticket",
+    destinatario: params.clienteEmail,
+    reservationId: params.reservationId,
+    resultado,
+  });
+
+  return resultado;
 }

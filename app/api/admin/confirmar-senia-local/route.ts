@@ -76,6 +76,7 @@ export async function POST(req: Request) {
 
   if (cliente?.email) {
     const resultado = await enviarConfirmacionReserva({
+      reservationId,
       clienteEmail: cliente.email,
       clienteNombre: cliente.nombre ?? "Clienta",
       productoNombre: producto?.nombre ?? "prenda",
