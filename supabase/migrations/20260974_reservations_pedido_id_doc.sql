@@ -1,0 +1,12 @@
+-- Môone — documenta reservations.pedido_id, ya existente en producción
+-- (creada out-of-band, con default gen_random_uuid() por fila). No
+-- cambia nada en la base que ya la tiene (add column if not exists): es
+-- solo para que un clon nuevo del proyecto tenga la columna.
+--
+-- Agrupa reservas de un mismo pedido (ej. vestido + sandalias reservados
+-- juntos) para el mail de confirmación (lib/email/reservas.ts,
+-- enviarMailConfirmacionReserva). Hoy cada punto de alta de reserva crea
+-- una sola reserva por llamada, así que cada una recibe su propio
+-- pedido_id al azar por el default — no hay todavía un checkout que
+-- cree varias reservas juntas compartiendo pedido_id.
+alter table reservations add column if not exists pedido_id uuid default gen_random_uuid();

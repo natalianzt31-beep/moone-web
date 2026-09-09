@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/serviceClient";
-import { enviarConfirmacionReserva } from "@/lib/email/reservas";
+import { enviarMailConfirmacionReserva } from "@/lib/email/reservas";
 
 /**
  * La vendedora confirma desde el backoffice que recibió el pago de la seña
@@ -37,9 +37,7 @@ export async function POST(req: Request) {
 
   const { data: reserva, error: reservaError } = await supabase
     .from("reservations")
-    .select(
-      "id, senia, senia_confirmada, precio_total, fecha_retiro, fecha_devolucion, products(nombre), clients(nombre, email)"
-    )
+    .select("id, pedido_id, senia, senia_confirmada")
     .eq("id", reservationId)
     .single();
 
@@ -71,27 +69,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  const producto = Array.isArray(reserva.products) ? reserva.products[0] : reserva.products;
-  const cliente = Array.isArray(reserva.clients) ? reserva.clients[0] : reserva.clients;
-
-  if (cliente?.email) {
-    const resultado = await enviarConfirmacionReserva({
-      reservationId,
-      clienteEmail: cliente.email,
-      clienteNombre: cliente.nombre ?? "Clienta",
-      productoNombre: producto?.nombre ?? "prenda",
-      fechaRetiro: reserva.fecha_retiro,
-      fechaDevolucion: reserva.fecha_devolucion,
-      seniaPagada: reserva.senia,
-      saldoPendiente: reserva.precio_total - reserva.senia,
-    });
+  if (reserva.pedido_id) {
+    const resultado = await enviarMailConfirmacionReserva(reserva.pedido_id);
     await supabase
       .from("reservations")
       .update({
         senia_avisada: resultado.ok,
         senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
       })
-      .eq("id", reservationId);
+      .eq("pedido_id", reserva.pedido_id);
   }
 
   return NextResponse.json({ ok: true });

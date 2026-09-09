@@ -3,7 +3,7 @@ import { Payment } from "mercadopago";
 import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { facturarYEnviar } from "@/lib/facturacion";
-import { enviarConfirmacionReserva } from "@/lib/email/reservas";
+import { enviarMailConfirmacionReserva } from "@/lib/email/reservas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function procesarPagoAlquiler(
@@ -42,7 +42,7 @@ async function procesarPagoAlquiler(
       senia_confirmada: true,
       medio_pago: "mercado_pago",
     })
-    .select("id")
+    .select("id, pedido_id")
     .single();
 
   if (reservationError || !reservation) {
@@ -70,29 +70,15 @@ async function procesarPagoAlquiler(
     console.error("No se pudo registrar el pago", insertPaymentError);
   }
 
-  const [{ data: producto }, { data: cliente }] = await Promise.all([
-    supabase.from("products").select("nombre").eq("id", productId).single(),
-    supabase.from("clients").select("nombre, email").eq("id", clientId).single(),
-  ]);
-
-  if (cliente?.email) {
-    const resultado = await enviarConfirmacionReserva({
-      reservationId: reservation.id,
-      clienteEmail: cliente.email,
-      clienteNombre: cliente.nombre ?? "Clienta",
-      productoNombre: producto?.nombre ?? "prenda",
-      fechaRetiro,
-      fechaDevolucion,
-      seniaPagada: payment.transaction_amount ?? senia,
-      saldoPendiente: precioTotal - (payment.transaction_amount ?? senia),
-    });
+  if (reservation.pedido_id) {
+    const resultado = await enviarMailConfirmacionReserva(reservation.pedido_id);
     await supabase
       .from("reservations")
       .update({
         senia_avisada: resultado.ok,
         senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
       })
-      .eq("id", reservation.id);
+      .eq("pedido_id", reservation.pedido_id);
   }
 }
 
