@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -101,6 +102,21 @@ function StockContent() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  // Entrada desde /p/[sku]: si venís de ahí como staff, te lleva derecho a
+  // editar ese producto en vez de mostrarte el listado entero.
+  const searchParams = useSearchParams();
+  const skuParam = searchParams.get("sku");
+  const skuParamHandled = useRef(false);
+
+  useEffect(() => {
+    if (!skuParam || skuParamHandled.current || products.length === 0) return;
+    const producto = products.find((p) => p.sku === skuParam);
+    if (producto) {
+      skuParamHandled.current = true;
+      startEdit(producto);
+    }
+  }, [skuParam, products]);
 
   const talleOpciones = useMemo(
     () =>
