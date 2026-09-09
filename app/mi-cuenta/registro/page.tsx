@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { ContinuarConGoogle } from "@/components/ContinuarConGoogle";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -11,8 +11,9 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 const inputClass =
   "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none";
 
-export default function RegistroPage() {
+function RegistroForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
 
   const [nombre, setNombre] = useState("");
@@ -24,11 +25,14 @@ export default function RegistroPage() {
   const [error, setError] = useState<string | null>(null);
   const [confirmacionPendiente, setConfirmacionPendiente] = useState(false);
 
+  const returnTo = searchParams.get("returnTo");
+  const destino = returnTo && returnTo.startsWith("/") ? returnTo : "/mi-cuenta/historial";
+
   useEffect(() => {
     if (!loading && user && !confirmacionPendiente) {
-      router.replace("/mi-cuenta/historial");
+      router.replace(destino);
     }
-  }, [loading, user, confirmacionPendiente, router]);
+  }, [loading, user, confirmacionPendiente, router, destino]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -57,7 +61,7 @@ export default function RegistroPage() {
       }
 
       if (data.session) {
-        router.replace("/mi-cuenta/historial");
+        router.replace(destino);
       } else {
         setConfirmacionPendiente(true);
       }
@@ -84,7 +88,14 @@ export default function RegistroPage() {
             <div className="mt-8 rounded-[3px] bg-crema p-4 text-sm text-chocolate">
               Te enviamos un email para confirmar tu cuenta. Una vez que la
               confirmes, iniciá sesión desde{" "}
-              <Link href="/mi-cuenta/login" className="text-negro hover:text-chocolate">
+              <Link
+                href={
+                  returnTo
+                    ? `/mi-cuenta/login?returnTo=${encodeURIComponent(returnTo)}`
+                    : "/mi-cuenta/login"
+                }
+                className="text-negro hover:text-chocolate"
+              >
                 Iniciar sesión
               </Link>
               .
@@ -92,7 +103,7 @@ export default function RegistroPage() {
           ) : (
             <>
               <div className="mt-8">
-                <ContinuarConGoogle />
+                <ContinuarConGoogle redirectPath={destino} />
               </div>
 
               <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
@@ -169,12 +180,27 @@ export default function RegistroPage() {
 
           <p className="mt-6 text-sm text-taupe">
             ¿Ya tenés cuenta?{" "}
-            <Link href="/mi-cuenta/login" className="text-negro hover:text-chocolate">
+            <Link
+              href={
+                returnTo
+                  ? `/mi-cuenta/login?returnTo=${encodeURIComponent(returnTo)}`
+                  : "/mi-cuenta/login"
+              }
+              className="text-negro hover:text-chocolate"
+            >
               Iniciá sesión
             </Link>
           </p>
         </section>
       </main>
     </div>
+  );
+}
+
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegistroForm />
+    </Suspense>
   );
 }

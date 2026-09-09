@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { ContinuarConGoogle } from "@/components/ContinuarConGoogle";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -11,8 +11,9 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 const inputClass =
   "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -20,11 +21,14 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const returnTo = searchParams.get("returnTo");
+  const destino = returnTo && returnTo.startsWith("/") ? returnTo : "/mi-cuenta/historial";
+
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/mi-cuenta/historial");
+      router.replace(destino);
     }
-  }, [loading, user, router]);
+  }, [loading, user, router, destino]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -46,7 +50,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace("/mi-cuenta/historial");
+      router.replace(destino);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -67,7 +71,7 @@ export default function LoginPage() {
           </p>
 
           <div className="mt-8">
-            <ContinuarConGoogle />
+            <ContinuarConGoogle redirectPath={destino} />
           </div>
 
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
@@ -113,12 +117,27 @@ export default function LoginPage() {
 
           <p className="mt-6 text-sm text-taupe">
             ¿Todavía no tenés cuenta?{" "}
-            <Link href="/mi-cuenta/registro" className="text-negro hover:text-chocolate">
+            <Link
+              href={
+                returnTo
+                  ? `/mi-cuenta/registro?returnTo=${encodeURIComponent(returnTo)}`
+                  : "/mi-cuenta/registro"
+              }
+              className="text-negro hover:text-chocolate"
+            >
               Registrate
             </Link>
           </p>
         </section>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

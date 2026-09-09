@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
@@ -9,6 +10,11 @@ import { crearPreferenciaReserva, crearPreferenciaVenta } from "@/lib/mercadopag
 import { crearReservaLocal, crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
+import {
+  guardarPedidoPendiente,
+  leerPedidoPendiente,
+  limpiarPedidoPendiente,
+} from "@/lib/pendingCartItem";
 import type { Product } from "@/lib/supabase/types";
 
 export function ProductCard({
@@ -19,6 +25,7 @@ export function ProductCard({
   tipo: "alquiler" | "venta";
 }) {
   const { user, client, loading: authLoading } = useAuth();
+  const pathname = usePathname();
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
   const [fechaRetiro, setFechaRetiro] = useState<string | null>(null);
   const [fechaDevolucion, setFechaDevolucion] = useState<string | null>(null);
@@ -27,6 +34,27 @@ export function ProductCard({
   const [payingLocal, setPayingLocal] = useState(false);
   const [localOk, setLocalOk] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const loginHref = `/mi-cuenta/login?returnTo=${encodeURIComponent(pathname)}`;
+
+  function guardarPendienteYSeguir() {
+    guardarPedidoPendiente({
+      productId: product.id,
+      talle: product.talle ?? null,
+      tipo,
+      url: pathname,
+    });
+  }
+
+  useEffect(() => {
+    if (authLoading || !client) return;
+    const pendiente = leerPedidoPendiente();
+    if (!pendiente || pendiente.productId !== product.id) return;
+    limpiarPedidoPendiente();
+    addToCart(client.id, product.id, tipo)
+      .then(() => setCartState("added"))
+      .catch(() => setCartState("error"));
+  }, [authLoading, client, product.id, tipo]);
 
   const precio = tipo === "venta" ? product.precio_venta : product.precio_alquiler;
   const detalle = [product.talle, product.color].filter(Boolean).join(" · ");
@@ -127,7 +155,8 @@ export function ProductCard({
 
       {!authLoading && !user ? (
         <Link
-          href="/mi-cuenta/login"
+          href={loginHref}
+          onClick={guardarPendienteYSeguir}
           className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
         >
           {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
@@ -181,7 +210,8 @@ export function ProductCard({
 
       {!authLoading && !user && (
         <Link
-          href="/mi-cuenta/login"
+          href={loginHref}
+          onClick={guardarPendienteYSeguir}
           className="flex min-h-11 items-center justify-center text-center text-xs text-taupe transition-colors hover:text-chocolate"
         >
           Iniciá sesión para agregar al carrito

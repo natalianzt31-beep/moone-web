@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
@@ -10,6 +11,11 @@ import { crearReservaLocal, crearPedidoLocalVenta } from "@/lib/pago-local-clien
 import { compararTalles } from "@/lib/talles";
 import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
+import {
+  guardarPedidoPendiente,
+  leerPedidoPendiente,
+  limpiarPedidoPendiente,
+} from "@/lib/pendingCartItem";
 import type { Product } from "@/lib/supabase/types";
 
 function nombreSinTalle(nombre: string) {
@@ -46,6 +52,7 @@ export function GroupedProductCard({
     primero;
 
   const { user, client, loading: authLoading } = useAuth();
+  const pathname = usePathname();
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
   const [fechaRetiro, setFechaRetiro] = useState<string | null>(null);
   const [fechaDevolucion, setFechaDevolucion] = useState<string | null>(null);
@@ -54,6 +61,35 @@ export function GroupedProductCard({
   const [payingLocal, setPayingLocal] = useState(false);
   const [localOk, setLocalOk] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const loginHref = `/mi-cuenta/login?returnTo=${encodeURIComponent(pathname)}`;
+
+  function guardarPendienteYSeguir() {
+    guardarPedidoPendiente({
+      productId: producto.id,
+      talle: producto.talle ?? null,
+      tipo,
+      url: pathname,
+    });
+  }
+
+  useEffect(() => {
+    if (authLoading || !client) return;
+    const pendiente = leerPedidoPendiente();
+    if (!pendiente) return;
+    const match = ordenadas.find((p) => p.id === pendiente.productId);
+    if (!match) return;
+    limpiarPedidoPendiente();
+    addToCart(client.id, match.id, tipo)
+      .then(() => {
+        setTalleSeleccionado(match.talle);
+        setCartState("added");
+      })
+      .catch(() => {
+        setTalleSeleccionado(match.talle);
+        setCartState("error");
+      });
+  }, [authLoading, client, ordenadas, tipo]);
 
   const precio = tipo === "venta" ? producto.precio_venta : producto.precio_alquiler;
   const cta = tipo === "venta" ? "Comprar" : "Reservar y pagar seña";
@@ -174,7 +210,8 @@ export function GroupedProductCard({
 
       {!authLoading && !user ? (
         <Link
-          href="/mi-cuenta/login"
+          href={loginHref}
+          onClick={guardarPendienteYSeguir}
           className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
         >
           {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
@@ -228,7 +265,8 @@ export function GroupedProductCard({
 
       {!authLoading && !user && (
         <Link
-          href="/mi-cuenta/login"
+          href={loginHref}
+          onClick={guardarPendienteYSeguir}
           className="flex min-h-11 items-center justify-center text-center text-xs text-taupe transition-colors hover:text-chocolate"
         >
           Iniciá sesión para agregar al carrito

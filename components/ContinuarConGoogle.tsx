@@ -26,7 +26,11 @@ function GoogleIcon() {
   );
 }
 
-export function ContinuarConGoogle() {
+export function ContinuarConGoogle({
+  redirectPath = "/mi-cuenta/historial",
+}: {
+  redirectPath?: string;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +41,7 @@ export function ContinuarConGoogle() {
       const { error } = await getSupabaseClient().auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/mi-cuenta/historial`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
         },
       });
 
