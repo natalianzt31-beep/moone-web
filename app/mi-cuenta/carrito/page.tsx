@@ -8,8 +8,10 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
 import { registrarUsoPromoCode, validatePromoCode } from "@/lib/supabase/promo";
-import { crearPreferenciaVenta } from "@/lib/mercadopago-client";
+import { crearPreferenciaCarrito, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { crearPedidoLocalVenta } from "@/lib/pago-local-client";
+import { fetchClosedDatesSet } from "@/lib/supabase/closedDates";
+import { nextBusinessDay, sugerirDevolucion, toISODate } from "@/lib/disponibilidad";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
 import type { Categoria, CartItem, PromoCode } from "@/lib/supabase/types";
 
@@ -116,6 +118,13 @@ function CarritoContent() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [validandoPromo, setValidandoPromo] = useState(false);
 
+  const [closedDates, setClosedDates] = useState<Set<string>>(new Set());
+  const [fechaRetiro, setFechaRetiro] = useState("");
+  const [fechaDevolucion, setFechaDevolucion] = useState("");
+  const [devolucionManual, setDevolucionManual] = useState(false);
+  const [payingPedido, setPayingPedido] = useState(false);
+  const [pedidoError, setPedidoError] = useState<string | null>(null);
+
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + (precioItem(item) ?? 0), 0),
     [items]
@@ -123,6 +132,66 @@ function CarritoContent() {
   const descuento = promoAplicado ? Math.round((subtotal * promoAplicado.porcentaje) / 100) : 0;
   const totalFinal = subtotal - descuento;
   const datosCompletos = Boolean(client?.celular?.trim());
+
+  const itemsAlquiler = useMemo(() => items.filter((i) => i.tipo === "alquiler"), [items]);
+  const subtotalAlquiler = useMemo(
+    () => itemsAlquiler.reduce((sum, item) => sum + (precioItem(item) ?? 0), 0),
+    [itemsAlquiler]
+  );
+  const descuentoAlquiler = promoAplicado
+    ? Math.round((subtotalAlquiler * promoAplicado.porcentaje) / 100)
+    : 0;
+  const totalAlquiler = subtotalAlquiler - descuentoAlquiler;
+  const seniaAlquiler = Math.round(totalAlquiler * 0.5);
+
+  useEffect(() => {
+    if (itemsAlquiler.length === 0 || fechaRetiro) return;
+
+    let cancelled = false;
+    async function load() {
+      const closed = await fetchClosedDatesSet();
+      if (cancelled) return;
+      setClosedDates(closed);
+      const retiro = nextBusinessDay(toISODate(new Date()), closed);
+      setFechaRetiro(retiro);
+      setFechaDevolucion(sugerirDevolucion(retiro, closed));
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsAlquiler.length]);
+
+  function handleFechaRetiroChange(value: string) {
+    const ajustada = nextBusinessDay(value, closedDates);
+    setFechaRetiro(ajustada);
+    if (!devolucionManual) {
+      setFechaDevolucion(sugerirDevolucion(ajustada, closedDates));
+    }
+  }
+
+  function handleFechaDevolucionChange(value: string) {
+    setDevolucionManual(true);
+    setFechaDevolucion(value);
+  }
+
+  async function handlePagarPedidoAlquiler() {
+    setPedidoError(null);
+    setPayingPedido(true);
+    try {
+      const initPoint = await crearPreferenciaCarrito({
+        productIds: itemsAlquiler.map((i) => i.product_id),
+        fechaRetiro,
+        fechaDevolucion,
+        promoCode: promoAplicado?.codigo,
+      });
+      window.location.href = initPoint;
+    } catch (err) {
+      setPedidoError(err instanceof Error ? err.message : "Error desconocido");
+      setPayingPedido(false);
+    }
+  }
 
   async function handleAplicarCodigo() {
     setPromoError(null);
@@ -325,12 +394,12 @@ function CarritoContent() {
                       </button>
                     </>
                   ) : (
-                    <Link
-                      href={`/reservar/${item.product_id}?tipo=${item.tipo}`}
+                    <a
+                      href="#reservar-alquiler"
                       className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate sm:flex-none"
                     >
-                      Continuar reserva
-                    </Link>
+                      Elegir fecha y reservar
+                    </a>
                   )}
                   <button
                     type="button"
@@ -351,9 +420,88 @@ function CarritoContent() {
             );
           })}
 
+          {itemsAlquiler.length > 0 && (
+            <div
+              id="reservar-alquiler"
+              className="mt-4 rounded-[3px] border border-arena bg-blanco p-4 sm:p-6"
+            >
+              <h2 className="text-base font-medium text-negro">
+                Reservar {itemsAlquiler.length > 1 ? "las prendas de alquiler juntas" : "la prenda"}
+              </h2>
+              <p className="mt-1 text-sm text-chocolate">
+                Elegí la fecha de retiro — vale para{" "}
+                {itemsAlquiler.length > 1 ? "todas las prendas de alquiler del carrito" : "esta prenda"}.
+              </p>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm text-negro">
+                  Fecha de retiro
+                  <input
+                    type="date"
+                    value={fechaRetiro}
+                    onChange={(e) => handleFechaRetiroChange(e.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-negro">
+                  Fecha de devolución
+                  <input
+                    type="date"
+                    value={fechaDevolucion}
+                    onChange={(e) => handleFechaDevolucionChange(e.target.value)}
+                    className={inputClass}
+                  />
+                  <span className="text-xs text-taupe">Sugerida automáticamente.</span>
+                </label>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 border-t border-arena pt-4 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-chocolate">Subtotal alquiler</span>
+                  <span className="text-negro">{currencyFormatter.format(subtotalAlquiler)}</span>
+                </div>
+                {promoAplicado && (
+                  <div className="flex justify-between">
+                    <span className="text-chocolate">
+                      Descuento ({promoAplicado.porcentaje}%)
+                    </span>
+                    <span className="text-negro">
+                      -{currencyFormatter.format(descuentoAlquiler)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium">
+                  <span className="text-negro">Seña a pagar ahora (50%)</span>
+                  <span className="text-negro">{currencyFormatter.format(seniaAlquiler)}</span>
+                </div>
+              </div>
+
+              {pedidoError && <p className="mt-3 text-sm text-chocolate">{pedidoError}</p>}
+
+              <button
+                type="button"
+                onClick={handlePagarPedidoAlquiler}
+                disabled={!datosCompletos || !fechaRetiro || payingPedido}
+                className="mt-4 flex min-h-11 w-full items-center justify-center rounded-[3px] bg-negro px-6 text-sm font-medium text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+              >
+                {payingPedido ? "Redirigiendo..." : "Pagar seña y reservar con Mercado Pago"}
+              </button>
+              {!datosCompletos && (
+                <p className="mt-2 text-xs text-taupe">
+                  Completá tus datos abajo para poder reservar.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="mt-4 rounded-[3px] border border-arena bg-blanco p-4 sm:p-6">
             <label className="flex flex-col gap-1 text-sm text-negro">
               Código de descuento
+              {itemsAlquiler.length > 0 && (
+                <span className="text-xs font-normal text-taupe">
+                  Se aplica también a la reserva de arriba.
+                </span>
+              )}
               <div className="flex gap-2">
                 <input
                   type="text"

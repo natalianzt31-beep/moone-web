@@ -82,6 +82,114 @@ async function procesarPagoAlquiler(
   }
 }
 
+async function procesarPagoAlquilerMultiple(
+  supabase: SupabaseClient,
+  payment: { id?: string | number; transaction_amount?: number },
+  metadata: Record<string, unknown>
+) {
+  const pedidoId = metadata.pedido_id as string | undefined;
+  const clientId = metadata.client_id as string | undefined;
+  const fechaRetiro = metadata.fecha_retiro as string | undefined;
+  const fechaDevolucion = metadata.fecha_devolucion as string | undefined;
+  const promoCodigo = (metadata.promo_codigo as string | null) ?? null;
+  const itemsJson = metadata.items_json as string | undefined;
+
+  let items: { product_id: string; precio_total: number; senia: number }[] = [];
+  try {
+    items = itemsJson ? JSON.parse(itemsJson) : [];
+  } catch {
+    items = [];
+  }
+
+  if (!pedidoId || !clientId || !fechaRetiro || !fechaDevolucion || items.length === 0) {
+    console.error("Webhook de Mercado Pago (alquiler múltiple) aprobado sin metadata completa", {
+      paymentId: payment.id,
+      metadata,
+    });
+    return;
+  }
+
+  // Idempotencia adicional: si Mercado Pago reintenta la notificación y por
+  // lo que sea la fila de payments con este mp_payment_id no se llegó a
+  // escribir la primera vez, este pedido_id ya identifica de forma única
+  // a esta preferencia — no se vuelve a crear nada.
+  const { data: yaExiste } = await supabase
+    .from("reservations")
+    .select("id")
+    .eq("pedido_id", pedidoId)
+    .limit(1)
+    .maybeSingle();
+
+  if (yaExiste) {
+    return;
+  }
+
+  // La reserva recién se crea acá, con el pago ya aprobado — igual que el
+  // alquiler de un solo producto.
+  const { data: reservas, error: reservasError } = await supabase
+    .from("reservations")
+    .insert(
+      items.map((item) => ({
+        product_id: item.product_id,
+        client_id: clientId,
+        fecha_retiro: fechaRetiro,
+        fecha_devolucion: fechaDevolucion,
+        estado: "reservado",
+        precio_total: item.precio_total,
+        senia: item.senia,
+        senia_confirmada: true,
+        medio_pago: "mercado_pago",
+        pedido_id: pedidoId,
+      }))
+    )
+    .select("id");
+
+  if (reservasError || !reservas || reservas.length !== items.length) {
+    // El pago ya está aprobado pero no pudimos crear alguna reserva (ej.
+    // esas fechas se ocuparon mientras pagaba). Requiere revisión manual.
+    console.error(
+      "Pago de Mercado Pago (alquiler múltiple) aprobado pero no se pudieron crear todas las reservas — revisar manualmente",
+      reservasError,
+      { paymentId: payment.id, pedidoId, clientId, items }
+    );
+    return;
+  }
+
+  // El mp_payment_id solo se guarda en el primer pago del pedido: la
+  // columna es única y este cobro de Mercado Pago cubre a todas las
+  // reservas del pedido por igual.
+  const pagos = reservas.map((r, i) => ({
+    reservation_id: r.id,
+    medio: "mercado_pago",
+    tipo: "seña",
+    monto: items[i].senia,
+    mp_payment_id: i === 0 ? String(payment.id) : null,
+  }));
+
+  const { error: insertPaymentError } = await supabase.from("payments").insert(pagos);
+  if (insertPaymentError) {
+    console.error("No se pudo registrar el pago del pedido", insertPaymentError);
+  }
+
+  if (promoCodigo) {
+    const { error: promoError } = await supabase.rpc("increment_promo_code_uso", {
+      p_codigo: promoCodigo,
+    });
+    if (promoError) {
+      console.error("No se pudo registrar el uso del código de descuento", promoError);
+    }
+  }
+
+  const resultado = await enviarMailConfirmacionReserva(pedidoId);
+  await supabase
+    .from("reservations")
+    .update({
+      senia_avisada: resultado.ok,
+      senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
+    })
+    .eq("pedido_id", pedidoId);
+}
+
 async function procesarPagoSaldo(
   supabase: SupabaseClient,
   payment: { id?: string | number; transaction_amount?: number },
@@ -320,6 +428,8 @@ export async function POST(req: Request) {
       await procesarPagoVenta(supabase, payment, metadata);
     } else if (metadata.tipo === "saldo") {
       await procesarPagoSaldo(supabase, payment, metadata);
+    } else if (metadata.tipo === "alquiler_multiple") {
+      await procesarPagoAlquilerMultiple(supabase, payment, metadata);
     } else {
       await procesarPagoAlquiler(supabase, payment, metadata);
     }
