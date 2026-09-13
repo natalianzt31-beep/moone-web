@@ -132,7 +132,7 @@ export function ProductCard({
       : `relative ${imageBoxAspectClass(product.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex h-full flex-col gap-3">
       <div className={boxClass}>
         <ProductImageCarousel fotos={fotos} alt={product.nombre} fit={fit} />
         {tipo === "venta" && product.condicion && (
@@ -143,102 +143,107 @@ export function ProductCard({
       </div>
 
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium text-negro">{product.nombre}</span>
+        <span className="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-negro">
+          {product.nombre}
+        </span>
         {detalle && <span className="text-xs text-taupe">{detalle}</span>}
         {product.descripcion_web && (
           <p className="line-clamp-2 text-xs text-taupe">{product.descripcion_web}</p>
         )}
+      </div>
+
+      <div className="mt-auto flex flex-col gap-3">
         <span className="text-sm text-negro">
           {precio != null ? currencyFormatter.format(precio) : "Consultar"}
         </span>
+
+        {!authLoading && !user ? (
+          <Link
+            href={loginHref}
+            onClick={guardarPendienteYSeguir}
+            className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
+          >
+            {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
+          </Link>
+        ) : !authLoading && tipo === "alquiler" && !mostrarReserva ? (
+          <button
+            type="button"
+            onClick={() => setMostrarReserva(true)}
+            className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
+          >
+            Reservar
+          </button>
+        ) : (
+          <>
+            {tipo === "alquiler" && (
+              <DisponibilidadCalendar
+                productId={product.id}
+                onSelect={(retiro, devolucion) => {
+                  setFechaRetiro(retiro);
+                  setFechaDevolucion(devolucion);
+                }}
+              />
+            )}
+
+            {fechaElegida ? (
+              <button
+                type="button"
+                onClick={handleReservarYPagar}
+                disabled={payingMp}
+                className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+              >
+                {payingMp ? "Redirigiendo a Mercado Pago..." : cta}
+              </button>
+            ) : (
+              <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
+                {cta}
+              </span>
+            )}
+            {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
+
+            {!authLoading && user && fechaElegida && !localOk && (
+              <button
+                type="button"
+                onClick={handlePagarEnLocal}
+                disabled={payingLocal || payingMp}
+                className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+              >
+                {payingLocal ? "Registrando..." : "Pagar en el local"}
+              </button>
+            )}
+            {localOk && (
+              <p className="text-center text-xs text-chocolate">
+                {tipo === "venta" ? "Pedido registrado" : "Reserva registrada"} — pagá en el local ✓
+              </p>
+            )}
+            {localError && <p className="text-xs text-chocolate">{localError}</p>}
+
+            {!authLoading && user && (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={!fechaElegida || !client || cartState === "adding" || cartState === "added"}
+                className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+              >
+                {cartState === "adding" && "Agregando..."}
+                {cartState === "added" && "En tu carrito ✓"}
+                {cartState === "error" && "Error, probá de nuevo"}
+                {cartState === "idle" && "Agregar al carrito"}
+              </button>
+            )}
+          </>
+        )}
+
+        {!authLoading && !user && (
+          <Link
+            href={loginHref}
+            onClick={guardarPendienteYSeguir}
+            className="flex min-h-11 items-center justify-center text-center text-xs text-taupe transition-colors hover:text-chocolate"
+          >
+            Iniciá sesión para agregar al carrito
+          </Link>
+        )}
       </div>
-
-      {!authLoading && !user ? (
-        <Link
-          href={loginHref}
-          onClick={guardarPendienteYSeguir}
-          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
-        >
-          {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
-        </Link>
-      ) : !authLoading && tipo === "alquiler" && !mostrarReserva ? (
-        <button
-          type="button"
-          onClick={() => setMostrarReserva(true)}
-          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
-        >
-          Reservar
-        </button>
-      ) : (
-        <>
-          {tipo === "alquiler" && (
-            <DisponibilidadCalendar
-              productId={product.id}
-              onSelect={(retiro, devolucion) => {
-                setFechaRetiro(retiro);
-                setFechaDevolucion(devolucion);
-              }}
-            />
-          )}
-
-          {fechaElegida ? (
-            <button
-              type="button"
-              onClick={handleReservarYPagar}
-              disabled={payingMp}
-              className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
-            >
-              {payingMp ? "Redirigiendo a Mercado Pago..." : cta}
-            </button>
-          ) : (
-            <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
-              {cta}
-            </span>
-          )}
-          {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
-
-          {!authLoading && user && fechaElegida && !localOk && (
-            <button
-              type="button"
-              onClick={handlePagarEnLocal}
-              disabled={payingLocal || payingMp}
-              className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
-            >
-              {payingLocal ? "Registrando..." : "Pagar en el local"}
-            </button>
-          )}
-          {localOk && (
-            <p className="text-center text-xs text-chocolate">
-              {tipo === "venta" ? "Pedido registrado" : "Reserva registrada"} — pagá en el local ✓
-            </p>
-          )}
-          {localError && <p className="text-xs text-chocolate">{localError}</p>}
-
-          {!authLoading && user && (
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={!fechaElegida || !client || cartState === "adding" || cartState === "added"}
-              className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
-            >
-              {cartState === "adding" && "Agregando..."}
-              {cartState === "added" && "En tu carrito ✓"}
-              {cartState === "error" && "Error, probá de nuevo"}
-              {cartState === "idle" && "Agregar al carrito"}
-            </button>
-          )}
-        </>
-      )}
-
-      {!authLoading && !user && (
-        <Link
-          href={loginHref}
-          onClick={guardarPendienteYSeguir}
-          className="flex min-h-11 items-center justify-center text-center text-xs text-taupe transition-colors hover:text-chocolate"
-        >
-          Iniciá sesión para agregar al carrito
-        </Link>
-      )}
     </div>
   );
 }
