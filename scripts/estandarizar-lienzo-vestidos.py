@@ -56,7 +56,18 @@ CANVAS_WIDTH = 700
 CANVAS_HEIGHT = 1250
 SIDE_MARGIN = 30  # margen mínimo a cada lado de la prenda dentro del lienzo
 DELTA = 18
-MIN_FRAC = 0.12
+# ROW_MIN_FRAC filtra ruido al buscar el alto (el torso/las piernas ocupan
+# casi todo el ancho en sus filas, así que un umbral más alto no pierde nada
+# ahí). COL_MIN_FRAC tiene que ser mucho más bajo: una mano apoyada en la
+# cadera, un pie hacia el costado o un pliegue de tela pueden ocupar muy
+# pocas filas en su columna sin dejar de ser contenido real que NO hay que
+# recortar — un umbral alto ahí (probado con 0.12, el mismo que antes se
+# usaba para ambos ejes) directamente no detectaba esas columnas como
+# contenido y el recorte de márgenes terminaba cortando dedos/manos reales
+# (confirmado visualmente comparando contra la foto original sin procesar).
+ROW_MIN_FRAC = 0.12
+COL_MIN_FRAC = 0.01
+BBOX_PAD = 12  # margen extra de seguridad alrededor del bbox detectado
 PAD_CHECK = 6
 
 
@@ -65,11 +76,20 @@ def content_bbox(gray: np.ndarray) -> tuple[int, int, int, int] | None:
     bg = gray[:PAD_CHECK, :PAD_CHECK].mean()
     diff = np.abs(gray.astype(np.int16) - bg)
     mask = diff > DELTA
-    rows = np.where(mask.sum(axis=1) > w * MIN_FRAC)[0]
-    cols = np.where(mask.sum(axis=0) > h * MIN_FRAC)[0]
+    rows = np.where(mask.sum(axis=1) > w * ROW_MIN_FRAC)[0]
+    cols = np.where(mask.sum(axis=0) > h * COL_MIN_FRAC)[0]
     if len(rows) == 0 or len(cols) == 0:
         return None
-    return cols.min(), cols.max(), rows.min(), rows.max()
+    x0, x1 = cols.min(), cols.max()
+    y0, y1 = rows.min(), rows.max()
+    # Margen extra de seguridad: aun con el umbral bajo, preferimos dejar
+    # unos píxeles de más de "fondo" antes que arriesgar recortar contenido
+    # real que el umbral no haya detectado del todo.
+    x0 = max(0, x0 - BBOX_PAD)
+    x1 = min(w - 1, x1 + BBOX_PAD)
+    y0 = max(0, y0 - BBOX_PAD)
+    y1 = min(h - 1, y1 + BBOX_PAD)
+    return x0, x1, y0, y1
 
 
 def procesar(path: str, dry_run: bool = False) -> None:
