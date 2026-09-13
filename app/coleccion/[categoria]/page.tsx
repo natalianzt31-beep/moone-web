@@ -227,16 +227,12 @@ export default function CategoriaPage() {
           )}
 
           {!loading && !error && productosFiltrados.length > 0 && (
-            <div className="mt-6 columns-2 gap-4 sm:mt-8 sm:columns-3 sm:gap-6 lg:columns-4">
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
               {grupos.map(({ key, variantes }) => (
-                <div key={key} className="mb-4 break-inside-avoid sm:mb-6">
-                  <GroupedProductCard variantes={variantes} tipo="alquiler" variant="grid" />
-                </div>
+                <GroupedProductCard key={key} variantes={variantes} tipo="alquiler" variant="grid" />
               ))}
               {individuales.map((product) => (
-                <div key={product.id} className="mb-4 break-inside-avoid sm:mb-6">
-                  <ProductCard product={product} tipo="alquiler" variant="grid" />
-                </div>
+                <ProductCard key={product.id} product={product} tipo="alquiler" variant="grid" />
               ))}
             </div>
           )}
