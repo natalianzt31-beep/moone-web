@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
 """Estandariza las fotos de vestidos (y prendas de cuerpo entero similares)
 a UN MISMO lienzo fijo, con la modela siempre al mismo tamaño relativo entre
-foto y foto, y el resto del cuadro relleno con fondo blanco de estudio.
+foto y foto, y el resto del cuadro relleno EXTENDIENDO los píxeles reales
+del borde de esa misma foto (no un color plano) — así no se nota un "corte"
+entre la foto y el resto del rectángulo, ni siquiera si el fondo de estudio
+tiene un degradé sutil (común en fotos con luz de estudio tipo softbox):
+un relleno de color plano, por más que sea el color "correcto" en promedio,
+igual se nota como una costura donde el degradé real de la foto se corta en
+seco. Extendiendo el píxel del borde hacia afuera, la transición es
+continua.
 
-Por que existe: normalizar solo el "% de la foto que ocupa la modela" (lo
-que hacía normalizar-foto-producto.py) no alcanza para que dos fotos se
-vean del mismo tamaño una al lado de la otra en la grilla del catálogo,
-porque cada foto termina con sus PROPIAS dimensiones finales según el
-recorte de esa foto puntual. Acá en cambio:
+Por que existe lo demás: normalizar solo el "% de la foto que ocupa la
+modela" (lo que hacía normalizar-foto-producto.py) no alcanza para que dos
+fotos se vean del mismo tamaño una al lado de la otra en la grilla del
+catálogo, porque cada foto termina con sus PROPIAS dimensiones finales
+según el recorte de esa foto puntual. Acá en cambio:
 
   1. Se detecta el alto real (en píxeles) de la modela+prenda en la foto
      ORIGINAL.
   2. Se escala TODA la foto (sin recortar) para que ese alto quede igual
      en TODAS las fotos procesadas (CONTENT_HEIGHT píxeles).
-  3. Se la pega centrada sobre un lienzo blanco de tamaño FIJO
-     (CANVAS_WIDTH x CANVAS_HEIGHT, igual para cada foto del catálogo).
+  3. Se la pega centrada sobre un lienzo de tamaño FIJO (CANVAS_WIDTH x
+     CANVAS_HEIGHT, igual para cada foto del catálogo), extendiendo el
+     borde de la foto hacia afuera para rellenar lo que falta.
 
 Como el alto de la modela queda idéntico en píxeles en todas las fotos, y
 el lienzo final también es idéntico, todas las fotos del catálogo se ven
@@ -48,7 +56,6 @@ MAX_SHRINK = 0.22  # nunca recortar más de este % del ancho real del contenido
 DELTA = 18
 MIN_FRAC = 0.12
 PAD_CHECK = 6
-BLANCO = (255, 255, 255)
 
 
 def content_bbox(gray: np.ndarray) -> tuple[int, int, int, int] | None:
@@ -134,10 +141,16 @@ def procesar(path: str, dry_run: bool = False) -> None:
         resized = resized.crop((0, top, new_w, top + CANVAS_HEIGHT))
         new_h = CANVAS_HEIGHT
 
-    canvas = Image.new("RGB", (CANVAS_WIDTH, CANVAS_HEIGHT), BLANCO)
+    # Relleno = extender el propio borde de la foto hacia afuera (no un
+    # color plano): así la transición entre la foto y el resto del
+    # rectángulo es continua, sin costura visible.
     paste_x = round(CANVAS_WIDTH / 2 - new_w / 2)
     paste_y = round(CANVAS_HEIGHT / 2 - new_h / 2)
-    canvas.paste(resized, (paste_x, paste_y))
+    pad_left, pad_right = paste_x, CANVAS_WIDTH - new_w - paste_x
+    pad_top, pad_bottom = paste_y, CANVAS_HEIGHT - new_h - paste_y
+    arr = np.array(resized)
+    padded = np.pad(arr, ((pad_top, pad_bottom), (pad_left, pad_right), (0, 0)), mode="edge")
+    canvas = Image.fromarray(padded)
     canvas.save(path, quality=92)
     print(f"  {path}: escala={scale:.2f} -> lienzo {CANVAS_WIDTH}x{CANVAS_HEIGHT}")
 
