@@ -9,13 +9,20 @@ export function ProductImageCarousel({
 }: {
   fotos: string[];
   alt: string;
-  fit?: "contain" | "cover";
+  fit?: "contain" | "cover" | "natural";
 }) {
   const [index, setIndex] = useState(0);
 
+  // El modo "natural" (grilla de vestidos/monos/tapados) no fuerza un
+  // recuadro de tamaño fijo, así que sin fotos necesita su propia caja con
+  // altura definida para no colapsar a 0px.
   if (fotos.length === 0) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-crema">
+      <div
+        className={`flex items-center justify-center bg-crema ${
+          fit === "natural" ? "aspect-[3/4] w-full" : "h-full w-full"
+        }`}
+      >
         <span className="text-xs uppercase tracking-wider text-taupe">Sin foto</span>
       </div>
     );
@@ -30,7 +37,7 @@ export function ProductImageCarousel({
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div className={`relative w-full ${fit === "natural" ? "" : "h-full"}`}>
       <div
         role="button"
         tabIndex={0}
@@ -42,14 +49,18 @@ export function ProductImageCarousel({
           }
         }}
         aria-label="Ver otra foto"
-        className="h-full w-full cursor-pointer bg-blanco"
+        className={`w-full cursor-pointer bg-blanco ${fit === "natural" ? "" : "h-full"}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={fotos[index]}
           alt={alt}
           loading="lazy"
-          className={`h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`}
+          className={
+            fit === "natural"
+              ? "block h-auto w-full"
+              : `h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`
+          }
         />
       </div>
 

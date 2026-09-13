@@ -7,7 +7,7 @@ import { RequireStaff } from "@/components/RequireStaff";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import { compararTalles } from "@/lib/talles";
-import { imageBoxAspectClass, imageObjectFit } from "@/lib/productImage";
+import { imageBoxAspectClass, imageDisplayMode } from "@/lib/productImage";
 import type { Categoria, Condicion, EstadoProducto, Product } from "@/lib/supabase/types";
 
 const CONDICIONES: Condicion[] = ["nuevo", "usado"];
@@ -71,7 +71,7 @@ function ProductThumb({ product }: { product: Product }) {
           src={foto}
           alt={product.nombre}
           loading="lazy"
-          className={`h-full w-full ${imageObjectFit(product.categoria) === "cover" ? "object-cover" : "object-contain"}`}
+          className={`h-full w-full ${imageDisplayMode(product.categoria, "ficha") === "cover" ? "object-cover" : "object-contain"}`}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-center text-[9px] uppercase tracking-wider text-taupe">

@@ -16,7 +16,7 @@ import {
   leerPedidoPendiente,
   limpiarPedidoPendiente,
 } from "@/lib/pendingCartItem";
-import { imageBoxAspectClass, imageObjectFit } from "@/lib/productImage";
+import { imageBoxAspectClass, imageDisplayMode, type ImageVariant } from "@/lib/productImage";
 import type { Product } from "@/lib/supabase/types";
 
 function nombreSinTalle(nombre: string) {
@@ -26,9 +26,11 @@ function nombreSinTalle(nombre: string) {
 export function GroupedProductCard({
   variantes,
   tipo,
+  variant = "ficha",
 }: {
   variantes: Product[];
   tipo: "alquiler" | "venta";
+  variant?: ImageVariant;
 }) {
   const ordenadas = useMemo(
     () => [...variantes].sort((a, b) => compararTalles(a.talle, b.talle)),
@@ -156,17 +158,16 @@ export function GroupedProductCard({
     }
   }
 
+  const fit = imageDisplayMode(producto.categoria, variant);
+  const boxClass =
+    fit === "natural"
+      ? "relative w-full overflow-hidden rounded-[3px] border border-arena bg-blanco"
+      : `relative ${imageBoxAspectClass(producto.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`;
+
   return (
     <div className="flex flex-col gap-3">
-      <div
-        className={`relative ${imageBoxAspectClass(producto.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`}
-      >
-        <ProductImageCarousel
-          key={producto.id}
-          fotos={fotos}
-          alt={nombreBase}
-          fit={imageObjectFit(producto.categoria)}
-        />
+      <div className={boxClass}>
+        <ProductImageCarousel key={producto.id} fotos={fotos} alt={nombreBase} fit={fit} />
         {tipo === "venta" && producto.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
             {producto.condicion === "nuevo" ? "Nuevo" : "Usado"}

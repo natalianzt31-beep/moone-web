@@ -15,15 +15,17 @@ import {
   leerPedidoPendiente,
   limpiarPedidoPendiente,
 } from "@/lib/pendingCartItem";
-import { imageBoxAspectClass, imageObjectFit } from "@/lib/productImage";
+import { imageBoxAspectClass, imageDisplayMode, type ImageVariant } from "@/lib/productImage";
 import type { Product } from "@/lib/supabase/types";
 
 export function ProductCard({
   product,
   tipo,
+  variant = "ficha",
 }: {
   product: Product;
   tipo: "alquiler" | "venta";
+  variant?: ImageVariant;
 }) {
   const { user, client, loading: authLoading } = useAuth();
   const pathname = usePathname();
@@ -122,16 +124,16 @@ export function ProductCard({
     }
   }
 
+  const fit = imageDisplayMode(product.categoria, variant);
+  const boxClass =
+    fit === "natural"
+      ? "relative w-full overflow-hidden rounded-[3px] border border-arena bg-blanco"
+      : `relative ${imageBoxAspectClass(product.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`;
+
   return (
     <div className="flex flex-col gap-3">
-      <div
-        className={`relative ${imageBoxAspectClass(product.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`}
-      >
-        <ProductImageCarousel
-          fotos={fotos}
-          alt={product.nombre}
-          fit={imageObjectFit(product.categoria)}
-        />
+      <div className={boxClass}>
+        <ProductImageCarousel fotos={fotos} alt={product.nombre} fit={fit} />
         {tipo === "venta" && product.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
             {product.condicion === "nuevo" ? "Nuevo" : "Usado"}
