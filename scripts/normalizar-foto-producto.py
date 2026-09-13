@@ -4,12 +4,14 @@ modelo ocupe siempre una proporcion similar del cuadro, sin importar la
 resolucion o el recorte original de cada foto.
 
 Por que existe: las fotos llegan de fuentes distintas (fotos sueltas,
-collages frente/espalda de un mismo shooting) con distinta cantidad de
-margen blanco arriba/abajo de la modelo. Eso hace que en la galeria del
-sitio algunas prendas se vean "mas cerca de cámara" que otras. Este script
-recorta (o si hace falta, agrega un margen blanco) para que la modelo
-siempre ocupe ~90% de la altura del cuadro — nunca recorta la prenda ni a
-la persona, solo el fondo blanco sobrante.
+collages frente/espalda de un mismo shooting, lienzos casi cuadrados con
+mucho margen a los costados) con distinta cantidad de margen blanco
+alrededor de la modelo. Eso hace que en la galeria del sitio algunas
+prendas se vean "mas cerca de cámara" que otras, o más chicas dentro del
+recuadro. Este script recorta (o si hace falta, agrega un margen blanco)
+tanto en alto como en ancho para que la modelo siempre ocupe una fracción
+similar del cuadro — nunca recorta la prenda ni a la persona, solo el
+fondo blanco sobrante.
 
 Uso:
     python3 scripts/normalizar-foto-producto.py foto.jpg
@@ -31,7 +33,10 @@ import sys
 import numpy as np
 from PIL import Image
 
-TARGET_FILL = 0.90  # fracción de la altura del cuadro que debe ocupar la modelo
+TARGET_FILL_H = 0.90  # fracción de la altura del cuadro que debe ocupar la modelo
+TARGET_FILL_W = 0.85  # fracción del ancho del cuadro que debe ocupar la modelo
+MIN_FILL_H = 0.87  # por debajo de esto, se corrige el alto
+MIN_FILL_W = 0.75  # por debajo de esto, se corrige el ancho (más margen de sobra: la pose varía más el ancho que el alto)
 DELTA = 18  # cuánto debe diferir un pixel del fondo para contar como "contenido"
 MIN_FRAC = 0.12  # fracción mínima de la fila/columna que debe ser "contenido"
 PAD_CHECK = 6  # tamaño del parche de esquina usado para medir el color de fondo
@@ -52,58 +57,75 @@ def content_bbox(gray: np.ndarray) -> tuple[int, int, int, int] | None:
     return cols.min(), cols.max(), rows.min(), rows.max()
 
 
-def fit_to_height(img: Image.Image, final_h: int) -> Image.Image:
-    """Ajusta la imagen a una altura exacta: recorta margen blanco si sobra,
-    o agrega margen blanco arriba/abajo si hace falta. Nunca recorta el
-    contenido detectado."""
+def fit_to_size(img: Image.Image, axis: str, final_size: int) -> Image.Image:
+    """Ajusta la imagen a un ancho o alto exacto (según `axis`, 'h' o 'w'):
+    recorta margen blanco si sobra, o agrega margen blanco si hace falta,
+    centrado sobre el contenido detectado. Nunca recorta el contenido."""
     w, h = img.size
-    if h == final_h:
+    current = h if axis == "h" else w
+    if current == final_size:
         return img
-    if h > final_h:
-        gray = np.array(img.convert("L"))
-        bbox = content_bbox(gray)
+    gray = np.array(img.convert("L"))
+    bbox = content_bbox(gray)
+    if current > final_size:
         if bbox is None:
             return img
-        _, _, y0, y1 = bbox
-        content_h = y1 - y0
-        extra = max(final_h - content_h, 0)
-        top = max(0, y0 - extra // 2)
-        bottom = min(h, top + final_h)
-        top = bottom - final_h
-        return img.crop((0, top, w, bottom))
-    pad_total = final_h - h
-    pad_top = pad_total // 2
-    pad_bottom = pad_total - pad_top
-    lienzo = Image.new("RGB", (w, final_h), (255, 255, 255))
-    lienzo.paste(img, (0, pad_top))
+        x0, x1, y0, y1 = bbox
+        lo, hi = (y0, y1) if axis == "h" else (x0, x1)
+        content = hi - lo
+        extra = max(final_size - content, 0)
+        start = max(0, lo - extra // 2)
+        end = min(current, start + final_size)
+        start = end - final_size
+        box = (0, start, w, end) if axis == "h" else (start, 0, end, h)
+        return img.crop(box)
+    pad_total = final_size - current
+    pad_a = pad_total // 2
+    pad_b = pad_total - pad_a
+    size = (w, final_size) if axis == "h" else (final_size, h)
+    offset = (0, pad_a) if axis == "h" else (pad_a, 0)
+    lienzo = Image.new("RGB", size, (255, 255, 255))
+    lienzo.paste(img, offset)
     return lienzo
 
 
-def normalizar_una(path: str) -> None:
-    img = Image.open(path).convert("RGB")
+def _normalizar_eje(img: Image.Image, path: str, axis: str, target: float, min_fill: float) -> Image.Image:
+    label = "alto" if axis == "h" else "ancho"
     gray = np.array(img.convert("L"))
     h, w = gray.shape
+    current = h if axis == "h" else w
     bbox = content_bbox(gray)
     if bbox is None:
         print(f"  {path}: no se detectó contenido, se deja sin cambios")
-        return
-    _, _, y0, y1 = bbox
-    content_h = y1 - y0
-    fill = content_h / h
-    if fill >= 0.87:
-        print(f"  {path}: encuadre ya OK ({fill:.2f}), sin cambios")
-        return
-    desired_h = min(round(content_h / TARGET_FILL), h)
-    margin_to_remove = h - desired_h
-    top_margin, bottom_margin = y0, h - y1
-    total_margin = top_margin + bottom_margin
+        return img
+    x0, x1, y0, y1 = bbox
+    lo, hi = (y0, y1) if axis == "h" else (x0, x1)
+    content = hi - lo
+    fill = content / current
+    if fill >= min_fill:
+        print(f"  {path}: {label} ya OK ({fill:.2f}), sin cambios")
+        return img
+    desired = min(round(content / target), current)
+    margin_to_remove = current - desired
+    margin_lo, margin_hi = lo, current - hi
+    total_margin = margin_lo + margin_hi
     if total_margin <= 0:
-        return
-    remove_top = round(margin_to_remove * (top_margin / total_margin))
-    remove_bottom = margin_to_remove - remove_top
-    cropped = img.crop((0, remove_top, w, h - remove_bottom))
-    cropped.save(path, quality=92)
-    print(f"  {path}: {h}px -> {cropped.size[1]}px (encuadre {fill:.2f} -> ~{TARGET_FILL:.2f})")
+        return img
+    remove_lo = round(margin_to_remove * (margin_lo / total_margin))
+    remove_hi = margin_to_remove - remove_lo
+    box = (0, remove_lo, w, h - remove_hi) if axis == "h" else (remove_lo, 0, w - remove_hi, h)
+    cropped = img.crop(box)
+    new_current = cropped.size[1] if axis == "h" else cropped.size[0]
+    print(f"  {path}: {label} {current}px -> {new_current}px (encuadre {fill:.2f} -> ~{target:.2f})")
+    return cropped
+
+
+def normalizar_una(path: str) -> None:
+    original = Image.open(path).convert("RGB")
+    img = _normalizar_eje(original, path, "h", TARGET_FILL_H, MIN_FILL_H)
+    img = _normalizar_eje(img, path, "w", TARGET_FILL_W, MIN_FILL_W)
+    if img.size != original.size:
+        img.save(path, quality=92)
 
 
 def normalizar_par(front: str, back: str) -> None:
@@ -111,22 +133,23 @@ def normalizar_par(front: str, back: str) -> None:
     normalizar_una(back)
 
     fimg, bimg = Image.open(front), Image.open(back)
-    if fimg.size == bimg.size:
-        return
+    if fimg.size != bimg.size:
+        bbox_f = content_bbox(np.array(fimg.convert("L")))
+        bbox_b = content_bbox(np.array(bimg.convert("L")))
+        if bbox_f is not None and bbox_b is not None:
+            content_hf, content_hb = bbox_f[3] - bbox_f[2], bbox_b[3] - bbox_b[2]
+            final_h = round(max(content_hf, content_hb) / TARGET_FILL_H)
+            fimg = fit_to_size(fimg, "h", final_h)
+            bimg = fit_to_size(bimg, "h", final_h)
 
-    bbox_f = content_bbox(np.array(fimg.convert("L")))
-    bbox_b = content_bbox(np.array(bimg.convert("L")))
-    if bbox_f is None or bbox_b is None:
-        return
-    content_hf = bbox_f[3] - bbox_f[2]
-    content_hb = bbox_b[3] - bbox_b[2]
-    final_h = round(max(content_hf, content_hb) / TARGET_FILL)
+            content_wf, content_wb = bbox_f[1] - bbox_f[0], bbox_b[1] - bbox_b[0]
+            final_w = round(max(content_wf, content_wb) / TARGET_FILL_W)
+            fimg = fit_to_size(fimg, "w", final_w)
+            bimg = fit_to_size(bimg, "w", final_w)
 
-    fimg2 = fit_to_height(fimg, final_h)
-    bimg2 = fit_to_height(bimg, final_h)
-    fimg2.save(front, quality=92)
-    bimg2.save(back, quality=92)
-    print(f"  {front} / {back}: alineadas a la misma altura ({final_h}px)")
+            fimg.save(front, quality=92)
+            bimg.save(back, quality=92)
+            print(f"  {front} / {back}: alineadas a las mismas dimensiones ({final_w}x{final_h}px)")
 
 
 def main(argv: list[str]) -> None:
