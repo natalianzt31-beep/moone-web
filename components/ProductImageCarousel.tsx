@@ -9,7 +9,7 @@ export function ProductImageCarousel({
 }: {
   fotos: string[];
   alt: string;
-  fit?: "contain" | "cover" | "natural";
+  fit?: "contain" | "cover" | "cover-top" | "natural";
 }) {
   const [index, setIndex] = useState(0);
 
@@ -59,7 +59,9 @@ export function ProductImageCarousel({
           className={
             fit === "natural"
               ? "block h-auto w-full"
-              : `h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`
+              : fit === "cover-top"
+                ? "h-full w-full object-cover object-top"
+                : `h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`
           }
         />
       </div>

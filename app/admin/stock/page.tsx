@@ -71,7 +71,13 @@ function ProductThumb({ product }: { product: Product }) {
           src={foto}
           alt={product.nombre}
           loading="lazy"
-          className={`h-full w-full ${imageDisplayMode(product.categoria, "ficha") === "cover" ? "object-cover" : "object-contain"}`}
+          className={`h-full w-full ${
+            imageDisplayMode(product.categoria, "ficha") === "cover-top"
+              ? "object-cover object-top"
+              : imageDisplayMode(product.categoria, "ficha") === "cover"
+                ? "object-cover"
+                : "object-contain"
+          }`}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-center text-[9px] uppercase tracking-wider text-taupe">

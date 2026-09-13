@@ -9,6 +9,16 @@ import type { Categoria } from "@/lib/supabase/types";
 // de aspecto (16/25) en cualquier contexto, sin letterboxing ni recorte: el
 // recuadro y la foto miden exactamente lo mismo.
 //
+// Usan object-cover (no object-contain) anclado arriba (object-top): como
+// el recuadro coincide exactamente con el tamaño del lienzo, cover no
+// recorta nada hoy — pero si alguna vez se sube una foto que no pasó por el
+// script y su proporción no coincide exacto, ancla por arriba (cabeza) en
+// vez de recortar parejo arriba y abajo, achicando el margen de error.
+// OJO: nunca usar un recuadro más ancho que 16/25 (p.ej. el clásico 3/4) acá
+// — con ese recuadro, object-cover necesitaría recortar ~15% del alto de
+// cada foto, y ese 15% cae justo en los pies/tacos de la modela, no en el
+// margen blanco (medido sobre el catálogo real).
+//
 // Monos y tapados (solo un puñado de fotos hoy) todavía no pasaron por ese
 // script — sus fotos varían de proporción entre sí según el vuelo/largo de
 // cada prenda. Para esos casos, la grilla del catálogo no las mete en una
@@ -29,7 +39,7 @@ const PRENDAS_CUERPO_ENTERO: Categoria[] = ["vestido", "mono", "tapado"];
 const LIENZO_FIJO: Categoria[] = ["vestido"];
 
 export type ImageVariant = "grid" | "ficha";
-export type ImageDisplayMode = "contain" | "cover" | "natural";
+export type ImageDisplayMode = "contain" | "cover" | "cover-top" | "natural";
 
 export function esPrendaCuerpoEntero(categoria: Categoria): boolean {
   return PRENDAS_CUERPO_ENTERO.includes(categoria);
@@ -41,7 +51,7 @@ export function imageBoxAspectClass(categoria: Categoria): string {
 }
 
 export function imageDisplayMode(categoria: Categoria, variant: ImageVariant): ImageDisplayMode {
-  if (LIENZO_FIJO.includes(categoria)) return "contain";
+  if (LIENZO_FIJO.includes(categoria)) return "cover-top";
   if (variant === "grid" && esPrendaCuerpoEntero(categoria)) return "natural";
   return esPrendaCuerpoEntero(categoria) ? "contain" : "cover";
 }
