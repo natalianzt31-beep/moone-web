@@ -2,22 +2,24 @@ import type { Categoria } from "@/lib/supabase/types";
 
 // Los vestidos ya pasan por scripts/estandarizar-lienzo-vestidos.py antes de
 // subirse: ese script escala cada foto (sin recortar la prenda) para que la
-// modela quede siempre al mismo alto en píxeles, y la pega centrada sobre un
-// lienzo blanco de tamaño FIJO (800x1250, igual para cada foto del
-// catálogo). Por eso todas las fotos de vestidos son literalmente idénticas
-// en tamaño y proporción — alcanza un recuadro fijo con esa misma relación
-// de aspecto (16/25) en cualquier contexto, sin letterboxing ni recorte: el
-// recuadro y la foto miden exactamente lo mismo.
+// modela quede al mismo alto en píxeles en TODAS las fotos, y la pega
+// centrada sobre un lienzo blanco de tamaño FIJO (700x1250, igual para cada
+// foto del catálogo). Por eso todas las fotos de vestidos son literalmente
+// idénticas en tamaño y proporción — alcanza un recuadro fijo con esa misma
+// relación de aspecto (14/25) en cualquier contexto, sin letterboxing ni
+// recorte: el recuadro y la foto miden exactamente lo mismo.
+// (El ancho de lienzo 700 se eligió porque el 96% del catálogo tiene un
+// vuelo de prenda de 214 a 494px a esa altura estándar — un lienzo pensado
+// para las pocas polleras muy amplias dejaba a la enorme mayoría como una
+// "banda angosta" perdida en un rectángulo blanco gigante. Las pocas fotos
+// cuyo vuelo no entra ni con esto se resuelven en el propio script achicando
+// la modela un poco en esa foto puntual, nunca recortándole la prenda.)
 //
 // Usan object-cover (no object-contain) anclado arriba (object-top): como
 // el recuadro coincide exactamente con el tamaño del lienzo, cover no
 // recorta nada hoy — pero si alguna vez se sube una foto que no pasó por el
 // script y su proporción no coincide exacto, ancla por arriba (cabeza) en
 // vez de recortar parejo arriba y abajo, achicando el margen de error.
-// OJO: nunca usar un recuadro más ancho que 16/25 (p.ej. el clásico 3/4) acá
-// — con ese recuadro, object-cover necesitaría recortar ~15% del alto de
-// cada foto, y ese 15% cae justo en los pies/tacos de la modela, no en el
-// margen blanco (medido sobre el catálogo real).
 //
 // Monos y tapados (solo un puñado de fotos hoy) todavía no pasaron por ese
 // script — sus fotos varían de proporción entre sí según el vuelo/largo de
@@ -46,7 +48,7 @@ export function esPrendaCuerpoEntero(categoria: Categoria): boolean {
 }
 
 export function imageBoxAspectClass(categoria: Categoria): string {
-  if (LIENZO_FIJO.includes(categoria)) return "aspect-[16/25]";
+  if (LIENZO_FIJO.includes(categoria)) return "aspect-[14/25]";
   return esPrendaCuerpoEntero(categoria) ? "aspect-[3/8]" : "aspect-[4/5]";
 }
 
