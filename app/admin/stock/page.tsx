@@ -7,6 +7,7 @@ import { RequireStaff } from "@/components/RequireStaff";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import { compararTalles } from "@/lib/talles";
+import { imageBoxAspectClass, imageObjectFit } from "@/lib/productImage";
 import type { Categoria, Condicion, EstadoProducto, Product } from "@/lib/supabase/types";
 
 const CONDICIONES: Condicion[] = ["nuevo", "usado"];
@@ -57,6 +58,29 @@ const emptyEditForm = {
   ...emptyForm,
   estado: "disponible" as EstadoProducto,
 };
+
+function ProductThumb({ product }: { product: Product }) {
+  const foto = product.fotos?.[0] ?? product.foto_url;
+  return (
+    <div
+      className={`relative w-14 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-blanco ${imageBoxAspectClass(product.categoria)}`}
+    >
+      {foto ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={foto}
+          alt={product.nombre}
+          loading="lazy"
+          className={`h-full w-full ${imageObjectFit(product.categoria) === "cover" ? "object-cover" : "object-contain"}`}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-center text-[9px] uppercase tracking-wider text-taupe">
+          Sin foto
+        </div>
+      )}
+    </div>
+  );
+}
 
 function StockContent() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -501,7 +525,7 @@ function StockContent() {
         <table className="min-w-full divide-y divide-arena">
           <thead className="bg-crema">
             <tr>
-              {["Nombre", "Categoría", "Talle", "Color", "Precio alquiler", "Estado", ""].map(
+              {["Foto", "Nombre", "Categoría", "Talle", "Color", "Precio alquiler", "Estado", ""].map(
                 (h) => (
                   <th
                     key={h}
@@ -516,7 +540,7 @@ function StockContent() {
           <tbody className="divide-y divide-arena bg-blanco">
             {loading && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-taupe">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-taupe">
                   Cargando productos...
                 </td>
               </tr>
@@ -524,7 +548,7 @@ function StockContent() {
 
             {!loading && error && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-chocolate">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-chocolate">
                   Error al cargar productos: {error}
                 </td>
               </tr>
@@ -532,7 +556,7 @@ function StockContent() {
 
             {!loading && !error && filteredProducts.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-taupe">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-taupe">
                   No hay productos que coincidan con los filtros.
                 </td>
               </tr>
@@ -543,6 +567,9 @@ function StockContent() {
               filteredProducts.map((product) =>
                 editingId === product.id ? (
                   <tr key={product.id} className="bg-crema">
+                    <td className="px-4 py-3">
+                      <ProductThumb product={product} />
+                    </td>
                     <td className="px-4 py-3">
                       <input
                         type="text"
@@ -662,6 +689,9 @@ function StockContent() {
                   </tr>
                 ) : (
                   <tr key={product.id}>
+                    <td className="px-4 py-3">
+                      <ProductThumb product={product} />
+                    </td>
                     <td className="px-4 py-3 text-sm font-medium text-negro">
                       {product.nombre}
                       {product.precio_venta != null && (

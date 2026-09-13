@@ -15,7 +15,7 @@ import {
   leerPedidoPendiente,
   limpiarPedidoPendiente,
 } from "@/lib/pendingCartItem";
-import { imageBoxAspectClass } from "@/lib/productImage";
+import { imageBoxAspectClass, imageObjectFit } from "@/lib/productImage";
 import type { Product } from "@/lib/supabase/types";
 
 export function ProductCard({
@@ -127,7 +127,11 @@ export function ProductCard({
       <div
         className={`relative ${imageBoxAspectClass(product.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`}
       >
-        <ProductImageCarousel fotos={fotos} alt={product.nombre} />
+        <ProductImageCarousel
+          fotos={fotos}
+          alt={product.nombre}
+          fit={imageObjectFit(product.categoria)}
+        />
         {tipo === "venta" && product.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
             {product.condicion === "nuevo" ? "Nuevo" : "Usado"}

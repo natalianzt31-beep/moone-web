@@ -16,7 +16,7 @@ import {
   leerPedidoPendiente,
   limpiarPedidoPendiente,
 } from "@/lib/pendingCartItem";
-import { imageBoxAspectClass } from "@/lib/productImage";
+import { imageBoxAspectClass, imageObjectFit } from "@/lib/productImage";
 import type { Product } from "@/lib/supabase/types";
 
 function nombreSinTalle(nombre: string) {
@@ -161,7 +161,12 @@ export function GroupedProductCard({
       <div
         className={`relative ${imageBoxAspectClass(producto.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`}
       >
-        <ProductImageCarousel key={producto.id} fotos={fotos} alt={nombreBase} />
+        <ProductImageCarousel
+          key={producto.id}
+          fotos={fotos}
+          alt={nombreBase}
+          fit={imageObjectFit(producto.categoria)}
+        />
         {tipo === "venta" && producto.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
             {producto.condicion === "nuevo" ? "Nuevo" : "Usado"}

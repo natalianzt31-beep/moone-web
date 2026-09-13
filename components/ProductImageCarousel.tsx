@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 
-export function ProductImageCarousel({ fotos, alt }: { fotos: string[]; alt: string }) {
+export function ProductImageCarousel({
+  fotos,
+  alt,
+  fit = "contain",
+}: {
+  fotos: string[];
+  alt: string;
+  fit?: "contain" | "cover";
+}) {
   const [index, setIndex] = useState(0);
 
   if (fotos.length === 0) {
@@ -37,7 +45,12 @@ export function ProductImageCarousel({ fotos, alt }: { fotos: string[]; alt: str
         className="h-full w-full cursor-pointer bg-blanco"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={fotos[index]} alt={alt} loading="lazy" className="h-full w-full object-contain" />
+        <img
+          src={fotos[index]}
+          alt={alt}
+          loading="lazy"
+          className={`h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`}
+        />
       </div>
 
       {fotos.length > 1 && (
