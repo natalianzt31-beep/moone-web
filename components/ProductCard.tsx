@@ -30,6 +30,7 @@ export function ProductCard({
   const { user, client, loading: authLoading } = useAuth();
   const pathname = usePathname();
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
+  const [mostrarReserva, setMostrarReserva] = useState(false);
   const [fechaRetiro, setFechaRetiro] = useState<string | null>(null);
   const [fechaDevolucion, setFechaDevolucion] = useState<string | null>(null);
   const [payingMp, setPayingMp] = useState(false);
@@ -152,16 +153,6 @@ export function ProductCard({
         </span>
       </div>
 
-      {tipo === "alquiler" && (
-        <DisponibilidadCalendar
-          productId={product.id}
-          onSelect={(retiro, devolucion) => {
-            setFechaRetiro(retiro);
-            setFechaDevolucion(devolucion);
-          }}
-        />
-      )}
-
       {!authLoading && !user ? (
         <Link
           href={loginHref}
@@ -170,51 +161,73 @@ export function ProductCard({
         >
           {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
         </Link>
-      ) : fechaElegida ? (
+      ) : !authLoading && tipo === "alquiler" && !mostrarReserva ? (
         <button
           type="button"
-          onClick={handleReservarYPagar}
-          disabled={payingMp}
-          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+          onClick={() => setMostrarReserva(true)}
+          className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
         >
-          {payingMp ? "Redirigiendo a Mercado Pago..." : cta}
+          Reservar
         </button>
       ) : (
-        <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
-          {cta}
-        </span>
-      )}
-      {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
+        <>
+          {tipo === "alquiler" && (
+            <DisponibilidadCalendar
+              productId={product.id}
+              onSelect={(retiro, devolucion) => {
+                setFechaRetiro(retiro);
+                setFechaDevolucion(devolucion);
+              }}
+            />
+          )}
 
-      {!authLoading && user && fechaElegida && !localOk && (
-        <button
-          type="button"
-          onClick={handlePagarEnLocal}
-          disabled={payingLocal || payingMp}
-          className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
-        >
-          {payingLocal ? "Registrando..." : "Pagar en el local"}
-        </button>
-      )}
-      {localOk && (
-        <p className="text-center text-xs text-chocolate">
-          {tipo === "venta" ? "Pedido registrado" : "Reserva registrada"} — pagá en el local ✓
-        </p>
-      )}
-      {localError && <p className="text-xs text-chocolate">{localError}</p>}
+          {fechaElegida ? (
+            <button
+              type="button"
+              onClick={handleReservarYPagar}
+              disabled={payingMp}
+              className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+            >
+              {payingMp ? "Redirigiendo a Mercado Pago..." : cta}
+            </button>
+          ) : (
+            <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
+              {cta}
+            </span>
+          )}
+          {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
 
-      {!authLoading && user && (
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          disabled={!fechaElegida || !client || cartState === "adding" || cartState === "added"}
-          className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
-        >
-          {cartState === "adding" && "Agregando..."}
-          {cartState === "added" && "En tu carrito ✓"}
-          {cartState === "error" && "Error, probá de nuevo"}
-          {cartState === "idle" && "Agregar al carrito"}
-        </button>
+          {!authLoading && user && fechaElegida && !localOk && (
+            <button
+              type="button"
+              onClick={handlePagarEnLocal}
+              disabled={payingLocal || payingMp}
+              className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+            >
+              {payingLocal ? "Registrando..." : "Pagar en el local"}
+            </button>
+          )}
+          {localOk && (
+            <p className="text-center text-xs text-chocolate">
+              {tipo === "venta" ? "Pedido registrado" : "Reserva registrada"} — pagá en el local ✓
+            </p>
+          )}
+          {localError && <p className="text-xs text-chocolate">{localError}</p>}
+
+          {!authLoading && user && (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={!fechaElegida || !client || cartState === "adding" || cartState === "added"}
+              className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+            >
+              {cartState === "adding" && "Agregando..."}
+              {cartState === "added" && "En tu carrito ✓"}
+              {cartState === "error" && "Error, probá de nuevo"}
+              {cartState === "idle" && "Agregar al carrito"}
+            </button>
+          )}
+        </>
       )}
 
       {!authLoading && !user && (
