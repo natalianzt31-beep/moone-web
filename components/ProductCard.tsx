@@ -123,7 +123,7 @@ export function ProductCard({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena bg-blanco">
+      <div className="relative aspect-[1/2] overflow-hidden rounded-[3px] border border-arena bg-blanco">
         <ProductImageCarousel fotos={fotos} alt={product.nombre} />
         {tipo === "venta" && product.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
