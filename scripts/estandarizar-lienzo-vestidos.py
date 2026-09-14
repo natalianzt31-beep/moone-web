@@ -39,6 +39,26 @@ el ancho sobrante centrado en la prenda, nunca el alto, y nunca lo
 suficiente como para tocar el rango de contenido detectado — ver
 `SIDE_MARGIN`.
 
+Detección de fondo (importante, causó varios bugs reales): el fondo de
+estudio de estas fotos casi nunca es un blanco parejo — suele tener un
+degradé/viñeta (más oscuro hacia los bordes o las esquinas, típico de
+luz de softbox). Comparar cada píxel contra un único valor de referencia
+(el promedio de una esquina) rompía en dos direcciones opuestas: en
+fotos con esquina más oscura que el resto, subestimaba el contenido y
+recortaba manos/dedos reales; en fotos con más viñeta de la esperada,
+directamente marcaba TODO el ancho como "contenido" (confirmado en
+"vestido-verde-sirena-lentejuelas.jpg": el fondo real rondaba 220-230 de
+gris pero variaba across la imagen lo suficiente como para que un solo
+número de referencia fallara). Ahora se ajusta una superficie de fondo
+suave (polinomio cuadrático en x,y) usando sólo un marco angosto de
+píxeles del borde de la foto, y se compara cada píxel contra el valor
+ESTIMADO del fondo en esa posición, no contra un único número global —
+así un degradé/viñeta real no se confunde con contenido. También se
+ignoran los 2px más externos de la foto al sumar por fila/columna: varias
+fotos tienen un artefacto de exportación (un aro de 1px más claro/oscuro
+pegado al borde) que si no se excluye se cuenta como contenido en toda
+la foto.
+
 Uso:
     python3 scripts/estandarizar-lienzo-vestidos.py public/images/vestidos/*.jpg
     python3 scripts/estandarizar-lienzo-vestidos.py --dry-run public/images/vestidos/*.jpg
@@ -68,20 +88,57 @@ DELTA = 18
 ROW_MIN_FRAC = 0.12
 COL_MIN_FRAC = 0.01
 BBOX_PAD = 12  # margen extra de seguridad alrededor del bbox detectado
-PAD_CHECK = 6
+BORDER_BAND = 20  # ancho de banda de borde usada para estimar el fondo
+EDGE_TRIM = 2  # ignora estos px del borde exterior (artefactos de exportación)
+
+
+def background_surface(gray: np.ndarray) -> np.ndarray:
+    """Ajusta un polinomio cuadrático en (x, y) al fondo real de la foto,
+    usando sólo una banda angosta de píxeles del borde (donde nunca hay
+    modela/prenda). Devuelve el fondo ESTIMADO en cada posición, para poder
+    comparar cada píxel contra el fondo esperado ahí — no contra un único
+    número global, que se rompe apenas el fondo tiene degradé o viñeta."""
+    h, w = gray.shape
+    yy, xx = np.mgrid[0:h, 0:w]
+    mask = np.zeros((h, w), dtype=bool)
+    mask[EDGE_TRIM:BORDER_BAND, EDGE_TRIM : w - EDGE_TRIM] = True
+    mask[h - BORDER_BAND : h - EDGE_TRIM, EDGE_TRIM : w - EDGE_TRIM] = True
+    mask[EDGE_TRIM : h - EDGE_TRIM, EDGE_TRIM:BORDER_BAND] = True
+    mask[EDGE_TRIM : h - EDGE_TRIM, w - BORDER_BAND : w - EDGE_TRIM] = True
+    xs = (xx[mask].astype(np.float64) - w / 2) / w
+    ys = (yy[mask].astype(np.float64) - h / 2) / h
+    zs = gray[mask].astype(np.float64)
+    basis = np.column_stack([np.ones_like(xs), xs, ys, xs * ys, xs**2, ys**2])
+    coef, *_ = np.linalg.lstsq(basis, zs, rcond=None)
+    xg = (xx.astype(np.float64) - w / 2) / w
+    yg = (yy.astype(np.float64) - h / 2) / h
+    basis_full = np.column_stack(
+        [np.ones(xg.size), xg.ravel(), yg.ravel(), (xg * yg).ravel(), (xg**2).ravel(), (yg**2).ravel()]
+    )
+    return (basis_full @ coef).reshape(h, w)
 
 
 def content_bbox(gray: np.ndarray) -> tuple[int, int, int, int] | None:
     h, w = gray.shape
-    bg = gray[:PAD_CHECK, :PAD_CHECK].mean()
-    diff = np.abs(gray.astype(np.int16) - bg)
+    surface = background_surface(gray)
+    diff = np.abs(gray.astype(np.float64) - surface)
     mask = diff > DELTA
-    rows = np.where(mask.sum(axis=1) > w * ROW_MIN_FRAC)[0]
-    cols = np.where(mask.sum(axis=0) > h * COL_MIN_FRAC)[0]
+    # Ignora los EDGE_TRIM px más externos al sumar (artefactos de borde).
+    interior = mask[EDGE_TRIM : h - EDGE_TRIM, EDGE_TRIM : w - EDGE_TRIM]
+    ih, iw = interior.shape
+    rows = np.where(interior.sum(axis=1) > iw * ROW_MIN_FRAC)[0] + EDGE_TRIM
+    cols = np.where(interior.sum(axis=0) > ih * COL_MIN_FRAC)[0] + EDGE_TRIM
     if len(rows) == 0 or len(cols) == 0:
         return None
     x0, x1 = cols.min(), cols.max()
     y0, y1 = rows.min(), rows.max()
+    # Si el contenido detectado (antes del margen de seguridad) ya toca el
+    # borde analizado, es sospechoso: puede ser una pollera realmente amplia,
+    # pero también puede ser que la estimación de fondo haya fallado ahí. Se
+    # avisa por consola para poder revisarlo a simple vista — no se aborta el
+    # procesamiento, porque en este catálogo lo primero es mucho más común.
+    if x0 <= EDGE_TRIM + 1 or x1 >= w - EDGE_TRIM - 2 or y0 <= EDGE_TRIM + 1 or y1 >= h - EDGE_TRIM - 2:
+        print(f"    (aviso: el contenido detectado toca el borde de la foto original {w}x{h} — revisar a simple vista)")
     # Margen extra de seguridad: aun con el umbral bajo, preferimos dejar
     # unos píxeles de más de "fondo" antes que arriesgar recortar contenido
     # real que el umbral no haya detectado del todo.
