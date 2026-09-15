@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { compararTalles } from "@/lib/talles";
+import { colorPrincipal, compararColoresPrincipales } from "@/lib/colores";
 import type { Product } from "@/lib/supabase/types";
 
 const SELECT_CLASSES =
@@ -20,7 +21,12 @@ export default function SalePage() {
   const [talleFiltro, setTalleFiltro] = useState("");
 
   const opcionesColor = useMemo(
-    () => Array.from(new Set(products.map((p) => p.color).filter((v): v is string => !!v))).sort(),
+    () =>
+      Array.from(
+        new Set(
+          products.map((p) => p.color).filter((v): v is string => !!v).map(colorPrincipal),
+        ),
+      ).sort(compararColoresPrincipales),
     [products],
   );
   const opcionesTalle = useMemo(
@@ -34,7 +40,9 @@ export default function SalePage() {
   const productosFiltrados = useMemo(
     () =>
       products.filter(
-        (p) => (!colorFiltro || p.color === colorFiltro) && (!talleFiltro || p.talle === talleFiltro),
+        (p) =>
+          (!colorFiltro || (p.color && colorPrincipal(p.color) === colorFiltro)) &&
+          (!talleFiltro || p.talle === talleFiltro),
       ),
     [products, colorFiltro, talleFiltro],
   );
