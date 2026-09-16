@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { Preference } from "mercadopago";
 import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseUserClient } from "@/lib/supabase/serviceClient";
+import { checkoutEnabled } from "@/lib/features";
 
 export async function POST(req: Request) {
+  if (!checkoutEnabled) {
+    return NextResponse.json({ error: "El pago online está desactivado." }, { status: 403 });
+  }
+
   const authHeader = req.headers.get("authorization");
   const accessToken = authHeader?.replace(/^Bearer\s+/i, "");
 

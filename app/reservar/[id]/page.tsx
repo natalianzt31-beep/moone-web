@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { redirect, useParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
+import { checkoutEnabled } from "@/lib/features";
 import type { Product } from "@/lib/supabase/types";
 
 // Esta página es solo para venta definitiva (pago 100% y coordinación por
 // WhatsApp). El alquiler paga la seña directo desde la ficha con Mercado
 // Pago y nunca pasa por acá.
 export default function ReservarPage() {
+  if (!checkoutEnabled) {
+    redirect("/coleccion");
+  }
+
   const params = useParams<{ id: string }>();
 
   const [product, setProduct] = useState<Product | null>(null);

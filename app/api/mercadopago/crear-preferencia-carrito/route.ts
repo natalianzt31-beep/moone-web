@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Preference } from "mercadopago";
 import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/serviceClient";
+import { checkoutEnabled } from "@/lib/features";
 import type { Categoria } from "@/lib/supabase/types";
 
 type PromoCode = {
@@ -23,6 +24,10 @@ type PromoCode = {
  * confiar en el porcentaje que mande el navegador.
  */
 export async function POST(req: Request) {
+  if (!checkoutEnabled) {
+    return NextResponse.json({ error: "El pago online está desactivado." }, { status: 403 });
+  }
+
   const authHeader = req.headers.get("authorization");
   const accessToken = authHeader?.replace(/^Bearer\s+/i, "");
   if (!accessToken) {

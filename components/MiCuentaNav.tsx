@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { checkoutEnabled } from "@/lib/features";
 
 const TABS = [
   { href: "/mi-cuenta/historial", label: "Historial" },
-  { href: "/mi-cuenta/carrito", label: "Carrito" },
+  ...(checkoutEnabled ? [{ href: "/mi-cuenta/carrito", label: "Carrito" }] : []),
 ];
 
 export function MiCuentaNav() {

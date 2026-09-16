@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Nav } from "@/components/Nav";
+import { checkoutEnabled } from "@/lib/features";
 import { MiCuentaNav } from "@/components/MiCuentaNav";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -584,6 +586,10 @@ function CarritoContent() {
 }
 
 export default function CarritoPage() {
+  if (!checkoutEnabled) {
+    redirect("/coleccion");
+  }
+
   return (
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />

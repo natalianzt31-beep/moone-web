@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/serviceClient";
+import { checkoutEnabled } from "@/lib/features";
 
 /**
  * Venta: la clienta elige "pagar en el local" en vez de Mercado Pago.
@@ -9,6 +10,10 @@ import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/
  * en el que la prenda pasa a baja_definitiva.
  */
 export async function POST(req: Request) {
+  if (!checkoutEnabled) {
+    return NextResponse.json({ error: "El pago está desactivado." }, { status: 403 });
+  }
+
   const authHeader = req.headers.get("authorization");
   const accessToken = authHeader?.replace(/^Bearer\s+/i, "");
 

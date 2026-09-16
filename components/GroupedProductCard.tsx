@@ -9,6 +9,7 @@ import { addToCart } from "@/lib/supabase/account";
 import { crearPreferenciaReserva, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { crearReservaLocal, crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { compararTalles } from "@/lib/talles";
+import { bookingEnabled, checkoutEnabled } from "@/lib/features";
 import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
 import {
@@ -100,6 +101,9 @@ export function GroupedProductCard({
 
   const precio = tipo === "venta" ? producto.precio_venta : producto.precio_alquiler;
   const cta = tipo === "venta" ? "Comprar" : "Reservar y pagar seña";
+  // Con reservas/compra desactivadas (ver lib/features.ts), la ficha muestra
+  // el producto pero sin ninguna acción de reservar/comprar/pagar/carrito.
+  const habilitado = tipo === "venta" ? checkoutEnabled : bookingEnabled;
   const fotos =
     producto.fotos && producto.fotos.length > 0
       ? producto.fotos
@@ -225,92 +229,100 @@ export function GroupedProductCard({
           </select>
         </label>
 
-        {!authLoading && !user ? (
-          <Link
-            href={loginHref}
-            onClick={guardarPendienteYSeguir}
-            className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
-          >
-            {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
-          </Link>
-        ) : !authLoading && tipo === "alquiler" && !mostrarReserva ? (
-          <button
-            type="button"
-            onClick={() => setMostrarReserva(true)}
-            className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
-          >
-            Reservar
-          </button>
-        ) : (
+        {habilitado && (
           <>
-            {tipo === "alquiler" && (
-              <DisponibilidadCalendar
-                key={producto.id}
-                productId={producto.id}
-                onSelect={(retiro, devolucion) => {
-                  setFechaRetiro(retiro);
-                  setFechaDevolucion(devolucion);
-                }}
-              />
-            )}
-
-            {fechaElegida ? (
+            {!authLoading && !user ? (
+              <Link
+                href={loginHref}
+                onClick={guardarPendienteYSeguir}
+                className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
+              >
+                {tipo === "venta" ? "Iniciá sesión para comprar" : "Iniciá sesión para reservar"}
+              </Link>
+            ) : !authLoading && tipo === "alquiler" && !mostrarReserva ? (
               <button
                 type="button"
-                onClick={handleReservarYPagar}
-                disabled={payingMp}
-                className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+                onClick={() => setMostrarReserva(true)}
+                className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate"
               >
-                {payingMp ? "Redirigiendo a Mercado Pago..." : cta}
+                Reservar
               </button>
             ) : (
-              <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
-                {cta}
-              </span>
-            )}
-            {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
+              <>
+                {tipo === "alquiler" && (
+                  <DisponibilidadCalendar
+                    key={producto.id}
+                    productId={producto.id}
+                    onSelect={(retiro, devolucion) => {
+                      setFechaRetiro(retiro);
+                      setFechaDevolucion(devolucion);
+                    }}
+                  />
+                )}
 
-            {!authLoading && user && fechaElegida && !localOk && (
-              <button
-                type="button"
-                onClick={handlePagarEnLocal}
-                disabled={payingLocal || payingMp}
-                className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
-              >
-                {payingLocal ? "Registrando..." : "Pagar en el local"}
-              </button>
-            )}
-            {localOk && (
-              <p className="text-center text-xs text-chocolate">
-                {tipo === "venta" ? "Pedido registrado" : "Reserva registrada"} — pagá en el local ✓
-              </p>
-            )}
-            {localError && <p className="text-xs text-chocolate">{localError}</p>}
+                {checkoutEnabled && (
+                  <>
+                    {fechaElegida ? (
+                      <button
+                        type="button"
+                        onClick={handleReservarYPagar}
+                        disabled={payingMp}
+                        className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
+                      >
+                        {payingMp ? "Redirigiendo a Mercado Pago..." : cta}
+                      </button>
+                    ) : (
+                      <span className="flex min-h-11 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40">
+                        {cta}
+                      </span>
+                    )}
+                    {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
 
-            {!authLoading && user && (
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={!fechaElegida || !client || cartState === "adding" || cartState === "added"}
-                className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+                    {!authLoading && user && fechaElegida && !localOk && (
+                      <button
+                        type="button"
+                        onClick={handlePagarEnLocal}
+                        disabled={payingLocal || payingMp}
+                        className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+                      >
+                        {payingLocal ? "Registrando..." : "Pagar en el local"}
+                      </button>
+                    )}
+                    {localOk && (
+                      <p className="text-center text-xs text-chocolate">
+                        {tipo === "venta" ? "Pedido registrado" : "Reserva registrada"} — pagá en el local ✓
+                      </p>
+                    )}
+                    {localError && <p className="text-xs text-chocolate">{localError}</p>}
+
+                    {!authLoading && user && (
+                      <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        disabled={!fechaElegida || !client || cartState === "adding" || cartState === "added"}
+                        className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
+                      >
+                        {cartState === "adding" && "Agregando..."}
+                        {cartState === "added" && "En tu carrito ✓"}
+                        {cartState === "error" && "Error, probá de nuevo"}
+                        {cartState === "idle" && "Agregar al carrito"}
+                      </button>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {!authLoading && !user && (
+              <Link
+                href={loginHref}
+                onClick={guardarPendienteYSeguir}
+                className="flex min-h-11 items-center justify-center text-center text-xs text-taupe transition-colors hover:text-chocolate"
               >
-                {cartState === "adding" && "Agregando..."}
-                {cartState === "added" && "En tu carrito ✓"}
-                {cartState === "error" && "Error, probá de nuevo"}
-                {cartState === "idle" && "Agregar al carrito"}
-              </button>
+                Iniciá sesión para agregar al carrito
+              </Link>
             )}
           </>
-        )}
-
-        {!authLoading && !user && (
-          <Link
-            href={loginHref}
-            onClick={guardarPendienteYSeguir}
-            className="flex min-h-11 items-center justify-center text-center text-xs text-taupe transition-colors hover:text-chocolate"
-          >
-            Iniciá sesión para agregar al carrito
-          </Link>
         )}
       </div>
     </div>
