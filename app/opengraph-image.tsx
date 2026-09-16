@@ -7,9 +7,11 @@ export const alt = "Môone — Alquiler de vestidos de fiesta en Montevideo";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const cormorantGaramond = await readFile(
-  join(process.cwd(), "assets/fonts/CormorantGaramond-Medium.ttf")
-);
+const [cormorantGaramond, logoBuffer] = await Promise.all([
+  readFile(join(process.cwd(), "assets/fonts/CormorantGaramond-Medium.ttf")),
+  readFile(join(process.cwd(), "assets/logo-isotipo.png")),
+]);
+const logoSrc = `data:image/png;base64,${logoBuffer.toString("base64")}`;
 
 export default async function Image() {
   return new ImageResponse(
@@ -26,20 +28,23 @@ export default async function Image() {
           fontFamily: "Cormorant Garamond",
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoSrc} width={186} height={260} alt="" />
         <div
           style={{
             display: "flex",
-            fontSize: 160,
+            marginTop: 8,
+            fontSize: 96,
             color: "#171513",
           }}
         >
-          Môone
+          MÔONE
         </div>
         <div
           style={{
             display: "flex",
-            marginTop: 24,
-            fontSize: 36,
+            marginTop: 20,
+            fontSize: 32,
             color: "#171513",
             letterSpacing: 4,
             textTransform: "uppercase",
