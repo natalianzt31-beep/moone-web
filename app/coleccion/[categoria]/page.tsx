@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CATEGORIAS } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { absoluteUrl } from "@/lib/site";
+import { JsonLd } from "@/components/JsonLd";
 import { CategoriaClient } from "./CategoriaClient";
 
 export const revalidate = 3600;
@@ -65,5 +67,25 @@ export default async function CategoriaPage({
 
   if (error) throw new Error(error.message);
 
-  return <CategoriaClient key={categoria.slug} categoria={categoria} products={data ?? []} />;
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Colección", item: absoluteUrl("/coleccion") },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: categoria.label,
+        item: absoluteUrl(`/coleccion/${categoria.slug}`),
+      },
+    ],
+  };
+
+  return (
+    <>
+      <JsonLd data={breadcrumbJsonLd} />
+      <CategoriaClient key={categoria.slug} categoria={categoria} products={data ?? []} />
+    </>
+  );
 }

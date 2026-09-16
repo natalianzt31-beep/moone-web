@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nav } from "@/components/Nav";
+import { JsonLd } from "@/components/JsonLd";
 import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -52,9 +53,23 @@ const PREGUNTAS = [
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: PREGUNTAS.map(({ pregunta, respuesta }) => ({
+    "@type": "Question",
+    name: pregunta,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: respuesta,
+    },
+  })),
+};
+
 export default function FaqPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
+      <JsonLd data={faqJsonLd} />
       <Nav />
       <main className="flex-1">
         <section className="mx-auto max-w-3xl px-4 py-10 sm:px-8 sm:py-16">

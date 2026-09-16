@@ -1,11 +1,40 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
+import { JsonLd } from "@/components/JsonLd";
 import { DIRECCION } from "@/lib/site-config";
+import { BUSINESS, absoluteUrl } from "@/lib/site";
+
+const clothingStoreJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ClothingStore",
+  name: BUSINESS.name,
+  description: BUSINESS.description,
+  url: absoluteUrl("/"),
+  image: absoluteUrl("/tienda.jpg"),
+  telephone: BUSINESS.phone,
+  email: BUSINESS.email,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: BUSINESS.address.streetAddress,
+    addressLocality: BUSINESS.address.addressLocality,
+    addressRegion: BUSINESS.address.addressRegion,
+    addressCountry: BUSINESS.address.addressCountry,
+  },
+  openingHoursSpecification: BUSINESS.openingHours.map((horario) => ({
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: horario.dayOfWeek,
+    opens: horario.opens,
+    closes: horario.closes,
+  })),
+  areaServed: BUSINESS.areaServed,
+  ...(BUSINESS.sameAs.length > 0 ? { sameAs: BUSINESS.sameAs } : {}),
+};
 
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
+      <JsonLd data={clothingStoreJsonLd} />
       <Nav />
       <main className="flex-1">
         <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-8 sm:py-16 lg:grid-cols-2 lg:items-center lg:gap-12 lg:py-24">

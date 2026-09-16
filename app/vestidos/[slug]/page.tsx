@@ -4,7 +4,12 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { compararTalles } from "@/lib/talles";
 import { absoluteUrl } from "@/lib/site";
 import type { Product } from "@/lib/supabase/types";
+import { JsonLd } from "@/components/JsonLd";
 import { VestidoDetailClient } from "./VestidoDetailClient";
+
+function nombreSinTalle(nombre: string) {
+  return nombre.replace(/\s*talle\s*\S+\s*$/i, "").trim();
+}
 
 export const revalidate = 3600;
 
@@ -80,5 +85,47 @@ export default async function VestidoPage({
     notFound();
   }
 
-  return <VestidoDetailClient variantes={variantes} />;
+  const producto = variantes[0];
+  const nombreBase = nombreSinTalle(producto.nombre);
+  const foto = producto.fotos?.[0] ?? producto.foto_url ?? undefined;
+
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: nombreBase,
+    description: producto.descripcion_web ?? undefined,
+    image: foto ? absoluteUrl(foto) : undefined,
+    category: "Vestido de fiesta",
+    ...(producto.precio_alquiler > 0
+      ? {
+          offers: {
+            "@type": "Offer",
+            price: producto.precio_alquiler,
+            priceCurrency: "UYU",
+            availability: variantes.some((p) => p.estado === "disponible")
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            url: absoluteUrl(`/vestidos/${slug}`),
+          },
+        }
+      : {}),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Vestidos", item: absoluteUrl("/coleccion/vestidos") },
+      { "@type": "ListItem", position: 3, name: nombreBase, item: absoluteUrl(`/vestidos/${slug}`) },
+    ],
+  };
+
+  return (
+    <>
+      <JsonLd data={productJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
+      <VestidoDetailClient variantes={variantes} />
+    </>
+  );
 }
