@@ -4,6 +4,8 @@
  * no hardcodear el nombre, la dirección, el horario, etc. en otro lado.
  */
 
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/site-config";
+
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
@@ -31,11 +33,15 @@ export const BUSINESS = {
   legalName: "Môone",
   description: SITE_DESCRIPTION,
   email: "contacto@moone.com.uy",
-  /** Número en formato E.164, para JSON-LD y enlaces tel:. */
-  phone: "+59894227223",
+  /**
+   * Número operativo de la tienda (el mismo que ya se usa en la UI para
+   * WhatsApp, ver lib/site-config.ts) — no el personal de la fundadora.
+   * En formato E.164, para JSON-LD y enlaces tel:.
+   */
+  phone: `+${WHATSAPP_URL.replace("https://wa.me/", "")}`,
   /** Mismo número, formateado para mostrar en pantalla. */
-  phoneDisplay: "+598 94 227 223",
-  whatsappUrl: "https://wa.me/59894227223",
+  phoneDisplay: WHATSAPP_DISPLAY,
+  whatsappUrl: WHATSAPP_URL,
   address: {
     streetAddress: "Prudencio Vázquez y Vega 887 esq. Sarmiento",
     addressLocality: "Montevideo",
