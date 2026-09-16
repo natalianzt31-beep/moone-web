@@ -4,7 +4,7 @@
  * no hardcodear el nombre, la dirección, el horario, etc. en otro lado.
  */
 
-import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/site-config";
+import { currencyFormatter, WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/site-config";
 
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
@@ -74,6 +74,12 @@ export const BUSINESS = {
       closes: "16:00",
     },
   ],
+  /**
+   * Rango de precios de alquiler, para JSON-LD (`priceRange`). Valor real
+   * tomado de la base (min/max de precio_alquiler en productos disponibles),
+   * no se calcula en cada build — actualizar a mano si el rango cambia mucho.
+   */
+  priceRange: `${currencyFormatter.format(990)} - ${currencyFormatter.format(1790)}`,
   areaServed: "Montevideo",
   /** Perfiles oficiales de la marca (JSON-LD `sameAs` de la home). */
   sameAs: [

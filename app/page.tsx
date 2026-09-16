@@ -14,6 +14,7 @@ const clothingStoreJsonLd = {
   image: absoluteUrl("/tienda.jpg"),
   telephone: BUSINESS.phone,
   email: BUSINESS.email,
+  priceRange: BUSINESS.priceRange,
   address: {
     "@type": "PostalAddress",
     streetAddress: BUSINESS.address.streetAddress,
