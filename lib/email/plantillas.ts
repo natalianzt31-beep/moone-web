@@ -60,7 +60,7 @@ export const PLANTILLA_CONFIRMACION_RESERVA = `<!DOCTYPE html>
               </table>
 
               <p style="color:#A49587; font-size: 13px; line-height: 1.6; margin: 0;">
-                Te avisamos de nuevo el día del retiro con el horario y las condiciones. Cualquier consulta, escribinos por WhatsApp al 094 227 223.
+                Te avisamos de nuevo el día del retiro con el horario y las condiciones. Cualquier consulta, escribinos por WhatsApp al {{whatsapp_display}}.
               </p>
             </td>
           </tr>
@@ -72,7 +72,7 @@ export const PLANTILLA_CONFIRMACION_RESERVA = `<!DOCTYPE html>
                 Prudencio Vázquez y Vega 887 esq. Sarmiento, Punta Carretas, Montevideo
               </p>
               <p style="color:#A49587; font-size: 12px; margin: 0;">
-                contacto@moone.com.uy · WhatsApp 094 227 223
+                contacto@moone.com.uy · WhatsApp {{whatsapp_display}}
               </p>
             </td>
           </tr>

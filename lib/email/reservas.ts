@@ -2,7 +2,7 @@ import "server-only";
 import { enviarEmail } from "@/lib/email/resend";
 import { registrarEnvioEmail } from "@/lib/email/log";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
-import { currencyFormatter } from "@/lib/site-config";
+import { currencyFormatter, WHATSAPP_DISPLAY } from "@/lib/site-config";
 import { PLANTILLA_CONFIRMACION_RESERVA } from "@/lib/email/plantillas";
 
 function formatFecha(iso: string): string {
@@ -97,7 +97,8 @@ export async function enviarMailConfirmacionReserva(
     .replace("{{fecha_retiro}}", formatFechaConDia(reservas[0].fecha_retiro))
     .replace("{{fecha_devolucion}}", formatFechaConDia(reservas[0].fecha_devolucion))
     .replace("{{monto_senia}}", numeroFormatter.format(montoSenia))
-    .replace("{{saldo_pendiente}}", numeroFormatter.format(saldoPendiente));
+    .replace("{{saldo_pendiente}}", numeroFormatter.format(saldoPendiente))
+    .replaceAll("{{whatsapp_display}}", WHATSAPP_DISPLAY);
 
   const resultado = await enviarEmail({
     to: cliente.email,
