@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import { Nav } from "@/components/Nav";
 import {
   DIRECCION,
@@ -6,6 +8,13 @@ import {
   WHATSAPP_DISPLAY,
   WHATSAPP_URL,
 } from "@/lib/site-config";
+
+export const metadata: Metadata = {
+  title: "Nosotras y contacto",
+  description:
+    "Conocé al equipo de Môone y visitanos en Punta Carretas, Montevideo. Dirección, horario, email y WhatsApp para coordinar tu alquiler.",
+  alternates: { canonical: "/nosotras" },
+};
 
 const EQUIPO = [
   {
@@ -62,13 +71,18 @@ export default function NosotrasPage() {
           <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-4 sm:gap-6">
             {EQUIPO.map((persona, i) => (
               <div key={i} className="flex flex-col items-center gap-3 text-center">
-                <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-full border border-arena bg-crema p-2">
+                <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-full border border-arena bg-crema p-2">
                   {persona.fotoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={persona.fotoUrl}
-                      alt={persona.nombre ?? ""}
-                      className="h-full w-full rounded-full object-cover"
+                      alt={
+                        persona.rol
+                          ? `${persona.nombre} — ${persona.rol}`
+                          : (persona.nombre ?? "")
+                      }
+                      fill
+                      sizes="(min-width: 640px) 25vw, 50vw"
+                      className="rounded-full object-cover"
                     />
                   ) : (
                     <span className="text-[10px] uppercase tracking-wider text-taupe sm:text-xs">

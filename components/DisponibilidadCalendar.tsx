@@ -27,8 +27,10 @@ export function DisponibilidadCalendar({
 
   useEffect(() => {
     let cancelled = false;
-    setSelectedDay(null);
-    setLoading(true);
+    // El padre pasa key={productId}, así que este componente ya se
+    // remonta con selectedDay/loading en su valor inicial cuando cambia
+    // el producto — solo hace falta avisarle al padre que limpie su
+    // propia selección de fechas.
     onSelect(null, null);
 
     async function load() {

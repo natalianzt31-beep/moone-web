@@ -22,10 +22,13 @@ export function ProductCard({
   product,
   tipo,
   variant = "ficha",
+  preload = false,
 }: {
   product: Product;
   tipo: "alquiler" | "venta";
   variant?: ImageVariant;
+  /** Para las primeras cards visibles sin scroll (candidatas a LCP). */
+  preload?: boolean;
 }) {
   const { user, client, loading: authLoading } = useAuth();
   const pathname = usePathname();
@@ -130,11 +133,21 @@ export function ProductCard({
     fit === "natural"
       ? "relative w-full overflow-hidden rounded-[3px] border border-arena bg-blanco"
       : `relative ${imageBoxAspectClass(product.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`;
+  const sizes =
+    variant === "grid"
+      ? "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+      : "(min-width: 640px) 384px, 100vw";
 
   return (
     <div className="flex h-full flex-col gap-3">
       <div className={boxClass}>
-        <ProductImageCarousel fotos={fotos} alt={product.nombre} fit={fit} />
+        <ProductImageCarousel
+          fotos={fotos}
+          alt={product.nombre}
+          fit={fit}
+          sizes={sizes}
+          preload={preload}
+        />
         {tipo === "venta" && product.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
             {product.condicion === "nuevo" ? "Nuevo" : "Usado"}

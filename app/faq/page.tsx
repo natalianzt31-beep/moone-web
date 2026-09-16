@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { Nav } from "@/components/Nav";
+import { JsonLd } from "@/components/JsonLd";
 import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/site-config";
+
+export const metadata: Metadata = {
+  title: "Preguntas frecuentes",
+  description:
+    "Cómo reservar, talles, seña, devolución y tintorería: todo lo que necesitás saber sobre el alquiler de vestidos de fiesta en Môone, Montevideo.",
+  alternates: { canonical: "/faq" },
+};
 
 const PREGUNTAS = [
   {
@@ -28,6 +37,11 @@ const PREGUNTAS = [
       "Si la prenda se mancha o se daña más allá del uso normal, nos avisás de inmediato y te hacés cargo del costo de reparación o limpieza especial que corresponda. En caso de pérdida o daño irreparable, se abona el valor de reposición de la prenda — no cobramos ningún depósito de garantía por adelantado.",
   },
   {
+    pregunta: "¿Tengo que llevar la prenda a la tintorería antes de devolverla?",
+    respuesta:
+      "No. Nosotros nos encargamos de la limpieza de cada prenda después de cada alquiler, así que la devolvés tal cual la usaste. Solo te hacés cargo de una limpieza especial si hay una mancha o daño fuera de lo normal.",
+  },
+  {
     pregunta: "¿Puedo cancelar o cambiar mi reserva?",
     respuesta:
       "Escribinos por WhatsApp apenas sepas que necesitás cambiar la fecha o cancelar — cuanto antes nos avises, más fácil es reacomodar todo.",
@@ -44,9 +58,23 @@ const PREGUNTAS = [
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: PREGUNTAS.map(({ pregunta, respuesta }) => ({
+    "@type": "Question",
+    name: pregunta,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: respuesta,
+    },
+  })),
+};
+
 export default function FaqPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
+      <JsonLd data={faqJsonLd} />
       <Nav />
       <main className="flex-1">
         <section className="mx-auto max-w-3xl px-4 py-10 sm:px-8 sm:py-16">

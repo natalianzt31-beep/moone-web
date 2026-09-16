@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { CATEGORIAS } from "@/lib/site-config";
+
+export const metadata: Metadata = {
+  title: "Colección",
+  description:
+    "Explorá la colección de Môone: vestidos, monos, sandalias, carteras y tapados en alquiler para tu próximo evento en Montevideo.",
+  alternates: { canonical: "/coleccion" },
+};
 
 const FOTOS: Record<string, string> = {
   vestidos: "/images/categorias/vestidos.jpg",

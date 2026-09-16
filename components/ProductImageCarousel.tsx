@@ -1,15 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 export function ProductImageCarousel({
   fotos,
   alt,
   fit = "contain",
+  sizes = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw",
+  preload = false,
 }: {
   fotos: string[];
   alt: string;
   fit?: "contain" | "cover" | "cover-top" | "natural";
+  /** Ver https://nextjs.org/docs/app/api-reference/components/image#sizes */
+  sizes?: string;
+  /** Para la foto principal de una ficha de producto (candidata a LCP). */
+  preload?: boolean;
 }) {
   const [index, setIndex] = useState(0);
 
@@ -49,21 +56,31 @@ export function ProductImageCarousel({
           }
         }}
         aria-label="Ver otra foto"
-        className={`w-full cursor-pointer bg-blanco ${fit === "natural" ? "" : "h-full"}`}
+        className={`w-full cursor-pointer bg-blanco ${fit === "natural" ? "" : "relative h-full"}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={fotos[index]}
-          alt={alt}
-          loading="lazy"
-          className={
-            fit === "natural"
-              ? "block h-auto w-full"
-              : fit === "cover-top"
-                ? "h-full w-full object-cover object-top"
-                : `h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`
-          }
-        />
+        {fit === "natural" ? (
+          // Proporción real de cada foto (varía según la prenda, ver
+          // lib/productImage.ts): sin caja de tamaño fijo, next/image
+          // necesitaría igual el ancho y alto intrínsecos de cada archivo
+          // para no generar layout shift, y acá no los tenemos a mano.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fotos[index]} alt={alt} loading="lazy" className="block h-auto w-full" />
+        ) : (
+          <Image
+            src={fotos[index]}
+            alt={alt}
+            fill
+            sizes={sizes}
+            preload={preload}
+            className={
+              fit === "cover-top"
+                ? "object-cover object-top"
+                : fit === "cover"
+                  ? "object-cover"
+                  : "object-contain"
+            }
+          />
+        )}
       </div>
 
       {fotos.length > 1 && (

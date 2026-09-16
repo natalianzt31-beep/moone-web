@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -24,11 +25,13 @@ export function Nav() {
     <header className="border-b border-arena bg-blanco">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-8">
         <Link href="/" className="flex items-center" onClick={() => setOpen(false)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/logo.png"
             alt="Môone Rental Boutique"
+            width={945}
+            height={401}
             className="h-10 w-auto sm:h-12"
+            preload
           />
         </Link>
 

@@ -22,6 +22,7 @@ export type Product = {
   precio_alquiler: number;
   valor_reposicion: number | null;
   estado: EstadoProducto;
+  slug: string;
   foto_url: string | null;
   fotos: string[] | null;
   precio_venta: number | null;

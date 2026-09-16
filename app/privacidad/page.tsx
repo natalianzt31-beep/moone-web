@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { Nav } from "@/components/Nav";
+
+export const metadata: Metadata = {
+  title: "Política de privacidad",
+  description: "Política de privacidad de Môone, alquiler de vestidos de fiesta en Montevideo.",
+  alternates: { canonical: "/privacidad" },
+};
 
 export default function PrivacidadPage() {
   return (
