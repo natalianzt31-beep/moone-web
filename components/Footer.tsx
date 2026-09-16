@@ -7,6 +7,12 @@ export function Footer() {
         <span>&copy; {new Date().getFullYear()} Môone</span>
         <div className="flex items-center gap-4">
           <Link
+            href="/como-funciona-el-alquiler"
+            className="flex min-h-11 items-center transition-colors hover:text-chocolate sm:min-h-0"
+          >
+            Cómo funciona el alquiler
+          </Link>
+          <Link
             href="/privacidad"
             className="flex min-h-11 items-center transition-colors hover:text-chocolate sm:min-h-0"
           >
