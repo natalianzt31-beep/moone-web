@@ -144,7 +144,7 @@ export function CategoriaClient({ categoria }: { categoria: Categoria }) {
                   className={SELECT_CLASSES}
                   aria-label="Filtrar por largo"
                 >
-                  <option value="">Largo</option>
+                  <option value="">Corto o largo</option>
                   {opcionesLargo.map((valor) => (
                     <option key={valor} value={valor}>
                       {valor}
