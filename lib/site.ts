@@ -8,6 +8,13 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
 
+/**
+ * Host "canónico" del sitio (sin protocolo). Cualquier otro host que sirva
+ * la misma app (el alias *.vercel.app, previews de rama, etc.) debería
+ * quedar fuera de la indexación de Google — ver proxy.ts.
+ */
+export const CANONICAL_HOST = new URL(SITE_URL).hostname;
+
 export const SITE_NAME = "Môone";
 
 export const SITE_TAGLINE = "Alquiler de vestidos de fiesta en Montevideo";
