@@ -11,6 +11,12 @@ create extension if not exists unaccent;
 
 alter table products add column if not exists slug text;
 
+-- Había un índice único parcial (idx_products_slug) con datos sueltos de
+-- un intento previo, no referenciado por ningún código de la app (slug
+-- por fila/SKU, no por diseño). Se reemplaza por el esquema de esta
+-- migración (un slug por diseño) y por el constraint de más abajo.
+drop index if exists idx_products_slug;
+
 with row_group as (
   select
     id,
@@ -22,7 +28,7 @@ group_info as (
   select
     group_key,
     min(clean_nombre) as clean_nombre,
-    min(id) as first_id
+    min(id::text) as first_id
   from row_group
   group by group_key
 ),
@@ -50,4 +56,9 @@ join group_final_slug gfs on gfs.group_key = rg.group_key
 where rg.id = p.id;
 
 alter table products alter column slug set not null;
-alter table products add constraint products_slug_key unique (slug);
+
+-- No es UNIQUE a nivel de fila a propósito: los distintos talles de un
+-- mismo diseño comparten el mismo slug (una sola URL /vestidos/[slug]
+-- por diseño, con selector de talle). La desambiguación entre diseños
+-- distintos ya se resuelve arriba, al calcular group_final_slug.
+create index if not exists idx_products_slug on products (slug);
