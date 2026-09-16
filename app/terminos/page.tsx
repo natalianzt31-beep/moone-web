@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { Nav } from "@/components/Nav";
+
+export const metadata: Metadata = {
+  title: "Términos y condiciones",
+  description: "Términos y condiciones del alquiler de vestidos de fiesta en Môone, Montevideo.",
+  alternates: { canonical: "/terminos" },
+};
 
 export default function TerminosPage() {
   return (

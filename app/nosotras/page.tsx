@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Nav } from "@/components/Nav";
 import {
   DIRECCION,
@@ -6,6 +7,13 @@ import {
   WHATSAPP_DISPLAY,
   WHATSAPP_URL,
 } from "@/lib/site-config";
+
+export const metadata: Metadata = {
+  title: "Nosotras y contacto",
+  description:
+    "Conocé al equipo de Môone y visitanos en Punta Carretas, Montevideo. Dirección, horario, email y WhatsApp para coordinar tu alquiler.",
+  alternates: { canonical: "/nosotras" },
+};
 
 const EQUIPO = [
   {

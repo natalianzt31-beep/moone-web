@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import { Nav } from "@/components/Nav";
 import { WHATSAPP_DISPLAY, WHATSAPP_URL } from "@/lib/site-config";
+
+export const metadata: Metadata = {
+  title: "Preguntas frecuentes",
+  description:
+    "Cómo reservar, talles, seña, devolución y tintorería: todo lo que necesitás saber sobre el alquiler de vestidos de fiesta en Môone, Montevideo.",
+  alternates: { canonical: "/faq" },
+};
 
 const PREGUNTAS = [
   {
