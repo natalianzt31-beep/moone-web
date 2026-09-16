@@ -69,11 +69,11 @@ export const BUSINESS = {
     },
   ],
   areaServed: "Montevideo",
-  /**
-   * Perfiles oficiales de la marca (JSON-LD `sameAs` de la home).
-   * TODO: sumar el de TikTok cuando esté.
-   */
-  sameAs: ["https://www.instagram.com/moonerentalboutique"] as string[],
+  /** Perfiles oficiales de la marca (JSON-LD `sameAs` de la home). */
+  sameAs: [
+    "https://www.instagram.com/moonerentalboutique",
+    "https://www.tiktok.com/@moonerentalboutique",
+  ] as string[],
 } as const;
 
 /** Arma una URL absoluta a partir de una ruta relativa, usando SITE_URL. */
