@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CATEGORIAS } from "@/lib/site-config";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { CategoriaClient } from "./CategoriaClient";
 
 export const revalidate = 3600;
@@ -54,5 +55,15 @@ export default async function CategoriaPage({
     notFound();
   }
 
-  return <CategoriaClient key={categoria.slug} categoria={categoria} />;
+  const { data, error } = await getSupabaseClient()
+    .from("products")
+    .select("*")
+    .eq("categoria", categoria.db)
+    .eq("estado", "disponible")
+    .gt("precio_alquiler", 0)
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  return <CategoriaClient key={categoria.slug} categoria={categoria} products={data ?? []} />;
 }

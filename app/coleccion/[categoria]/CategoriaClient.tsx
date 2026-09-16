@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { ProductCard } from "@/components/ProductCard";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
-import { getSupabaseClient } from "@/lib/supabase/client";
 import { compararTalles } from "@/lib/talles";
 import { colorPrincipal, compararColoresPrincipales } from "@/lib/colores";
 import type { Product } from "@/lib/supabase/types";
@@ -16,52 +15,16 @@ const SELECT_CLASSES =
 
 type Categoria = (typeof CATEGORIAS)[number];
 
-export function CategoriaClient({ categoria }: { categoria: Categoria }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+export function CategoriaClient({
+  categoria,
+  products,
+}: {
+  categoria: Categoria;
+  products: Product[];
+}) {
   const [largoFiltro, setLargoFiltro] = useState("");
   const [colorFiltro, setColorFiltro] = useState("");
   const [talleFiltro, setTalleFiltro] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchProducts() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const { data, error } = await getSupabaseClient()
-          .from("products")
-          .select("*")
-          .eq("categoria", categoria.db)
-          .eq("estado", "disponible")
-          .gt("precio_alquiler", 0)
-          .order("nombre", { ascending: true });
-
-        if (cancelled) return;
-
-        if (error) {
-          setError(error.message);
-        } else {
-          setProducts(data ?? []);
-        }
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchProducts();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [categoria]);
 
   const opcionesLargo = useMemo(
     () =>
@@ -135,7 +98,7 @@ export function CategoriaClient({ categoria }: { categoria: Categoria }) {
             {categoria.label}
           </h1>
 
-          {!loading && !error && products.length > 0 && (
+          {products.length > 0 && (
             <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
               {opcionesLargo.length > 0 && (
                 <select
@@ -201,25 +164,19 @@ export function CategoriaClient({ categoria }: { categoria: Categoria }) {
             </div>
           )}
 
-          {loading && <p className="mt-8 text-sm text-taupe">Cargando piezas...</p>}
-
-          {!loading && error && (
-            <p className="mt-8 text-sm text-chocolate">Error al cargar: {error}</p>
-          )}
-
-          {!loading && !error && products.length === 0 && (
+          {products.length === 0 && (
             <p className="mt-8 text-sm text-taupe">
               No hay piezas disponibles en esta categoría por el momento.
             </p>
           )}
 
-          {!loading && !error && products.length > 0 && productosFiltrados.length === 0 && (
+          {products.length > 0 && productosFiltrados.length === 0 && (
             <p className="mt-8 text-sm text-taupe">
               No hay piezas que coincidan con esos filtros.
             </p>
           )}
 
-          {!loading && !error && productosFiltrados.length > 0 && (
+          {productosFiltrados.length > 0 && (
             <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
               {grupos.map(({ key, variantes }) => (
                 <GroupedProductCard key={key} variantes={variantes} tipo="alquiler" variant="grid" />

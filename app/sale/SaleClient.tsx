@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Nav } from "@/components/Nav";
 import { ProductCard } from "@/components/ProductCard";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
-import { getSupabaseClient } from "@/lib/supabase/client";
 import { compararTalles } from "@/lib/talles";
 import { colorPrincipal, compararColoresPrincipales } from "@/lib/colores";
 import type { Product } from "@/lib/supabase/types";
@@ -12,11 +11,7 @@ import type { Product } from "@/lib/supabase/types";
 const SELECT_CLASSES =
   "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 text-sm text-negro focus:border-chocolate focus:outline-none";
 
-export function SaleClient() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+export function SaleClient({ products }: { products: Product[] }) {
   const [colorFiltro, setColorFiltro] = useState("");
   const [talleFiltro, setTalleFiltro] = useState("");
 
@@ -71,43 +66,6 @@ export function SaleClient() {
     return { grupos, individuales };
   }, [productosFiltrados]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchProducts() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const { data, error } = await getSupabaseClient()
-          .from("products")
-          .select("*")
-          .not("precio_venta", "is", null)
-          .neq("estado", "baja_definitiva")
-          .order("nombre", { ascending: true });
-
-        if (cancelled) return;
-
-        if (error) {
-          setError(error.message);
-        } else {
-          setProducts((data ?? []) as Product[]);
-        }
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    fetchProducts();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
@@ -120,7 +78,7 @@ export function SaleClient() {
             Prendas en venta definitiva — se abonan al 100%, no se alquilan.
           </p>
 
-          {!loading && !error && products.length > 0 && (
+          {products.length > 0 && (
             <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-8">
               {opcionesColor.length > 0 && (
                 <select
@@ -169,25 +127,19 @@ export function SaleClient() {
             </div>
           )}
 
-          {loading && <p className="mt-8 text-sm text-taupe">Cargando piezas...</p>}
-
-          {!loading && error && (
-            <p className="mt-8 text-sm text-chocolate">Error al cargar: {error}</p>
-          )}
-
-          {!loading && !error && products.length === 0 && (
+          {products.length === 0 && (
             <p className="mt-8 text-sm text-taupe">
               No hay prendas en venta por el momento.
             </p>
           )}
 
-          {!loading && !error && products.length > 0 && productosFiltrados.length === 0 && (
+          {products.length > 0 && productosFiltrados.length === 0 && (
             <p className="mt-8 text-sm text-taupe">
               No hay prendas que coincidan con esos filtros.
             </p>
           )}
 
-          {!loading && !error && productosFiltrados.length > 0 && (
+          {productosFiltrados.length > 0 && (
             <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
               {grupos.map(({ key, variantes }) => (
                 <GroupedProductCard key={key} variantes={variantes} tipo="venta" variant="grid" />
