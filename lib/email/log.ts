@@ -7,7 +7,8 @@ export type TipoEmailLog =
   | "eticket"
   | "recordatorio_devolucion"
   | "pedido_resena"
-  | "promocion";
+  | "promocion"
+  | "cuenta_existente";
 
 /**
  * Deja constancia en email_log de cada intento de envío (éxito o error),

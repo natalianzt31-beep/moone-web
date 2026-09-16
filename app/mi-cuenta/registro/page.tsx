@@ -24,6 +24,7 @@ function RegistroForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmacionPendiente, setConfirmacionPendiente] = useState(false);
+  const [cuentaExistente, setCuentaExistente] = useState(false);
 
   const returnTo = searchParams.get("returnTo");
   const destino = returnTo && returnTo.startsWith("/") ? returnTo : "/mi-cuenta/historial";
@@ -49,6 +50,18 @@ function RegistroForm() {
 
     setSubmitting(true);
     try {
+      const verificacion = await fetch("/api/auth/verificar-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const { existe } = await verificacion.json();
+
+      if (existe) {
+        setCuentaExistente(true);
+        return;
+      }
+
       const { data, error } = await getSupabaseClient().auth.signUp({
         email,
         password,
@@ -84,7 +97,12 @@ function RegistroForm() {
             Registrate para reservar y guardar prendas en tu carrito.
           </p>
 
-          {confirmacionPendiente ? (
+          {cuentaExistente ? (
+            <div className="mt-8 rounded-[3px] bg-crema p-4 text-sm text-chocolate">
+              Ya existe una cuenta con ese mail. Te enviamos un mail con el link para iniciar
+              sesión o restablecer tu contraseña, si no te acordás cuál es.
+            </div>
+          ) : confirmacionPendiente ? (
             <div className="mt-8 rounded-[3px] bg-crema p-4 text-sm text-chocolate">
               Te enviamos un email para confirmar tu cuenta. Una vez que la
               confirmes, iniciá sesión desde{" "}

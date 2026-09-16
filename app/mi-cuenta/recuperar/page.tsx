@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const inputClass =
   "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none";
 
-export default function RecuperarPage() {
-  const [email, setEmail] = useState("");
+function RecuperarForm() {
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
@@ -87,5 +89,13 @@ export default function RecuperarPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function RecuperarPage() {
+  return (
+    <Suspense fallback={null}>
+      <RecuperarForm />
+    </Suspense>
   );
 }
