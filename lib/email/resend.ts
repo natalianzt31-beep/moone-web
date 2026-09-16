@@ -32,6 +32,10 @@ export async function enviarEmail(params: {
   const resend = getClient();
 
   if (!resend || !from) {
+    console.error("[email] Resend no está configurada (falta RESEND_API_KEY o RESEND_FROM_EMAIL)", {
+      to: params.to,
+      subject: params.subject,
+    });
     return { ok: false, reason: "email_not_configured" };
   }
 
