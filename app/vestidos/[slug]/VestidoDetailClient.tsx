@@ -55,9 +55,9 @@ export function VestidoDetailClient({ variantes }: { variantes: Product[] }) {
 
           <div className="mt-6">
             {variantes.length > 1 ? (
-              <GroupedProductCard variantes={variantes} tipo="alquiler" />
+              <GroupedProductCard variantes={variantes} tipo="alquiler" preload />
             ) : (
-              <ProductCard product={variantes[0]} tipo="alquiler" />
+              <ProductCard product={variantes[0]} tipo="alquiler" preload />
             )}
           </div>
         </section>

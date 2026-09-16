@@ -178,11 +178,23 @@ export function CategoriaClient({
 
           {productosFiltrados.length > 0 && (
             <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
-              {grupos.map(({ key, variantes }) => (
-                <GroupedProductCard key={key} variantes={variantes} tipo="alquiler" variant="grid" />
+              {grupos.map(({ key, variantes }, i) => (
+                <GroupedProductCard
+                  key={key}
+                  variantes={variantes}
+                  tipo="alquiler"
+                  variant="grid"
+                  preload={i < 4}
+                />
               ))}
-              {individuales.map((product) => (
-                <ProductCard key={product.id} product={product} tipo="alquiler" variant="grid" />
+              {individuales.map((product, i) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  tipo="alquiler"
+                  variant="grid"
+                  preload={grupos.length + i < 4}
+                />
               ))}
             </div>
           )}

@@ -27,10 +27,13 @@ export function GroupedProductCard({
   variantes,
   tipo,
   variant = "ficha",
+  preload = false,
 }: {
   variantes: Product[];
   tipo: "alquiler" | "venta";
   variant?: ImageVariant;
+  /** Para las primeras cards visibles sin scroll (candidatas a LCP). */
+  preload?: boolean;
 }) {
   const ordenadas = useMemo(
     () => [...variantes].sort((a, b) => compararTalles(a.talle, b.talle)),
@@ -164,11 +167,22 @@ export function GroupedProductCard({
     fit === "natural"
       ? "relative w-full overflow-hidden rounded-[3px] border border-arena bg-blanco"
       : `relative ${imageBoxAspectClass(producto.categoria)} overflow-hidden rounded-[3px] border border-arena bg-blanco`;
+  const sizes =
+    variant === "grid"
+      ? "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+      : "(min-width: 640px) 384px, 100vw";
 
   return (
     <div className="flex h-full flex-col gap-3">
       <div className={boxClass}>
-        <ProductImageCarousel key={producto.id} fotos={fotos} alt={nombreBase} fit={fit} />
+        <ProductImageCarousel
+          key={producto.id}
+          fotos={fotos}
+          alt={nombreBase}
+          fit={fit}
+          sizes={sizes}
+          preload={preload}
+        />
         {tipo === "venta" && producto.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
             {producto.condicion === "nuevo" ? "Nuevo" : "Usado"}
