@@ -70,10 +70,10 @@ export const BUSINESS = {
   ],
   areaServed: "Montevideo",
   /**
-   * TODO: completar con los links reales de Instagram y TikTok de Môone
-   * antes de publicar (se usan en el JSON-LD `sameAs` de la home).
+   * Perfiles oficiales de la marca (JSON-LD `sameAs` de la home).
+   * TODO: sumar el de TikTok cuando esté.
    */
-  sameAs: [] as string[],
+  sameAs: ["https://www.instagram.com/moonerentalboutique"] as string[],
 } as const;
 
 /** Arma una URL absoluta a partir de una ruta relativa, usando SITE_URL. */
