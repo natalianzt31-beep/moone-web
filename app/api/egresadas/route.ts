@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { enviarEmail, resendConfigurado } from "@/lib/email/resend";
+import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { BUSINESS } from "@/lib/site";
 
 /** Vercel corta las funciones serverless en ~4.5MB por request; dejamos margen. */
@@ -89,18 +90,54 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!resendConfigurado()) {
-    return NextResponse.json(
-      { error: "El envío de mails no está configurado todavía." },
-      { status: 503 }
-    );
-  }
-
   const buffer = Buffer.from(await imagen.arrayBuffer());
-  const base64 = buffer.toString("base64");
   const extension = imagen.name.includes(".") ? imagen.name.split(".").pop() : "jpg";
   const nombreArchivo = `inspiracion-${nombre.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "egresada"}.${extension}`;
 
+  // Guardar en la base es lo que importa de verdad (así queda visible en el
+  // backoffice pase lo que pase con el mail) — se hace primero y si falla,
+  // se corta acá. El mail de abajo es solo un aviso best-effort.
+  const supabase = getSupabaseServiceClient();
+  const imagenPath = `${crypto.randomUUID()}-${nombreArchivo}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("egresadas")
+    .upload(imagenPath, buffer, { contentType: imagen.type });
+
+  if (uploadError) {
+    console.error("[egresadas] No se pudo subir la imagen", uploadError);
+    return NextResponse.json(
+      { error: "No pudimos guardar tu imagen, probá de nuevo." },
+      { status: 500 }
+    );
+  }
+
+  const { error: insertError } = await supabase.from("egresadas_submissions").insert({
+    nombre,
+    liceo,
+    graduacion,
+    talle,
+    color,
+    imagen_path: imagenPath,
+    gusta: gusta || null,
+    cambiaria: cambiaria || null,
+    instagram,
+    whatsapp,
+  });
+
+  if (insertError) {
+    console.error("[egresadas] No se pudo guardar la respuesta", insertError);
+    return NextResponse.json(
+      { error: "No pudimos guardar tu respuesta, probá de nuevo." },
+      { status: 500 }
+    );
+  }
+
+  if (!resendConfigurado()) {
+    return NextResponse.json({ ok: true });
+  }
+
+  const base64 = buffer.toString("base64");
   const filas = [
     filaHtml("Nombre", nombre),
     filaHtml("Liceo/colegio", liceo),
@@ -123,19 +160,12 @@ export async function POST(req: Request) {
     </div>
   `.trim();
 
-  const resultado = await enviarEmail({
+  await enviarEmail({
     to: BUSINESS.email,
     subject: `Egresadas — nueva inspiración de ${nombre}`,
     html,
     attachments: [{ filename: nombreArchivo, content: base64 }],
   });
-
-  if (!resultado.ok) {
-    return NextResponse.json(
-      { error: "No pudimos enviar tu inspiración, probá de nuevo." },
-      { status: 502 }
-    );
-  }
 
   return NextResponse.json({ ok: true });
 }

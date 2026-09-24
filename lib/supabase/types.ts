@@ -151,3 +151,19 @@ export type ClosedDate = {
   motivo: string | null;
   created_at: string;
 };
+
+export type EgresadaSubmission = {
+  id: string;
+  nombre: string;
+  liceo: string;
+  graduacion: string;
+  talle: string;
+  color: string;
+  imagen_path: string;
+  gusta: string | null;
+  cambiaria: string | null;
+  instagram: string;
+  whatsapp: string;
+  revisado: boolean;
+  created_at: string;
+};
