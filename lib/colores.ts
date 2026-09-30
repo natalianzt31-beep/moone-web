@@ -26,6 +26,7 @@ const FAMILIA_POR_COLOR: Record<string, string> = {
   peltre: "Plateado",
   lila: "Violeta",
   magenta: "Rosa",
+  malva: "Marrón",
   marron: "Marrón",
   multicolor: "Multicolor",
   naranja: "Naranja",
