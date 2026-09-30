@@ -10,6 +10,7 @@ const FAMILIA_POR_COLOR: Record<string, string> = {
   "azul petroleo": "Azul",
   celeste: "Azul",
   beige: "Beige",
+  ciruela: "Violeta",
   camel: "Beige",
   nude: "Beige",
   blanco: "Blanco",
