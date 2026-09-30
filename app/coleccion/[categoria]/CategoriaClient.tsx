@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
 import { compararTalles } from "@/lib/talles";
 import { colorPrincipal, compararColoresPrincipales } from "@/lib/colores";
+import { ColorFilterHint } from "@/components/ColorFilterHint";
 import type { Product } from "@/lib/supabase/types";
 import type { CATEGORIAS } from "@/lib/site-config";
 
@@ -117,19 +118,22 @@ export function CategoriaClient({
               )}
 
               {opcionesColor.length > 0 && (
-                <select
-                  value={colorFiltro}
-                  onChange={(e) => setColorFiltro(e.target.value)}
-                  className={SELECT_CLASSES}
-                  aria-label="Filtrar por color"
-                >
-                  <option value="">Color</option>
-                  {opcionesColor.map((valor) => (
-                    <option key={valor} value={valor}>
-                      {valor}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1">
+                  <select
+                    value={colorFiltro}
+                    onChange={(e) => setColorFiltro(e.target.value)}
+                    className={SELECT_CLASSES}
+                    aria-label="Filtrar por color"
+                  >
+                    <option value="">Color</option>
+                    {opcionesColor.map((valor) => (
+                      <option key={valor} value={valor}>
+                        {valor}
+                      </option>
+                    ))}
+                  </select>
+                  <ColorFilterHint />
+                </div>
               )}
 
               {opcionesTalle.length > 0 && (
