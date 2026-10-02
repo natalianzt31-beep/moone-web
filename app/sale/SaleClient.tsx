@@ -88,6 +88,7 @@ export function SaleClient({ products }: { products: Product[] }) {
                     onChange={(e) => setColorFiltro(e.target.value)}
                     className={SELECT_CLASSES}
                     aria-label="Filtrar por color"
+                    autoComplete="off"
                   >
                     <option value="">Color</option>
                     {opcionesColor.map((valor) => (
@@ -106,6 +107,7 @@ export function SaleClient({ products }: { products: Product[] }) {
                   onChange={(e) => setTalleFiltro(e.target.value)}
                   className={SELECT_CLASSES}
                   aria-label="Filtrar por talle"
+                  autoComplete="off"
                 >
                   <option value="">Talle</option>
                   {opcionesTalle.map((valor) => (

@@ -107,6 +107,7 @@ export function CategoriaClient({
                   onChange={(e) => setLargoFiltro(e.target.value)}
                   className={SELECT_CLASSES}
                   aria-label="Filtrar por largo"
+                  autoComplete="off"
                 >
                   <option value="">Corto o largo</option>
                   {opcionesLargo.map((valor) => (
@@ -124,6 +125,7 @@ export function CategoriaClient({
                     onChange={(e) => setColorFiltro(e.target.value)}
                     className={SELECT_CLASSES}
                     aria-label="Filtrar por color"
+                    autoComplete="off"
                   >
                     <option value="">Color</option>
                     {opcionesColor.map((valor) => (
@@ -142,6 +144,7 @@ export function CategoriaClient({
                   onChange={(e) => setTalleFiltro(e.target.value)}
                   className={SELECT_CLASSES}
                   aria-label="Filtrar por talle"
+                  autoComplete="off"
                 >
                   <option value="">Talle</option>
                   {opcionesTalle.map((valor) => (
