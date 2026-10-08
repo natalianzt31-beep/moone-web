@@ -56,12 +56,14 @@ function TurnosContent() {
       setTurnos(filas);
 
       const urls = await Promise.all(
-        filas.map(async (fila) => {
-          const { data: firmada } = await supabase.storage
-            .from("citas-modista")
-            .createSignedUrl(fila.imagen_path, SIGNED_URL_SEGUNDOS);
-          return [fila.id, firmada?.signedUrl ?? null] as const;
-        })
+        filas
+          .filter((fila) => fila.imagen_path)
+          .map(async (fila) => {
+            const { data: firmada } = await supabase.storage
+              .from("citas-modista")
+              .createSignedUrl(fila.imagen_path!, SIGNED_URL_SEGUNDOS);
+            return [fila.id, firmada?.signedUrl ?? null] as const;
+          })
       );
       setImagenes(Object.fromEntries(urls.filter(([, url]) => url) as [string, string][]));
     } catch (err) {

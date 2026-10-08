@@ -103,7 +103,6 @@ export function AgendaTurnoForm() {
     if (!email.trim()) nuevosErrores.email = "Dejanos tu mail.";
     if (!celular.trim()) nuevosErrores.celular = "Dejanos tu celular.";
     if (!fechaFiesta) nuevosErrores.fechaFiesta = "Elegí la fecha de tu fiesta.";
-    if (!imagen) nuevosErrores.imagen = "Subí una foto del vestido que querés lograr.";
 
     setErrores(nuevosErrores);
     return Object.values(nuevosErrores).every((msg) => !msg);
@@ -252,7 +251,8 @@ export function AgendaTurnoForm() {
       </label>
 
       <div className="flex flex-col gap-1 text-sm text-negro">
-        Mostranos el vestido que querés lograr 🤍 <span className="text-chocolate">*</span>
+        Mostranos el vestido que querés lograr 🤍{" "}
+        <span className="text-xs font-normal text-taupe">(opcional)</span>
         <label className="mt-1 flex cursor-pointer flex-col items-center gap-1 rounded-[3px] border border-dashed border-taupe bg-blanco px-4 py-6 text-center">
           <input type="file" accept="image/*" onChange={handleImagenChange} className="hidden" />
           <span className="text-sm font-medium text-chocolate">

@@ -176,7 +176,7 @@ export type CitaModista = {
   email: string;
   celular: string;
   fecha_fiesta: string;
-  imagen_path: string;
+  imagen_path: string | null;
   estado: "confirmada" | "cancelada";
   token: string;
   cancelado_at: string | null;

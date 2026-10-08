@@ -66,10 +66,10 @@ function filaHtml(etiqueta: string, valor: string): string {
     </tr>`;
 }
 
-/** Aviso interno a la tienda de que se agendó un turno nuevo, con la foto de referencia adjunta. */
+/** Aviso interno a la tienda de que se agendó un turno nuevo, con la foto de referencia adjunta si la clienta subió una. */
 export async function enviarAvisoNuevoTurno(
   turno: Turno,
-  imagen: { nombreArchivo: string; base64: string }
+  imagen: { nombreArchivo: string; base64: string } | null
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const filas = [
     filaHtml("Nombre", turno.nombre),
@@ -84,14 +84,16 @@ export async function enviarAvisoNuevoTurno(
       <h1 style="font-family: Georgia, serif; color:#171513; font-size: 20px; font-weight: 500; margin: 0 0 4px;">
         Nuevo turno con la modista
       </h1>
-      <p style="color:#A49587; font-size: 13px; margin: 0 0 20px;">La foto de referencia va adjunta a este mail.</p>
+      <p style="color:#A49587; font-size: 13px; margin: 0 0 20px;">
+        ${imagen ? "La foto de referencia va adjunta a este mail." : "La clienta no adjuntó foto de referencia."}
+      </p>
       <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
     </div>
   `.trim();
 
-  const attachments: EmailAttachment[] = [
-    { filename: imagen.nombreArchivo, content: imagen.base64 },
-  ];
+  const attachments: EmailAttachment[] | undefined = imagen
+    ? [{ filename: imagen.nombreArchivo, content: imagen.base64 }]
+    : undefined;
 
   return enviarEmail({
     to: BUSINESS.email,

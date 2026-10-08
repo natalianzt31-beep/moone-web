@@ -62,20 +62,18 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!(imagen instanceof File) || imagen.size === 0) {
-    return NextResponse.json(
-      { error: "Subí una foto del vestido que querés lograr." },
-      { status: 400 }
-    );
-  }
-  if (!imagen.type.startsWith("image/")) {
-    return NextResponse.json({ error: "El archivo tiene que ser una imagen." }, { status: 400 });
-  }
-  if (imagen.size > MAX_IMAGEN_BYTES) {
-    return NextResponse.json(
-      { error: "La imagen pesa más de 4MB, probá con otra." },
-      { status: 400 }
-    );
+  const tieneImagen = imagen instanceof File && imagen.size > 0;
+
+  if (tieneImagen) {
+    if (!imagen.type.startsWith("image/")) {
+      return NextResponse.json({ error: "El archivo tiene que ser una imagen." }, { status: 400 });
+    }
+    if (imagen.size > MAX_IMAGEN_BYTES) {
+      return NextResponse.json(
+        { error: "La imagen pesa más de 4MB, probá con otra." },
+        { status: 400 }
+      );
+    }
   }
 
   const supabase = getSupabaseServiceClient();
@@ -91,27 +89,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Ese día no atendemos, elegí otra fecha." }, { status: 400 });
   }
 
-  const buffer = Buffer.from(await imagen.arrayBuffer());
-  const extension = imagen.name.includes(".") ? imagen.name.split(".").pop() : "jpg";
-  const nombreArchivo = `turno-${
-    nombre.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "clienta"
-  }.${extension}`;
-
   // Guardar en la base es lo que importa de verdad (así la modista ve el
   // turno en el backoffice pase lo que pase con el mail) — se hace primero
   // y si falla, se corta acá. Los mails de abajo son best-effort.
-  const imagenPath = `${crypto.randomUUID()}-${nombreArchivo}`;
+  let imagenPath: string | null = null;
+  let buffer: Buffer | null = null;
+  let nombreArchivo: string | null = null;
 
-  const { error: uploadError } = await supabase.storage
-    .from("citas-modista")
-    .upload(imagenPath, buffer, { contentType: imagen.type });
+  if (tieneImagen) {
+    buffer = Buffer.from(await imagen.arrayBuffer());
+    const extension = imagen.name.includes(".") ? imagen.name.split(".").pop() : "jpg";
+    nombreArchivo = `turno-${
+      nombre.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "clienta"
+    }.${extension}`;
+    imagenPath = `${crypto.randomUUID()}-${nombreArchivo}`;
 
-  if (uploadError) {
-    console.error("[citas] No se pudo subir la imagen", uploadError);
-    return NextResponse.json(
-      { error: "No pudimos guardar tu imagen, probá de nuevo." },
-      { status: 500 }
-    );
+    const { error: uploadError } = await supabase.storage
+      .from("citas-modista")
+      .upload(imagenPath, buffer, { contentType: imagen.type });
+
+    if (uploadError) {
+      console.error("[citas] No se pudo subir la imagen", uploadError);
+      return NextResponse.json(
+        { error: "No pudimos guardar tu imagen, probá de nuevo." },
+        { status: 500 }
+      );
+    }
   }
 
   const { data: insertado, error: insertError } = await supabase
@@ -154,10 +157,10 @@ export async function POST(req: Request) {
       token: insertado.token as string,
     };
     await enviarConfirmacionTurno(turno);
-    await enviarAvisoNuevoTurno(turno, {
-      nombreArchivo,
-      base64: buffer.toString("base64"),
-    });
+    await enviarAvisoNuevoTurno(
+      turno,
+      buffer && nombreArchivo ? { nombreArchivo, base64: buffer.toString("base64") } : null
+    );
   }
 
   return NextResponse.json({ ok: true });
