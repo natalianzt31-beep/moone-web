@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { ProductCard } from "@/components/ProductCard";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
+import { ShareButton } from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Product } from "@/lib/supabase/types";
 
@@ -49,9 +50,12 @@ export function VestidoDetailClient({ variantes }: { variantes: Product[] }) {
           >
             ← Vestidos
           </Link>
-          <h1 className="mt-1 text-xl font-normal tracking-tight text-negro sm:text-2xl">
-            {nombreBase}
-          </h1>
+          <div className="mt-1 flex items-start justify-between gap-3">
+            <h1 className="text-xl font-normal tracking-tight text-negro sm:text-2xl">
+              {nombreBase}
+            </h1>
+            <ShareButton title={nombreBase} />
+          </div>
 
           <div className="mt-6">
             {variantes.length > 1 ? (

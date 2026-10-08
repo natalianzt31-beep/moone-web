@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { ProductCard } from "@/components/ProductCard";
+import { ShareButton } from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Product } from "@/lib/supabase/types";
@@ -84,10 +85,15 @@ export function ProductoClient({ sku }: { sku: string }) {
                 <p className="mt-2 text-sm text-chocolate">Esta prenda ya no está disponible.</p>
               </div>
             ) : (
-              <ProductCard
-                product={product}
-                tipo={product.precio_venta != null ? "venta" : "alquiler"}
-              />
+              <>
+                <div className="mb-4 flex justify-end">
+                  <ShareButton title={product.nombre} />
+                </div>
+                <ProductCard
+                  product={product}
+                  tipo={product.precio_venta != null ? "venta" : "alquiler"}
+                />
+              </>
             )
           )}
         </section>

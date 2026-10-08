@@ -17,6 +17,7 @@ import {
   limpiarPedidoPendiente,
 } from "@/lib/pendingCartItem";
 import { imageBoxAspectClass, imageDisplayMode, type ImageVariant } from "@/lib/productImage";
+import { productHref } from "@/lib/productLink";
 import type { Product } from "@/lib/supabase/types";
 
 export function ProductCard({
@@ -142,8 +143,8 @@ export function ProductCard({
       ? "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
       : "(min-width: 640px) 384px, 100vw";
 
-  return (
-    <div className="flex h-full flex-col gap-3">
+  const preview = (
+    <>
       <div className={boxClass}>
         <ProductImageCarousel
           fotos={fotos}
@@ -168,6 +169,18 @@ export function ProductCard({
           <p className="line-clamp-2 text-xs text-taupe">{product.descripcion_web}</p>
         )}
       </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-full flex-col gap-3">
+      {variant === "grid" ? (
+        <Link href={productHref(product)} className="contents">
+          {preview}
+        </Link>
+      ) : (
+        preview
+      )}
 
       <div className="mt-auto flex flex-col gap-3">
         <span className="text-sm text-negro">
