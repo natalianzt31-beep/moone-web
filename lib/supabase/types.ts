@@ -167,3 +167,18 @@ export type EgresadaSubmission = {
   revisado: boolean;
   created_at: string;
 };
+
+export type CitaModista = {
+  id: string;
+  fecha: string;
+  hora: string;
+  nombre: string;
+  email: string;
+  celular: string;
+  fecha_fiesta: string;
+  imagen_path: string;
+  estado: "confirmada" | "cancelada";
+  token: string;
+  cancelado_at: string | null;
+  created_at: string;
+};

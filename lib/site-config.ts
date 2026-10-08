@@ -21,3 +21,19 @@ export const CATEGORIAS = [
   { slug: "tapados", label: "Tapados", db: "tapado" },
   { slug: "accesorios", label: "Accesorios", db: "accesorio" },
 ] as const;
+
+/**
+ * Horario de atención de la modista para /turnos. diaSemana usa el valor de
+ * Date.getDay() (5 = viernes, 6 = sábado). Un turno dura duracionMinutos y
+ * el último empieza a horaFin menos esa duración (ej: viernes hasta 18:00,
+ * mangas de 30 min -> el último turno arranca a las 17:30).
+ */
+export const AGENDA_MODISTA = {
+  diasDisponibles: [
+    { diaSemana: 5, etiqueta: "Viernes", horaInicio: "14:00", horaFin: "18:00" },
+    { diaSemana: 6, etiqueta: "Sábado", horaInicio: "10:00", horaFin: "18:00" },
+  ],
+  duracionMinutos: 30,
+  /** Cuántas semanas hacia adelante se muestran para agendarse. */
+  semanasVisibles: 6,
+} as const;
