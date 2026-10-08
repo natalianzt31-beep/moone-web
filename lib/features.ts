@@ -5,3 +5,4 @@
  */
 export const bookingEnabled = process.env.NEXT_PUBLIC_ENABLE_BOOKING === "true";
 export const checkoutEnabled = process.env.NEXT_PUBLIC_ENABLE_CHECKOUT === "true";
+export const turnosEnabled = process.env.NEXT_PUBLIC_ENABLE_TURNOS === "true";

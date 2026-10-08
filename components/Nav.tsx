@@ -6,13 +6,14 @@ import Link from "next/link";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { WHATSAPP_URL } from "@/lib/site-config";
+import { turnosEnabled } from "@/lib/features";
 
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/coleccion", label: "Colección" },
   { href: "/nosotras", label: "Nosotras" },
   { href: "/sale", label: "On Sale" },
-  { href: "/turnos", label: "Modista" },
+  ...(turnosEnabled ? [{ href: "/turnos", label: "Modista" }] : []),
   { href: "/faq", label: "FAQ" },
 ];
 

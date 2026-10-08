@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { AgendaTurnoForm } from "@/app/turnos/AgendaTurnoForm";
+import { turnosEnabled } from "@/lib/features";
 
 export const metadata: Metadata = {
   title: "Turno con la modista",
@@ -10,6 +12,10 @@ export const metadata: Metadata = {
 };
 
 export default function TurnosPage() {
+  if (!turnosEnabled) {
+    redirect("/");
+  }
+
   return (
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
