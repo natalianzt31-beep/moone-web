@@ -155,6 +155,7 @@ export async function POST(req: Request) {
       hora,
       fecha_fiesta: fechaFiesta,
       token: insertado.token as string,
+      tieneImagen,
     };
     await enviarConfirmacionTurno(turno);
     await enviarAvisoNuevoTurno(

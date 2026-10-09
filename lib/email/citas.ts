@@ -35,6 +35,7 @@ type Turno = {
   hora: string;
   fecha_fiesta: string;
   token: string;
+  tieneImagen: boolean;
 };
 
 /** Mail a la clienta confirmando el turno, con el link para darse de baja. */
@@ -42,12 +43,16 @@ export async function enviarConfirmacionTurno(
   turno: Turno
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const linkCancelar = absoluteUrl(`/turnos/cancelar/${turno.token}`);
+  const textoEspera = turno.tieneImagen
+    ? "Te esperamos en Punta Carretas con la foto que nos mandaste como referencia."
+    : "Te esperamos en Punta Carretas.";
 
   const html = PLANTILLA_CONFIRMACION_TURNO.replace("{{nombre}}", escapeHtml(turno.nombre))
     .replace("{{fecha_turno}}", formatFechaConDia(turno.fecha))
     .replace("{{hora_turno}}", turno.hora)
     .replace("{{fecha_fiesta}}", formatFecha(turno.fecha_fiesta))
     .replace("{{link_cancelar}}", linkCancelar)
+    .replace("{{texto_espera}}", textoEspera)
     .replaceAll("{{whatsapp_display}}", WHATSAPP_DISPLAY);
 
   return enviarEmail({
@@ -66,7 +71,9 @@ function filaHtml(etiqueta: string, valor: string): string {
     </tr>`;
 }
 
-/** Aviso interno a la tienda de que se agendó un turno nuevo, con la foto de referencia adjunta si la clienta subió una. */
+const IMAGEN_CONTENT_ID = "foto-referencia-turno";
+
+/** Aviso interno a la tienda de que se agendó un turno nuevo, con la foto de referencia (si la clienta subió una) mostrada dentro del mail. */
 export async function enviarAvisoNuevoTurno(
   turno: Turno,
   imagen: { nombreArchivo: string; base64: string } | null
@@ -85,14 +92,15 @@ export async function enviarAvisoNuevoTurno(
         Nuevo turno con la modista
       </h1>
       <p style="color:#A49587; font-size: 13px; margin: 0 0 20px;">
-        ${imagen ? "La foto de referencia va adjunta a este mail." : "La clienta no adjuntó foto de referencia."}
+        ${imagen ? "La clienta adjuntó esta foto de referencia:" : "La clienta no adjuntó foto de referencia."}
       </p>
+      ${imagen ? `<img src="cid:${IMAGEN_CONTENT_ID}" alt="Foto de referencia" style="max-width: 100%; border-radius: 4px; margin-bottom: 20px;" />` : ""}
       <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
     </div>
   `.trim();
 
   const attachments: EmailAttachment[] | undefined = imagen
-    ? [{ filename: imagen.nombreArchivo, content: imagen.base64 }]
+    ? [{ filename: imagen.nombreArchivo, content: imagen.base64, contentId: IMAGEN_CONTENT_ID }]
     : undefined;
 
   return enviarEmail({

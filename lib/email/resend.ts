@@ -7,7 +7,12 @@ import { Resend } from "resend";
  * que intentar enviar nada.
  */
 
-export type EmailAttachment = { filename: string; content: string };
+export type EmailAttachment = {
+  filename: string;
+  content: string;
+  /** Si se pasa, el adjunto se manda inline y se puede referenciar en el HTML con src="cid:<contentId>". */
+  contentId?: string;
+};
 
 let client: Resend | undefined;
 

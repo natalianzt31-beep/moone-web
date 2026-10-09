@@ -134,8 +134,7 @@ export const PLANTILLA_CONFIRMACION_TURNO = `<!DOCTYPE html>
               </table>
 
               <p style="color:#4A3A31; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">
-                Te esperamos en Punta Carretas con la foto que nos mandaste como referencia.
-                Cualquier consulta, escribinos por WhatsApp al {{whatsapp_display}}.
+                {{texto_espera}} Cualquier consulta, escribinos por WhatsApp al {{whatsapp_display}}.
               </p>
 
               <p style="color:#A49587; font-size: 13px; line-height: 1.6; margin: 0;">
