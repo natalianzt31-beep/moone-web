@@ -6,6 +6,8 @@ export const MAPS_EMBED_SRC = `https://www.google.com/maps?q=${encodeURIComponen
 export const WHATSAPP_URL = "https://wa.me/59893787376";
 export const WHATSAPP_DISPLAY = "093 787 376";
 export const EMAIL_CONTACTO = "contacto@moone.com.uy";
+/** Recibe copia del aviso de cada turno nuevo agendado en /turnos (ver lib/email/citas.ts). */
+export const EMAIL_MODISTA = "mac.fesa@hotmail.com";
 
 export const currencyFormatter = new Intl.NumberFormat("es-UY", {
   style: "currency",

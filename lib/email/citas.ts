@@ -1,7 +1,7 @@
 import "server-only";
 import { enviarEmail, type EmailAttachment } from "@/lib/email/resend";
 import { absoluteUrl, BUSINESS } from "@/lib/site";
-import { WHATSAPP_DISPLAY } from "@/lib/site-config";
+import { EMAIL_MODISTA, WHATSAPP_DISPLAY } from "@/lib/site-config";
 import { PLANTILLA_CONFIRMACION_TURNO } from "@/lib/email/plantillas";
 
 function escapeHtml(texto: string): string {
@@ -73,7 +73,7 @@ function filaHtml(etiqueta: string, valor: string): string {
 
 const IMAGEN_CONTENT_ID = "foto-referencia-turno";
 
-/** Aviso interno a la tienda de que se agendó un turno nuevo, con la foto de referencia (si la clienta subió una) mostrada dentro del mail. */
+/** Aviso interno a la tienda y a la modista de que se agendó un turno nuevo, con la foto de referencia (si la clienta subió una) mostrada dentro del mail. */
 export async function enviarAvisoNuevoTurno(
   turno: Turno,
   imagen: { nombreArchivo: string; base64: string } | null
@@ -104,7 +104,7 @@ export async function enviarAvisoNuevoTurno(
     : undefined;
 
   return enviarEmail({
-    to: BUSINESS.email,
+    to: [BUSINESS.email, EMAIL_MODISTA],
     subject: `Nuevo turno — ${turno.nombre} (${formatFechaConDia(turno.fecha)} ${turno.hora})`,
     html,
     attachments,

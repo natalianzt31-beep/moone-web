@@ -28,7 +28,7 @@ export function resendConfigurado(): boolean {
 }
 
 export async function enviarEmail(params: {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   attachments?: EmailAttachment[];
