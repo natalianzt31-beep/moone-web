@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { CATEGORIAS } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { absoluteUrl } from "@/lib/site";
+import { turnosEnabled } from "@/lib/features";
 
 const PAGINAS_ESTATICAS = [
   { path: "/", changeFrequency: "weekly" as const, priority: 1 },
@@ -12,6 +13,10 @@ const PAGINAS_ESTATICAS = [
   { path: "/nosotras", changeFrequency: "monthly" as const, priority: 0.5 },
   { path: "/privacidad", changeFrequency: "yearly" as const, priority: 0.1 },
   { path: "/terminos", changeFrequency: "yearly" as const, priority: 0.1 },
+  // Mi Cuenta queda afuera a propósito: son páginas de sesión, no contenido público a indexar.
+  ...(turnosEnabled
+    ? [{ path: "/turnos", changeFrequency: "weekly" as const, priority: 0.6 }]
+    : []),
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
