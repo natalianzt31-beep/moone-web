@@ -23,7 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data, error } = await getSupabaseClient()
     .from("products")
     .select("slug")
-    .eq("categoria", "vestido");
+    .eq("categoria", "vestido")
+    .neq("estado", "baja_definitiva");
 
   if (error) throw new Error(error.message);
 

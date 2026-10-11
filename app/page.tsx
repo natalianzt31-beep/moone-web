@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { JsonLd } from "@/components/JsonLd";
 import { DIRECCION } from "@/lib/site-config";
 import { BUSINESS, absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Alquiler de vestidos de fiesta en Punta Carretas",
+  description:
+    "Alquilá vestidos, monos, sandalias y carteras para tus fiestas en Montevideo. Probalos en nuestro local de Punta Carretas, con asesoramiento.",
+};
 
 const clothingStoreJsonLd = {
   "@context": "https://schema.org",

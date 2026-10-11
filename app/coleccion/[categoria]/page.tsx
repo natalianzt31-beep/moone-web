@@ -12,9 +12,15 @@ export function generateStaticParams() {
   return CATEGORIAS.map((c) => ({ categoria: c.slug }));
 }
 
+// Título propio solo para vestidos (la categoría con más tráfico); el resto
+// sigue con la fórmula genérica "{label} en alquiler" de abajo.
+const TITULOS: Record<string, string> = {
+  vestidos: "Vestidos de fiesta en alquiler en Montevideo",
+};
+
 const DESCRIPCIONES: Record<string, string> = {
   vestidos:
-    "Alquilá vestidos de fiesta en Montevideo: variedad de talles, colores y estilos para casamientos, graduaciones y eventos. Asesoramiento y retiro en Punta Carretas.",
+    "Vestidos largos y cortos de fiesta para alquilar. Mirá la colección, elegí tu talle y probalo en nuestro local de Punta Carretas.",
   monos:
     "Alquilá monos de fiesta en Montevideo para tu próximo evento. Variedad de talles y asesoramiento personalizado en Môone, Punta Carretas.",
   sandalias:
@@ -34,7 +40,7 @@ export async function generateMetadata({
   const categoria = CATEGORIAS.find((c) => c.slug === slug);
   if (!categoria) return {};
 
-  const title = `${categoria.label} en alquiler`;
+  const title = TITULOS[categoria.slug] ?? `${categoria.label} en alquiler`;
   const description =
     DESCRIPCIONES[categoria.slug] ??
     `Alquilá ${categoria.label.toLowerCase()} para tu próximo evento en Montevideo. Curaduría y asesoramiento en Môone.`;
