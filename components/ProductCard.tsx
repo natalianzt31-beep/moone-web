@@ -44,6 +44,7 @@ export function ProductCard({
   const [payingLocal, setPayingLocal] = useState(false);
   const [localOk, setLocalOk] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const loginHref = `/mi-cuenta/login?returnTo=${encodeURIComponent(pathname)}`;
 
@@ -177,8 +178,24 @@ export function ProductCard({
           {product.nombre}
         </span>
         {detalle && <span className="text-xs text-taupe">{detalle}</span>}
+        {product.marca === "Victoria Vidarte" && (
+          <span className="text-xs text-taupe">
+            Victoria Vidarte{product.coleccion ? ` · Modelo ${product.coleccion}` : ""}
+          </span>
+        )}
         {product.descripcion_web && (
-          <p className="line-clamp-2 text-xs text-taupe">{product.descripcion_web}</p>
+          <div className="text-xs text-taupe">
+            <p className={descExpanded ? "" : "line-clamp-2"}>{product.descripcion_web}</p>
+            {variant !== "grid" && (
+              <button
+                type="button"
+                onClick={() => setDescExpanded((v) => !v)}
+                className="mt-0.5 font-medium text-chocolate hover:underline"
+              >
+                {descExpanded ? "Ver menos" : "Ver más"}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </>

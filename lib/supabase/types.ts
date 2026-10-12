@@ -28,6 +28,7 @@ export type Product = {
   precio_venta: number | null;
   condicion: Condicion | null;
   marca: string | null;
+  coleccion: string | null;
   created_at: string;
 };
 

@@ -71,6 +71,7 @@ export function GroupedProductCard({
   const [payingLocal, setPayingLocal] = useState(false);
   const [localOk, setLocalOk] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const loginHref = `/mi-cuenta/login?returnTo=${encodeURIComponent(pathname)}`;
 
@@ -212,8 +213,24 @@ export function GroupedProductCard({
           {nombreBase}
         </span>
         {producto.color && <span className="text-xs text-taupe">{producto.color}</span>}
+        {producto.marca === "Victoria Vidarte" && (
+          <span className="text-xs text-taupe">
+            Victoria Vidarte{producto.coleccion ? ` · Modelo ${producto.coleccion}` : ""}
+          </span>
+        )}
         {producto.descripcion_web && (
-          <p className="line-clamp-2 text-xs text-taupe">{producto.descripcion_web}</p>
+          <div className="text-xs text-taupe">
+            <p className={descExpanded ? "" : "line-clamp-2"}>{producto.descripcion_web}</p>
+            {variant !== "grid" && (
+              <button
+                type="button"
+                onClick={() => setDescExpanded((v) => !v)}
+                className="mt-0.5 font-medium text-chocolate hover:underline"
+              >
+                {descExpanded ? "Ver menos" : "Ver más"}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </>
