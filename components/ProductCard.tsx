@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -156,6 +157,17 @@ export function ProductCard({
         {tipo === "venta" && product.condicion && (
           <span className="absolute left-2 top-2 z-10 rounded-[3px] bg-negro px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-blanco">
             {product.condicion === "nuevo" ? "Nuevo" : "Usado"}
+          </span>
+        )}
+        {product.marca === "Victoria Vidarte" && (
+          <span className="absolute bottom-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-blanco/90 shadow-sm ring-1 ring-arena">
+            <Image
+              src="/logo-victoria-vidarte.png"
+              alt="Victoria Vidarte"
+              width={28}
+              height={28}
+              className="h-7 w-7 object-contain"
+            />
           </span>
         )}
       </div>

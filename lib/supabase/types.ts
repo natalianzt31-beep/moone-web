@@ -27,6 +27,7 @@ export type Product = {
   fotos: string[] | null;
   precio_venta: number | null;
   condicion: Condicion | null;
+  marca: string | null;
   created_at: string;
 };
 
