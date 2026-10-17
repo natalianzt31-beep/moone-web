@@ -28,8 +28,9 @@ export function Nav() {
 
   function buscarPorSku(e: FormEvent) {
     e.preventDefault();
-    const sku = skuQuery.trim();
-    if (!sku) return;
+    const raw = skuQuery.trim();
+    if (!raw) return;
+    const sku = /^\d+$/.test(raw) ? `VES-${raw.padStart(5, "0")}` : raw.toUpperCase();
     setOpen(false);
     router.push(`/p/${encodeURIComponent(sku)}`);
   }
