@@ -33,7 +33,7 @@ export function ProductCard({
   /** Para las primeras cards visibles sin scroll (candidatas a LCP). */
   preload?: boolean;
 }) {
-  const { user, client, loading: authLoading } = useAuth();
+  const { user, client, isStaff, loading: authLoading } = useAuth();
   const pathname = usePathname();
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
   const [mostrarReserva, setMostrarReserva] = useState(false);
@@ -177,6 +177,9 @@ export function ProductCard({
         <span className="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-negro">
           {product.nombre}
         </span>
+        {isStaff && (
+          <span className="text-xs text-taupe">SKU: {product.sku}</span>
+        )}
         {detalle && <span className="text-xs text-taupe">{detalle}</span>}
         {product.marca === "Victoria Vidarte" && (
           <span className="text-xs text-taupe">
