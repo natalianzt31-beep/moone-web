@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { WHATSAPP_URL } from "@/lib/site-config";
@@ -19,9 +20,19 @@ const LINKS = [
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const [skuQuery, setSkuQuery] = useState("");
+  const router = useRouter();
   const { user } = useAuth();
   const miCuentaHref = user ? "/mi-cuenta/historial" : "/mi-cuenta/login";
   const allLinks = [...LINKS, { href: miCuentaHref, label: "Mi Cuenta" }];
+
+  function buscarPorSku(e: FormEvent) {
+    e.preventDefault();
+    const sku = skuQuery.trim();
+    if (!sku) return;
+    setOpen(false);
+    router.push(`/p/${encodeURIComponent(sku)}`);
+  }
 
   return (
     <header className="border-b border-arena bg-blanco">
@@ -46,6 +57,32 @@ export function Nav() {
         </nav>
 
         <div className="flex items-center gap-1 lg:gap-2">
+          <form onSubmit={buscarPorSku} className="hidden items-center lg:flex">
+            <input
+              type="text"
+              value={skuQuery}
+              onChange={(e) => setSkuQuery(e.target.value)}
+              placeholder="Buscar por SKU"
+              aria-label="Buscar por SKU"
+              className="h-11 w-36 rounded-[3px] border border-arena bg-blanco px-3 text-xs text-negro placeholder:text-taupe focus:border-negro focus:outline-none"
+            />
+            <button
+              type="submit"
+              aria-label="Buscar"
+              className="flex h-11 w-11 items-center justify-center text-chocolate transition-colors hover:text-negro"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path
+                  d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm9-1-5.2-5.2"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
+            </button>
+          </form>
+
           <a
             href={WHATSAPP_URL}
             target="_blank"
@@ -91,6 +128,31 @@ export function Nav() {
       {open && (
         <nav className="border-t border-arena bg-blanco lg:hidden">
           <div className="mx-auto flex max-w-6xl flex-col px-4 sm:px-8">
+            <form onSubmit={buscarPorSku} className="flex items-center gap-2 border-b border-arena py-3">
+              <input
+                type="text"
+                value={skuQuery}
+                onChange={(e) => setSkuQuery(e.target.value)}
+                placeholder="Buscar por SKU"
+                aria-label="Buscar por SKU"
+                className="h-11 flex-1 rounded-[3px] border border-arena bg-blanco px-3 text-sm text-negro placeholder:text-taupe focus:border-negro focus:outline-none"
+              />
+              <button
+                type="submit"
+                aria-label="Buscar"
+                className="flex h-11 w-11 items-center justify-center text-chocolate transition-colors hover:text-negro"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path
+                    d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm9-1-5.2-5.2"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </svg>
+              </button>
+            </form>
             {allLinks.map(({ href, label }) => (
               <Link
                 key={href}
