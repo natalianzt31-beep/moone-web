@@ -60,7 +60,7 @@ export function GroupedProductCard({
     ordenadas.find((p) => p.talle === talleSeleccionado) ??
     primero;
 
-  const { user, client, isStaff, loading: authLoading } = useAuth();
+  const { user, client, loading: authLoading } = useAuth();
   const pathname = usePathname();
   const [cartState, setCartState] = useState<"idle" | "adding" | "added" | "error">("idle");
   const [mostrarReserva, setMostrarReserva] = useState(false);
@@ -212,9 +212,7 @@ export function GroupedProductCard({
         <span className="line-clamp-2 min-h-[2.5rem] text-sm font-medium text-negro">
           {nombreBase}
         </span>
-        {isStaff && (
-          <span className="text-xs text-taupe">SKU: {producto.sku}</span>
-        )}
+        <span className="text-xs text-taupe">SKU: {producto.sku}</span>
         {producto.color && <span className="text-xs text-taupe">{producto.color}</span>}
         {producto.marca === "Victoria Vidarte" && (
           <span className="text-xs text-taupe">
