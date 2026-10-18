@@ -1,0 +1,4 @@
+SKUs para reimprimir (etiqueta perdida), a sumar a la próxima tanda
+junto con los productos nuevos cargados desde la última impresión.
+
+- VES-00596 — 2026-10-18
