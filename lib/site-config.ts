@@ -39,16 +39,3 @@ export const AGENDA_MODISTA = {
   /** Cuántas semanas hacia adelante se muestran para agendarse. */
   semanasVisibles: 6,
 } as const;
-
-/**
- * Evento especial de un solo día: Cecilia Méndez (Alta Costura) prueba
- * vestidos Pronovias en el atelier de Victoria Vidarte en Môone. Turnos de
- * 1 hora, un cupo por hora. Ver app/evento-cecilia-mendez.
- */
-export const EVENTO_CECILIA_MENDEZ = {
-  fecha: "2026-11-13",
-  etiquetaFecha: "Viernes 13 de noviembre",
-  horaInicio: "13:00",
-  horaFin: "20:00",
-  duracionMinutos: 60,
-} as const;

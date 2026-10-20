@@ -8,7 +8,6 @@
   --color-taupe: #a49587;
   --color-chocolate: #4a3a31;
   --color-blanco: #ffffff;
-  --color-dorado: #ad844e;
 
   --background: var(--color-marfil);
   --foreground: var(--color-negro);
@@ -22,7 +21,6 @@
   --color-taupe: var(--color-taupe);
   --color-chocolate: var(--color-chocolate);
   --color-blanco: var(--color-blanco);
-  --color-dorado: var(--color-dorado);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-manrope);
