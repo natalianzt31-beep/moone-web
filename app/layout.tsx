@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { ModistaBanner } from "@/components/ModistaBanner";
+import { EventoCeciliaMendezBanner } from "@/components/EventoCeciliaMendezBanner";
 import { Footer } from "@/components/Footer";
 import { VisitTracker } from "@/components/VisitTracker";
 import {
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-marfil text-negro">
         <VisitTracker />
+        <EventoCeciliaMendezBanner />
         <AuthProvider>{children}</AuthProvider>
         <Footer />
         <ModistaBanner />

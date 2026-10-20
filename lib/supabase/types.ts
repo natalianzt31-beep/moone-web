@@ -184,3 +184,16 @@ export type CitaModista = {
   cancelado_at: string | null;
   created_at: string;
 };
+
+export type CitaCeciliaMendez = {
+  id: string;
+  fecha: string;
+  hora: string;
+  nombre: string;
+  email: string;
+  celular: string;
+  estado: "confirmada" | "cancelada";
+  token: string;
+  cancelado_at: string | null;
+  created_at: string;
+};
