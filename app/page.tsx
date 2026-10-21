@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { JsonLd } from "@/components/JsonLd";
+import { PronoviasBanner } from "@/components/PronoviasBanner";
 import { DIRECCION } from "@/lib/site-config";
 import { BUSINESS, absoluteUrl } from "@/lib/site";
 
@@ -82,6 +83,8 @@ export default function Home() {
             />
           </div>
         </section>
+
+        <PronoviasBanner />
 
         <section className="bg-crema">
           <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:flex-row sm:justify-between sm:gap-8 sm:px-8 sm:py-12">
