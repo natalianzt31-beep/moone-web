@@ -1,7 +1,12 @@
 import "server-only";
 import { enviarEmail } from "@/lib/email/resend";
 import { BUSINESS } from "@/lib/site";
-import { EMAIL_CECILIA_MENDEZ, WHATSAPP_DISPLAY } from "@/lib/site-config";
+import {
+  EMAIL_CECILIA_MENDEZ,
+  WHATSAPP_DISPLAY,
+  WHATSAPP_CECILIA_MENDEZ_URL,
+  WHATSAPP_CECILIA_MENDEZ_DISPLAY,
+} from "@/lib/site-config";
 import { PLANTILLA_CONFIRMACION_LEAD_PRONOVIAS } from "@/lib/email/plantillas";
 
 function escapeHtml(texto: string): string {
@@ -36,7 +41,9 @@ export async function enviarConfirmacionLeadPronovias(
     escapeHtml(lead.nombre)
   )
     .replace("{{celular}}", escapeHtml(lead.celular))
-    .replaceAll("{{whatsapp_display}}", WHATSAPP_DISPLAY);
+    .replaceAll("{{whatsapp_display}}", WHATSAPP_DISPLAY)
+    .replaceAll("{{whatsapp_cecilia_url}}", WHATSAPP_CECILIA_MENDEZ_URL)
+    .replaceAll("{{whatsapp_cecilia_display}}", WHATSAPP_CECILIA_MENDEZ_DISPLAY);
 
   return enviarEmail({
     to: lead.email,

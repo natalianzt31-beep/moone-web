@@ -145,12 +145,25 @@ export const PLANTILLA_CONFIRMACION_LEAD_PRONOVIAS = `<!DOCTYPE html>
                 </tr>
               </table>
 
-              <p style="color:#171513; font-size: 15px; line-height: 1.6; margin: 0 0 28px; text-align:center;">
+              <p style="color:#171513; font-size: 15px; line-height: 1.6; margin: 0 0 20px; text-align:center;">
                 Consultá los días y horarios disponibles para reservar tu espacio ✨
               </p>
 
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 28px; background-color:#EFE9DF; border-radius: 3px;">
+                <tr>
+                  <td style="padding: 20px; text-align:center;">
+                    <p style="color:#171513; font-size: 14px; line-height: 1.6; margin: 0 0 14px;">
+                      Si querés <strong>avanzar con tu prueba</strong>, escribile directo a Cecilia por WhatsApp:
+                    </p>
+                    <a href="{{whatsapp_cecilia_url}}" style="display:inline-block; background-color:#171513; color:#FFFFFF; font-size: 14px; font-weight:600; text-decoration:none; padding: 12px 28px; border-radius: 3px;">
+                      WhatsApp {{whatsapp_cecilia_display}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
               <p style="color:#A49587; font-size: 13px; line-height: 1.6; margin: 0;">
-                Cualquier consulta mientras tanto, escribinos por WhatsApp al {{whatsapp_display}}.
+                Cualquier otra consulta, escribinos por WhatsApp al {{whatsapp_display}}.
               </p>
             </td>
           </tr>

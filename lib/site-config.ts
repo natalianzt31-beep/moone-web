@@ -10,6 +10,9 @@ export const EMAIL_CONTACTO = "contacto@moone.com.uy";
 export const EMAIL_MODISTA = "mac.fesa@hotmail.com";
 /** Recibe copia del aviso de cada lead nuevo de /pronovias (ver lib/email/pronovias.ts). */
 export const EMAIL_CECILIA_MENDEZ = "ceciliamendezatelier@gmail.com";
+/** WhatsApp directo de Cecilia Méndez, para avanzar con la prueba Pronovias (ver mail de confirmación en lib/email/pronovias.ts). */
+export const WHATSAPP_CECILIA_MENDEZ_URL = "https://wa.me/59899158315";
+export const WHATSAPP_CECILIA_MENDEZ_DISPLAY = "099 158 315";
 
 export const currencyFormatter = new Intl.NumberFormat("es-UY", {
   style: "currency",
