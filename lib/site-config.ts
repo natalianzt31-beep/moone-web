@@ -8,6 +8,8 @@ export const WHATSAPP_DISPLAY = "093 787 376";
 export const EMAIL_CONTACTO = "contacto@moone.com.uy";
 /** Recibe copia del aviso de cada turno nuevo agendado en /turnos (ver lib/email/citas.ts). */
 export const EMAIL_MODISTA = "mac.fesa@hotmail.com";
+/** Recibe copia del aviso de cada lead nuevo de /pronovias (ver lib/email/pronovias.ts). */
+export const EMAIL_CECILIA_MENDEZ = "ceciliamendezatelier@gmail.com";
 
 export const currencyFormatter = new Intl.NumberFormat("es-UY", {
   style: "currency",

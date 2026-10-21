@@ -113,6 +113,42 @@ export const PLANTILLA_CONFIRMACION_LEAD_PRONOVIAS = `<!DOCTYPE html>
                 Te vamos a escribir por WhatsApp al {{celular}} para coordinar el día y el horario de tu prueba. Los cupos son limitados.
               </p>
 
+              <h2 style="font-family: Georgia, serif; color:#171513; font-size: 17px; font-weight: 500; margin: 0 0 16px; text-align:center;">
+                Consultas Pronovias y/o Cecilia Méndez Alta Costura
+              </h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px;">
+                <tr>
+                  <td style="padding: 14px 0; border-top: 1px solid #EFE9DF; color:#4A3A31; font-size: 14px; line-height: 1.6;">
+                    Te garantizamos una experiencia <strong style="color:#171513;">totalmente exclusiva</strong>, con un probador y una asesora dedicados únicamente a vos durante toda tu cita.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 0; border-top: 1px solid #EFE9DF; color:#4A3A31; font-size: 14px; line-height: 1.6;">
+                    Para las consultas de la marca <strong style="color:#171513;">Pronovias</strong> la agenda se abre un año antes del evento.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 0; border-top: 1px solid #EFE9DF; color:#4A3A31; font-size: 14px; line-height: 1.6;">
+                    Se solicita un depósito de reserva de <strong style="color:#171513;">U$S 45</strong> que se acredita al 100% como saldo a favor en la compra de tu vestido. De esta manera, el valor de la reserva se descuenta del total de tu compra.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 0; border-top: 1px solid #EFE9DF; color:#4A3A31; font-size: 14px; line-height: 1.6;">
+                    Para las consultas de <strong style="color:#171513;">Cecilia Méndez Alta Costura</strong> por confección a medida la agenda se abre un año antes y no se requiere depósito previo.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 0; border-top: 1px solid #EFE9DF; border-bottom: 1px solid #EFE9DF; color:#4A3A31; font-size: 14px; line-height: 1.6;">
+                    Nuestro local está ubicado en <strong style="color:#171513;">Punta del Este, Uruguay</strong>.
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#171513; font-size: 15px; line-height: 1.6; margin: 0 0 28px; text-align:center;">
+                Consultá los días y horarios disponibles para reservar tu espacio ✨
+              </p>
+
               <p style="color:#A49587; font-size: 13px; line-height: 1.6; margin: 0;">
                 Cualquier consulta mientras tanto, escribinos por WhatsApp al {{whatsapp_display}}.
               </p>

@@ -1,7 +1,7 @@
 import "server-only";
 import { enviarEmail } from "@/lib/email/resend";
 import { BUSINESS } from "@/lib/site";
-import { WHATSAPP_DISPLAY } from "@/lib/site-config";
+import { EMAIL_CECILIA_MENDEZ, WHATSAPP_DISPLAY } from "@/lib/site-config";
 import { PLANTILLA_CONFIRMACION_LEAD_PRONOVIAS } from "@/lib/email/plantillas";
 
 function escapeHtml(texto: string): string {
@@ -54,7 +54,7 @@ function filaHtml(etiqueta: string, valor: string): string {
     </tr>`;
 }
 
-/** Aviso interno a contacto@moone.com.uy de que llegó un lead nuevo, para coordinar por WhatsApp. */
+/** Aviso interno a contacto@moone.com.uy y a Cecilia Méndez de que llegó un lead nuevo, para coordinar por WhatsApp. */
 export async function enviarAvisoNuevoLeadPronovias(
   lead: LeadPronovias
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
@@ -81,7 +81,7 @@ export async function enviarAvisoNuevoLeadPronovias(
   `.trim();
 
   return enviarEmail({
-    to: BUSINESS.email,
+    to: [BUSINESS.email, EMAIL_CECILIA_MENDEZ],
     subject: `Nuevo lead Pronovias — ${lead.nombre}`,
     html,
   });
