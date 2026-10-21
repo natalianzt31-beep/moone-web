@@ -184,3 +184,12 @@ export type CitaModista = {
   cancelado_at: string | null;
   created_at: string;
 };
+
+export type LeadPronovias = {
+  id: string;
+  nombre: string;
+  fecha_casamiento_estimada: string | null;
+  celular: string;
+  email: string;
+  created_at: string;
+};

@@ -85,6 +85,60 @@ export const PLANTILLA_CONFIRMACION_RESERVA = `<!DOCTYPE html>
 </html>
 `;
 
+export const PLANTILLA_CONFIRMACION_LEAD_PRONOVIAS = `<!DOCTYPE html>
+<html>
+<body style="margin:0; padding:0; background-color:#F8F5EF; font-family: Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F8F5EF; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="480" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF; border-radius: 4px; overflow:hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background-color:#FFFFFF; padding: 36px 20px 24px; border-bottom: 1px solid #EFE9DF;">
+              <img src="https://moone.com.uy/logo.png" alt="Môone Rental Boutique" width="140" style="display:block; margin: 0 auto;" />
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 36px;">
+              <h1 style="font-family: Georgia, serif; color:#171513; font-size: 24px; font-weight: 500; margin: 0 0 16px;">
+                ¡Recibimos tus datos!
+              </h1>
+              <p style="color:#4A3A31; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
+                Hola {{nombre}}, gracias por tu interés en probarte los vestidos Pronovias con Cecilia Méndez — Alta Costura, en el atelier de Victoria Vidarte en Môone.
+              </p>
+              <p style="color:#4A3A31; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">
+                Te vamos a escribir por WhatsApp al {{celular}} para coordinar el día y el horario de tu prueba. Los cupos son limitados.
+              </p>
+
+              <p style="color:#A49587; font-size: 13px; line-height: 1.6; margin: 0;">
+                Cualquier consulta mientras tanto, escribinos por WhatsApp al {{whatsapp_display}}.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#EFE9DF; padding: 20px 36px; text-align:center;">
+              <p style="color:#4A3A31; font-size: 12px; margin: 0 0 4px;">
+                Prudencio Vázquez y Vega 887 esq. Sarmiento, Punta Carretas, Montevideo
+              </p>
+              <p style="color:#A49587; font-size: 12px; margin: 0;">
+                contacto@moone.com.uy · WhatsApp {{whatsapp_display}}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
 export const PLANTILLA_CONFIRMACION_TURNO = `<!DOCTYPE html>
 <html>
 <body style="margin:0; padding:0; background-color:#F8F5EF; font-family: Arial, sans-serif;">
