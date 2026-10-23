@@ -10,63 +10,76 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pronovias" },
 };
 
-const FLYERS = [
-  { src: "/pronovias/flyer-1.jpg", alt: "Pronovias Barcelona × Cecilia Méndez Alta Costura, de la mano de Môone" },
-  {
-    src: "/pronovias/flyer-2.jpg",
-    alt: "Por primera vez en Montevideo: Pronovias Barcelona, viernes 13 de noviembre en Prudencio Vázquez y Vega 887",
-  },
-  { src: "/pronovias/flyer-3.jpg", alt: "Reservá tu prueba, cupos muy limitados" },
-];
-
 export default function PronoviasPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
-        <section className="mx-auto grid max-w-5xl gap-8 px-4 py-10 sm:px-8 sm:py-16 lg:grid-cols-2 lg:gap-12">
-          <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
-            {FLYERS.map((flyer) => (
-              <div
-                key={flyer.src}
-                className="relative aspect-[4/5] overflow-hidden rounded-[3px] border border-arena"
-              >
-                <Image
-                  src={flyer.src}
-                  alt={flyer.alt}
-                  fill
-                  sizes="(min-width: 1024px) 45vw, 33vw"
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-5">
+        <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-8 sm:py-16 lg:grid-cols-2 lg:items-center lg:gap-12 lg:py-24">
+          <div className="flex flex-col items-start gap-5 sm:gap-6">
             <p className="text-xs font-medium uppercase tracking-[0.15em] text-taupe">
               Edición limitada en Montevideo · Cupos muy limitados
             </p>
-            <h1 className="text-2xl font-normal tracking-tight text-negro sm:text-3xl">
-              Pronovias Barcelona × Cecilia Méndez —{" "}
-              <em className="font-normal not-italic text-chocolate">Alta Costura</em>
+            <h1 className="text-3xl font-normal tracking-tight text-negro sm:text-4xl">
+              Pronovias Barcelona ×{" "}
+              <em className="font-normal not-italic text-chocolate">Cecilia Méndez</em>
             </h1>
-            <p className="text-base leading-7 text-chocolate">
+            <p className="max-w-xl text-base leading-7 text-chocolate sm:text-lg sm:leading-8">
               Cecilia Méndez — Alta Costura trae a Montevideo los modelos más icónicos de
               Pronovias, de Barcelona, con más de 100 años vistiendo novias.
             </p>
-            <p className="text-base leading-7 text-chocolate">
+            <p className="max-w-xl text-base leading-7 text-chocolate">
               La prueba es con la asesoría personalizada de Cecilia, en el atelier de Victoria
               Vidarte en Môone, Prudencio Vázquez y Vega 887 esq. Sarmiento.
             </p>
-            <p className="text-base leading-7 text-chocolate">
-              Dejanos tus datos y te escribimos por WhatsApp para coordinar el día y el horario de
-              tu prueba.
-            </p>
+          </div>
 
-            <div className="mt-2 rounded-[3px] border border-arena bg-blanco p-6 sm:p-8">
-              <PronoviasForm />
+          <div className="relative aspect-square overflow-hidden rounded-[3px] border border-arena">
+            <Image
+              src="/pronovias/foto-1.jpg"
+              alt="Vestido de novia Pronovias con bordado floral"
+              fill
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="object-cover"
+              priority
+            />
+          </div>
+        </section>
+
+        <section className="bg-crema">
+          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-3 px-4 py-8 sm:gap-6 sm:px-8 sm:py-12">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena">
+              <Image
+                src="/pronovias/foto-2.jpg"
+                alt="Espalda bordada de un vestido de novia Pronovias"
+                fill
+                sizes="(min-width: 1024px) 25vw, 50vw"
+                className="object-cover"
+              />
             </div>
+            <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena">
+              <Image
+                src="/pronovias/foto-3.jpg"
+                alt="Vestido de novia Pronovias de espalda descubierta"
+                fill
+                sizes="(min-width: 1024px) 25vw, 50vw"
+                className="object-cover"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-xl px-4 py-10 sm:px-8 sm:py-16">
+          <h2 className="text-xl font-normal tracking-tight text-negro sm:text-2xl">
+            Reservá tu prueba
+          </h2>
+          <p className="mt-2 text-base leading-7 text-chocolate">
+            Dejanos tus datos y te escribimos por WhatsApp para coordinar el día y el horario de
+            tu prueba.
+          </p>
+
+          <div className="mt-6 rounded-[3px] border border-arena bg-blanco p-6 sm:p-8">
+            <PronoviasForm />
           </div>
         </section>
       </main>
