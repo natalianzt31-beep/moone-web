@@ -47,13 +47,13 @@ export default function PronoviasPage() {
         </section>
 
         <section className="bg-crema">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-3 px-4 py-8 sm:gap-6 sm:px-8 sm:py-12">
+          <div className="mx-auto grid max-w-6xl grid-cols-3 gap-3 px-4 py-8 sm:gap-6 sm:px-8 sm:py-12">
             <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena">
               <Image
                 src="/pronovias/foto-2.jpg"
                 alt="Espalda bordada de un vestido de novia Pronovias"
                 fill
-                sizes="(min-width: 1024px) 25vw, 50vw"
+                sizes="(min-width: 1024px) 25vw, 33vw"
                 className="object-cover"
               />
             </div>
@@ -62,7 +62,16 @@ export default function PronoviasPage() {
                 src="/pronovias/foto-3.jpg"
                 alt="Vestido de novia Pronovias de espalda descubierta"
                 fill
-                sizes="(min-width: 1024px) 25vw, 50vw"
+                sizes="(min-width: 1024px) 25vw, 33vw"
+                className="object-cover"
+              />
+            </div>
+            <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena">
+              <Image
+                src="/pronovias/foto-4.jpg"
+                alt="Vestido de novia Pronovias con abertura lateral"
+                fill
+                sizes="(min-width: 1024px) 25vw, 33vw"
                 className="object-cover"
               />
             </div>

@@ -28,7 +28,7 @@ export function PronoviasBanner() {
 
         <div className="relative h-48 w-full sm:h-auto sm:w-80 lg:w-96">
           <Image
-            src="/pronovias/banner-foto.jpg"
+            src="/pronovias/foto-1.jpg"
             alt="Vestido de novia Pronovias"
             fill
             sizes="(min-width: 640px) 384px, 100vw"
