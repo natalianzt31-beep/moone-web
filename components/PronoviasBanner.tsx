@@ -8,7 +8,7 @@ export function PronoviasBanner() {
       <div className="mx-auto flex max-w-6xl flex-col sm:flex-row sm:items-stretch">
         <div className="flex flex-1 flex-col justify-center gap-3 px-4 py-8 sm:px-8 sm:py-10">
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-dorado">
-            Por primera vez en Montevideo
+            Edición limitada en Montevideo
           </p>
           <h2 className="text-2xl font-normal tracking-tight text-blanco sm:text-3xl">
             Pronovias Barcelona ×{" "}
