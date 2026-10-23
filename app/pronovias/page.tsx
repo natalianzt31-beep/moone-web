@@ -45,15 +45,15 @@ export default function PronoviasPage() {
 
           <div className="flex flex-col gap-5">
             <p className="text-xs font-medium uppercase tracking-[0.15em] text-taupe">
-              Por primera vez en Montevideo · Cupos muy limitados
+              Edición limitada en Montevideo · Cupos muy limitados
             </p>
             <h1 className="text-2xl font-normal tracking-tight text-negro sm:text-3xl">
               Pronovias Barcelona × Cecilia Méndez —{" "}
               <em className="font-normal not-italic text-chocolate">Alta Costura</em>
             </h1>
             <p className="text-base leading-7 text-chocolate">
-              Cecilia Méndez — Alta Costura trae por primera vez a Montevideo los modelos más
-              icónicos de Pronovias, de Barcelona, con más de 100 años vistiendo novias.
+              Cecilia Méndez — Alta Costura trae a Montevideo los modelos más icónicos de
+              Pronovias, de Barcelona, con más de 100 años vistiendo novias.
             </p>
             <p className="text-base leading-7 text-chocolate">
               La prueba es con la asesoría personalizada de Cecilia, en el atelier de Victoria
