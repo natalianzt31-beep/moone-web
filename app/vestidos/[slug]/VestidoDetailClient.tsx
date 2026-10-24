@@ -35,6 +35,8 @@ function RedirectStaffDesdeEtiqueta() {
 
 export function VestidoDetailClient({ variantes }: { variantes: Product[] }) {
   const nombreBase = nombreSinTalle(variantes[0].nombre);
+  // precio_alquiler es 0 (no null) en los vestidos que son solo venta definitiva.
+  const tipo = variantes[0].precio_alquiler > 0 ? "alquiler" : "venta";
 
   return (
     <div className="flex flex-1 flex-col bg-marfil">
@@ -59,9 +61,9 @@ export function VestidoDetailClient({ variantes }: { variantes: Product[] }) {
 
           <div className="mt-6">
             {variantes.length > 1 ? (
-              <GroupedProductCard variantes={variantes} tipo="alquiler" preload />
+              <GroupedProductCard variantes={variantes} tipo={tipo} preload />
             ) : (
-              <ProductCard product={variantes[0]} tipo="alquiler" preload />
+              <ProductCard product={variantes[0]} tipo={tipo} preload />
             )}
           </div>
         </section>

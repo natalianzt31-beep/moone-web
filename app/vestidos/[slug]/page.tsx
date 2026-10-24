@@ -48,18 +48,23 @@ export async function generateMetadata({
   const talles = Array.from(new Set(variantes.map((p) => p.talle).filter((v): v is string => !!v))).sort(
     compararTalles
   );
+  // precio_alquiler es 0 (no null) en los vestidos que son solo venta definitiva.
+  const esAlquiler = producto.precio_alquiler > 0;
 
-  const title = `${producto.nombre} – Alquiler`;
+  const title = `${producto.nombre} – ${esAlquiler ? "Alquiler" : "Venta"}`;
   const detalles = [
     producto.color ? `color ${producto.color.toLowerCase()}` : null,
     producto.largo_tipo ? `largo ${producto.largo_tipo.toLowerCase()}` : null,
   ]
     .filter(Boolean)
     .join(", ");
-  const description =
-    `Alquilá "${producto.nombre}"${detalles ? ` (${detalles})` : ""} en Montevideo` +
-    `${talles.length > 0 ? `. Talles disponibles: ${talles.join(", ")}` : ""}.` +
-    ` Ideal para casamientos, graduaciones y fiestas. Retiro en Punta Carretas.`;
+  const description = esAlquiler
+    ? `Alquilá "${producto.nombre}"${detalles ? ` (${detalles})` : ""} en Montevideo` +
+      `${talles.length > 0 ? `. Talles disponibles: ${talles.join(", ")}` : ""}.` +
+      ` Ideal para casamientos, graduaciones y fiestas. Retiro en Punta Carretas.`
+    : `Comprá "${producto.nombre}"${detalles ? ` (${detalles})` : ""} en Montevideo` +
+      `${talles.length > 0 ? `. Talles disponibles: ${talles.join(", ")}` : ""}.` +
+      ` Venta definitiva. Retiro en Punta Carretas.`;
 
   const foto = producto.fotos?.[0] ?? producto.foto_url ?? undefined;
 
@@ -96,11 +101,11 @@ export default async function VestidoPage({
     description: producto.descripcion_web ?? undefined,
     image: foto ? absoluteUrl(foto) : undefined,
     category: "Vestido de fiesta",
-    ...(producto.precio_alquiler > 0
+    ...(producto.precio_alquiler > 0 || producto.precio_venta != null
       ? {
           offers: {
             "@type": "Offer",
-            price: producto.precio_alquiler,
+            price: producto.precio_alquiler > 0 ? producto.precio_alquiler : producto.precio_venta,
             priceCurrency: "UYU",
             availability: variantes.some((p) => p.estado === "disponible")
               ? "https://schema.org/InStock"
