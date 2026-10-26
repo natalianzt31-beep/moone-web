@@ -29,7 +29,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Puedo comprar una prenda en vez de alquilarla?",
     respuesta:
-      "Sí. Las prendas de la sección On Sale están en venta definitiva y se abonan al 100%, no tienen seña ni devolución.",
+      "Sí. Las prendas de la sección En Venta están en venta definitiva y se abonan al 100%, no tienen seña ni devolución.",
   },
   {
     pregunta: "¿Qué pasa si la prenda se mancha o se daña?",

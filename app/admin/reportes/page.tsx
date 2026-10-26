@@ -121,7 +121,7 @@ function VentasPendientes() {
     <section>
       <h2 className="text-lg font-normal tracking-tight text-negro">Ventas pendientes de confirmar</h2>
       <p className="mt-1 text-sm text-chocolate">
-        Pedidos de la sección On Sale con &quot;Pagar en el local&quot;. Confirmá cuando recibas el
+        Pedidos de la sección En Venta con &quot;Pagar en el local&quot;. Confirmá cuando recibas el
         pago para completar la venta y emitir el comprobante.
       </p>
       {error && <p className="mt-3 text-sm text-chocolate">{error}</p>}

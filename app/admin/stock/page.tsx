@@ -418,7 +418,7 @@ function StockContent() {
           </label>
 
           <label className="flex flex-col gap-1 text-sm text-negro">
-            Precio de venta (opcional — completalo para mostrarla en On Sale)
+            Precio de venta (opcional — completalo para mostrarla en En Venta)
             <input
               type="number"
               min="0"

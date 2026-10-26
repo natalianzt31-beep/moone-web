@@ -13,7 +13,7 @@ const LINKS = [
   { href: "/", label: "Home" },
   { href: "/coleccion", label: "Colección" },
   { href: "/nosotras", label: "Nosotras" },
-  { href: "/sale", label: "On Sale" },
+  { href: "/sale", label: "En Venta" },
   ...(turnosEnabled ? [{ href: "/turnos", label: "Modista" }] : []),
   { href: "/faq", label: "FAQ" },
 ];

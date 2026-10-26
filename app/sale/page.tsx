@@ -5,7 +5,7 @@ import { SaleClient } from "./SaleClient";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "On Sale",
+  title: "En Venta",
   description:
     "Prendas de fiesta en venta definitiva en Môone, Montevideo: vestidos, monos, sandalias y más a precio de liquidación.",
   alternates: { canonical: "/sale" },

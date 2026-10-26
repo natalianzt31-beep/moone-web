@@ -73,7 +73,7 @@ export function SaleClient({ products }: { products: Product[] }) {
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
           <h1 className="text-xl font-normal tracking-tight text-negro sm:text-2xl">
-            On Sale
+            En Venta
           </h1>
           <p className="mt-1 text-sm text-chocolate">
             Prendas en venta definitiva — se abonan al 100%, no se alquilan.
