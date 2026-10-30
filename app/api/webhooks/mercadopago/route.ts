@@ -4,6 +4,7 @@ import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { facturarYEnviar } from "@/lib/facturacion";
 import { enviarMailConfirmacionReserva } from "@/lib/email/reservas";
+import { enviarAvisoVentaVestido } from "@/lib/email/ventas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function procesarPagoAlquiler(
@@ -334,7 +335,7 @@ async function procesarPagoVenta(
     .update({ estado: "baja_definitiva" })
     .eq("id", productId)
     .eq("estado", "disponible")
-    .select("id, sku, nombre");
+    .select("id, sku, nombre, categoria, talle, color");
 
   if (updateError) {
     console.error("No se pudo marcar la prenda como vendida", updateError);
@@ -377,6 +378,18 @@ async function procesarPagoVenta(
         eticket_numero: resultado.eticket_numero,
       })
       .eq("id", pagoInsertado.id);
+
+    if (producto.categoria === "vestido") {
+      await enviarAvisoVentaVestido({
+        sku: producto.sku,
+        nombre: producto.nombre,
+        talle: producto.talle,
+        color: producto.color,
+        monto,
+        medioPago: "Mercado Pago",
+        clienteNombre: cliente?.nombre ?? "Clienta",
+      });
+    }
   }
 }
 
