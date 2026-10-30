@@ -26,6 +26,7 @@ export type Product = {
   foto_url: string | null;
   fotos: string[] | null;
   precio_venta: number | null;
+  precio_venta_original: number | null;
   condicion: Condicion | null;
   marca: string | null;
   coleccion: string | null;

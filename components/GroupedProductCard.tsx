@@ -103,10 +103,16 @@ export function GroupedProductCard({
   }, [authLoading, client, ordenadas, tipo]);
 
   const precio = tipo === "venta" ? producto.precio_venta : producto.precio_alquiler;
+  const enOferta =
+    tipo === "venta" &&
+    producto.precio_venta_original != null &&
+    producto.precio_venta_original > (precio ?? 0);
   const cta = tipo === "venta" ? "Comprar" : "Reservar y pagar seña";
   // Con reservas/compra desactivadas (ver lib/features.ts), la ficha muestra
   // el producto pero sin ninguna acción de reservar/comprar/pagar/carrito.
-  const habilitado = tipo === "venta" ? checkoutEnabled : bookingEnabled;
+  // La compra web de venta definitiva solo está habilitada para vestidos.
+  const habilitado =
+    tipo === "venta" ? checkoutEnabled && producto.categoria === "vestido" : bookingEnabled;
   const fotos =
     producto.fotos && producto.fotos.length > 0
       ? producto.fotos
@@ -248,9 +254,25 @@ export function GroupedProductCard({
       )}
 
       <div className="mt-auto flex flex-col gap-3">
-        <span className="text-sm text-negro">
-          {precio != null ? currencyFormatter.format(precio) : "Consultar"}
-        </span>
+        {enOferta ? (
+          <div className="flex flex-col gap-0.5">
+            <span className="w-fit rounded-[3px] bg-chocolate px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blanco">
+              Liquidamos
+            </span>
+            <span className="flex items-baseline gap-2">
+              <span className="text-xs text-taupe line-through">
+                {currencyFormatter.format(producto.precio_venta_original!)}
+              </span>
+              <span className="text-sm font-medium text-negro">
+                {currencyFormatter.format(precio!)}
+              </span>
+            </span>
+          </div>
+        ) : (
+          <span className="text-sm text-negro">
+            {precio != null ? currencyFormatter.format(precio) : "Consultar"}
+          </span>
+        )}
 
         <label className="flex flex-col gap-1 text-xs uppercase tracking-wider text-taupe">
           Talle

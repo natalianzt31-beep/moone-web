@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id, precio_venta, estado")
+    .select("id, categoria, precio_venta, estado")
     .eq("id", productId)
     .single();
 
@@ -68,6 +68,13 @@ export async function POST(req: Request) {
 
   if (product.estado !== "disponible" || product.precio_venta == null) {
     return NextResponse.json({ error: "Esta prenda ya no está disponible." }, { status: 409 });
+  }
+
+  if (product.categoria !== "vestido") {
+    return NextResponse.json(
+      { error: "La compra web solo está habilitada para vestidos." },
+      { status: 403 }
+    );
   }
 
   // Reserva la prenda antes de cargar el pago pendiente: evita que otra
