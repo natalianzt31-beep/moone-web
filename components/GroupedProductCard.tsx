@@ -110,9 +110,7 @@ export function GroupedProductCard({
   const cta = tipo === "venta" ? "Comprar" : "Reservar y pagar seña";
   // Con reservas/compra desactivadas (ver lib/features.ts), la ficha muestra
   // el producto pero sin ninguna acción de reservar/comprar/pagar/carrito.
-  // La compra web de venta definitiva solo está habilitada para vestidos.
-  const habilitado =
-    tipo === "venta" ? checkoutEnabled && producto.categoria === "vestido" : bookingEnabled;
+  const habilitado = tipo === "venta" ? checkoutEnabled : bookingEnabled;
   const fotos =
     producto.fotos && producto.fotos.length > 0
       ? producto.fotos
