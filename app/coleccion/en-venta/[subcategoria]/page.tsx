@@ -5,6 +5,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { absoluteUrl } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { CategoriaClient } from "../../[categoria]/CategoriaClient";
+import type { Product } from "@/lib/supabase/types";
 
 export const revalidate = 3600;
 
@@ -49,7 +50,8 @@ export default async function EnVentaSubcategoriaPage({
     .not("precio_venta", "is", null)
     .neq("estado", "baja_definitiva")
     .filter("categoria", subcategoria.db ? "eq" : "neq", subcategoria.db ?? "vestido")
-    .order("nombre", { ascending: true });
+    .order("nombre", { ascending: true })
+    .returns<Product[]>();
 
   if (error) throw new Error(error.message);
 

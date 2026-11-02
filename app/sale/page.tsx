@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { SaleClient } from "./SaleClient";
+import type { Product } from "@/lib/supabase/types";
 
 export const revalidate = 3600;
 
@@ -17,7 +18,8 @@ export default async function SalePage() {
     .select("*")
     .not("precio_venta", "is", null)
     .neq("estado", "baja_definitiva")
-    .order("nombre", { ascending: true });
+    .order("nombre", { ascending: true })
+    .returns<Product[]>();
 
   if (error) throw new Error(error.message);
 
