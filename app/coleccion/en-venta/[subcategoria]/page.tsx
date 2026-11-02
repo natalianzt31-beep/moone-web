@@ -62,7 +62,7 @@ export default async function EnVentaSubcategoriaPage({
       {
         "@type": "ListItem",
         position: 3,
-        name: "En Venta",
+        name: "Artículos y accesorios en venta",
         item: absoluteUrl("/coleccion/en-venta"),
       },
       {
@@ -83,7 +83,7 @@ export default async function EnVentaSubcategoriaPage({
         products={data ?? []}
         tipo="venta"
         backHref="/coleccion/en-venta"
-        backLabel="En Venta"
+        backLabel="Artículos y accesorios en venta"
       />
     </>
   );

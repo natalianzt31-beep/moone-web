@@ -7,7 +7,7 @@ import { absoluteUrl } from "@/lib/site";
 import { EN_VENTA_SUBCATEGORIAS } from "@/lib/site-config";
 
 export const metadata: Metadata = {
-  title: "En Venta",
+  title: "Artículos y accesorios en venta",
   description:
     "Prendas en venta definitiva en Môone, Montevideo: elegí una subcategoría para ver lo disponible.",
   alternates: { canonical: "/coleccion/en-venta" },
@@ -23,7 +23,7 @@ export default function EnVentaPage() {
       {
         "@type": "ListItem",
         position: 3,
-        name: "En Venta",
+        name: "Artículos y accesorios en venta",
         item: absoluteUrl("/coleccion/en-venta"),
       },
     ],
@@ -42,7 +42,7 @@ export default function EnVentaPage() {
             ← Colección
           </Link>
           <h1 className="mt-1 text-xl font-normal tracking-tight text-negro sm:text-2xl">
-            En Venta
+            Artículos y accesorios en venta
           </h1>
           <p className="mt-1 text-sm text-chocolate">
             Prendas en venta definitiva — se abonan al 100%, no se alquilan. Elegí una

@@ -44,7 +44,7 @@ export const COLECCION_GRID = [
   { slug: "sandalias", label: "Sandalias" },
   { slug: "tapados", label: "Tapados" },
   { slug: "accesorios", label: "Accesorios" },
-  { slug: "en-venta", label: "En Venta" },
+  { slug: "en-venta", label: "Artículos y accesorios en venta" },
 ] as const;
 
 export const ACCESORIOS_SUBCATEGORIAS = [
@@ -77,9 +77,9 @@ export const EN_VENTA_SUBCATEGORIAS = [
   },
   {
     slug: "articulos",
-    label: "Artículos y accesorios en venta",
+    label: "Otros artículos en venta",
     db: null,
-    portada: "/images/categorias/articulos-accesorios-en-venta.jpg",
+    portada: "/images/carteras/cartera-negra-brillos.jpg",
   },
 ] as const;
 

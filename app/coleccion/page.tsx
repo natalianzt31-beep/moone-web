@@ -7,7 +7,7 @@ import { COLECCION_GRID } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "Colección",
   description:
-    "Explorá la colección de Môone: vestidos, monos, sandalias, accesorios y tapados en alquiler, y la sección En Venta, para tu próximo evento en Montevideo.",
+    "Explorá la colección de Môone: vestidos, monos, sandalias, accesorios y tapados en alquiler, y la sección de artículos y accesorios en venta, para tu próximo evento en Montevideo.",
   alternates: { canonical: "/coleccion" },
 };
 
@@ -17,7 +17,7 @@ const FOTOS: Record<string, string> = {
   sandalias: "/images/categorias/sandalias.jpg",
   tapados: "/images/categorias/tapados.jpg",
   accesorios: "/images/categorias/accesorios.jpg",
-  "en-venta": "/images/vestidos/vestido-plateado-corset-tajo.jpg",
+  "en-venta": "/images/categorias/articulos-accesorios-en-venta.jpg",
 };
 
 export default function ColeccionPage() {
