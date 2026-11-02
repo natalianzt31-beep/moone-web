@@ -25,12 +25,8 @@ const DESCRIPCIONES: Record<string, string> = {
     "Alquilá monos de fiesta en Montevideo para tu próximo evento. Variedad de talles y asesoramiento personalizado en Môone, Punta Carretas.",
   sandalias:
     "Alquilá sandalias de fiesta en Montevideo para combinar con tu look. Variedad de talles y estilos, retiro en Punta Carretas.",
-  carteras:
-    "Alquilá carteras de fiesta en Montevideo para completar tu look. Variedad de estilos, retiro en Punta Carretas.",
   tapados:
     "Alquilá tapados de fiesta en Montevideo para tu próximo evento. Variedad de talles y estilos, retiro en Punta Carretas.",
-  accesorios:
-    "Alquilá accesorios de fiesta en Montevideo para completar tu look. Retiro en Punta Carretas.",
 };
 
 export async function generateMetadata({

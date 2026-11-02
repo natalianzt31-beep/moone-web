@@ -9,19 +9,24 @@ import { compararTalles } from "@/lib/talles";
 import { colorPrincipal, compararColoresPrincipales } from "@/lib/colores";
 import { ColorFilterHint } from "@/components/ColorFilterHint";
 import type { Product } from "@/lib/supabase/types";
-import type { CATEGORIAS } from "@/lib/site-config";
 
 const SELECT_CLASSES =
   "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 text-sm text-negro focus:border-chocolate focus:outline-none";
 
-type Categoria = (typeof CATEGORIAS)[number];
-
 export function CategoriaClient({
   categoria,
   products,
+  tipo = "alquiler",
+  backHref = "/coleccion",
+  backLabel = "Colección",
 }: {
-  categoria: Categoria;
+  categoria: { label: string };
   products: Product[];
+  /** "venta" para subcategorías de En Venta (ej. vestidos en venta) — ver app/coleccion/en-venta/. */
+  tipo?: "alquiler" | "venta";
+  /** A dónde vuelve el link "←" de arriba — por defecto /coleccion, pero una subcategoría (ej. Accesorios > Cintos) vuelve a su categoría padre. */
+  backHref?: string;
+  backLabel?: string;
 }) {
   const [largoFiltro, setLargoFiltro] = useState("");
   const [colorFiltro, setColorFiltro] = useState("");
@@ -90,10 +95,10 @@ export function CategoriaClient({
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-16">
           <Link
-            href="/coleccion"
+            href={backHref}
             className="flex min-h-11 w-fit items-center text-xs uppercase tracking-wider text-taupe transition-colors hover:text-chocolate"
           >
-            ← Colección
+            ← {backLabel}
           </Link>
           <h1 className="mt-1 text-xl font-normal tracking-tight text-negro sm:text-2xl">
             {categoria.label}
@@ -189,7 +194,7 @@ export function CategoriaClient({
                 <GroupedProductCard
                   key={key}
                   variantes={variantes}
-                  tipo="alquiler"
+                  tipo={tipo}
                   variant="grid"
                   preload={i < 4}
                 />
@@ -198,7 +203,7 @@ export function CategoriaClient({
                 <ProductCard
                   key={product.id}
                   product={product}
-                  tipo="alquiler"
+                  tipo={tipo}
                   variant="grid"
                   preload={grupos.length + i < 4}
                 />

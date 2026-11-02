@@ -1,8 +1,16 @@
 import type { MetadataRoute } from "next";
-import { CATEGORIAS } from "@/lib/site-config";
+import { CATEGORIAS, ACCESORIOS_SUBCATEGORIAS, EN_VENTA_SUBCATEGORIAS } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { absoluteUrl } from "@/lib/site";
 import { turnosEnabled } from "@/lib/features";
+
+const RUTAS_COLECCION = [
+  ...CATEGORIAS.map((c) => `/coleccion/${c.slug}`),
+  "/coleccion/accesorios",
+  ...ACCESORIOS_SUBCATEGORIAS.map((s) => `/coleccion/accesorios/${s.slug}`),
+  "/coleccion/en-venta",
+  ...EN_VENTA_SUBCATEGORIAS.map((s) => `/coleccion/en-venta/${s.slug}`),
+];
 
 const PAGINAS_ESTATICAS = [
   { path: "/", changeFrequency: "weekly" as const, priority: 1 },
@@ -36,8 +44,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency,
       priority,
     })),
-    ...CATEGORIAS.map((categoria) => ({
-      url: absoluteUrl(`/coleccion/${categoria.slug}`),
+    ...RUTAS_COLECCION.map((path) => ({
+      url: absoluteUrl(path),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),

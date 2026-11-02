@@ -20,13 +20,59 @@ export const currencyFormatter = new Intl.NumberFormat("es-UY", {
   maximumFractionDigits: 0,
 });
 
+// Categorías de alquiler "simples": un solo listado de productos por
+// categoría, servidas por app/coleccion/[categoria]/page.tsx. Carteras y
+// Accesorios quedaron afuera a propósito: ahora son categorías "con
+// subcategorías" (ver ACCESORIOS_SUBCATEGORIAS más abajo) con sus propias
+// páginas en app/coleccion/accesorios/.
 export const CATEGORIAS = [
   { slug: "vestidos", label: "Vestidos", db: "vestido" },
   { slug: "monos", label: "Monos", db: "mono" },
   { slug: "sandalias", label: "Sandalias", db: "sandalias" },
-  { slug: "carteras", label: "Carteras", db: "cartera" },
   { slug: "tapados", label: "Tapados", db: "tapado" },
-  { slug: "accesorios", label: "Accesorios", db: "accesorio" },
+] as const;
+
+/**
+ * Tiles de /coleccion: las categorías "simples" de arriba, más Accesorios y
+ * En Venta, que en vez de listar productos directo llevan a una grilla de
+ * subcategorías (ver app/coleccion/accesorios/page.tsx y
+ * app/coleccion/en-venta/page.tsx).
+ */
+export const COLECCION_GRID = [
+  { slug: "vestidos", label: "Vestidos" },
+  { slug: "monos", label: "Monos" },
+  { slug: "sandalias", label: "Sandalias" },
+  { slug: "tapados", label: "Tapados" },
+  { slug: "accesorios", label: "Accesorios" },
+  { slug: "en-venta", label: "En Venta" },
+] as const;
+
+export const ACCESORIOS_SUBCATEGORIAS = [
+  {
+    slug: "carteras",
+    label: "Carteras",
+    db: "cartera",
+    portada: "/images/categorias/carteras.jpg",
+  },
+  {
+    slug: "cintos",
+    label: "Cintos",
+    db: "accesorio",
+    portada: "/images/accesorios/cinturon-plateado-strass.jpg",
+  },
+] as const;
+
+/**
+ * Subcategorías de /coleccion/en-venta. Por ahora solo vestidos en venta —
+ * cuando se sume la subcategoría de otros artículos en venta, va acá.
+ */
+export const EN_VENTA_SUBCATEGORIAS = [
+  {
+    slug: "vestidos",
+    label: "Vestidos en venta",
+    db: "vestido",
+    portada: "/images/vestidos/vestido-plateado-corset-tajo.jpg",
+  },
 ] as const;
 
 /**

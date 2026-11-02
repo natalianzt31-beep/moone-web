@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
-import { CATEGORIAS } from "@/lib/site-config";
+import { COLECCION_GRID } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Colección",
   description:
-    "Explorá la colección de Môone: vestidos, monos, sandalias, carteras y tapados en alquiler para tu próximo evento en Montevideo.",
+    "Explorá la colección de Môone: vestidos, monos, sandalias, accesorios y tapados en alquiler, y la sección En Venta, para tu próximo evento en Montevideo.",
   alternates: { canonical: "/coleccion" },
 };
 
@@ -15,9 +15,9 @@ const FOTOS: Record<string, string> = {
   vestidos: "/images/categorias/vestidos.jpg",
   monos: "/images/categorias/monos.jpg",
   sandalias: "/images/categorias/sandalias.jpg",
-  carteras: "/images/categorias/carteras.jpg",
   tapados: "/images/categorias/tapados.jpg",
   accesorios: "/images/categorias/accesorios.jpg",
+  "en-venta": "/images/vestidos/vestido-plateado-corset-tajo.jpg",
 };
 
 export default function ColeccionPage() {
@@ -34,7 +34,7 @@ export default function ColeccionPage() {
           </p>
 
           <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-6 lg:grid-cols-6">
-            {CATEGORIAS.map(({ slug, label }) => (
+            {COLECCION_GRID.map(({ slug, label }) => (
               <Link key={slug} href={`/coleccion/${slug}`} className="flex flex-col gap-3">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border border-arena bg-blanco transition-colors hover:border-chocolate">
                   <Image
