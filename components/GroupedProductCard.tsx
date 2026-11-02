@@ -255,7 +255,7 @@ export function GroupedProductCard({
         {enOferta ? (
           <div className="flex flex-col gap-0.5">
             <span className="w-fit rounded-[3px] bg-chocolate px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blanco">
-              Liquidamos
+              CyberLunes 30% OFF
             </span>
             <span className="flex items-baseline gap-2">
               <span className="text-xs text-taupe line-through">
