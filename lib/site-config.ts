@@ -63,8 +63,10 @@ export const ACCESORIOS_SUBCATEGORIAS = [
 ] as const;
 
 /**
- * Subcategorías de /coleccion/en-venta. Por ahora solo vestidos en venta —
- * cuando se sume la subcategoría de otros artículos en venta, va acá.
+ * Subcategorías de /coleccion/en-venta. `db: null` en "articulos" significa
+ * "cualquier categoría menos vestido" (ver la query en
+ * app/coleccion/en-venta/[subcategoria]/page.tsx) — agrupa monos, carteras,
+ * cintos/accesorios, sandalias y tapados que estén en venta.
  */
 export const EN_VENTA_SUBCATEGORIAS = [
   {
@@ -72,6 +74,12 @@ export const EN_VENTA_SUBCATEGORIAS = [
     label: "Vestidos en venta",
     db: "vestido",
     portada: "/images/vestidos/vestido-plateado-corset-tajo.jpg",
+  },
+  {
+    slug: "articulos",
+    label: "Artículos y accesorios en venta",
+    db: null,
+    portada: "/images/categorias/articulos-accesorios-en-venta.jpg",
   },
 ] as const;
 
