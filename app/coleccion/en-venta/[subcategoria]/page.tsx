@@ -40,16 +40,16 @@ export default async function EnVentaSubcategoriaPage({
     notFound();
   }
 
-  const base = getSupabaseClient()
+  // db: null significa "cualquier categoría menos vestido" (ver EN_VENTA_SUBCATEGORIAS).
+  // Una sola cadena sin ramas (vía .filter) para no confundir la inferencia
+  // de tipos de Supabase con dos builders distintos (.eq/.neq) por rama.
+  const { data, error } = await getSupabaseClient()
     .from("products")
     .select("*")
     .not("precio_venta", "is", null)
-    .neq("estado", "baja_definitiva");
-
-  // db: null significa "cualquier categoría menos vestido" (ver EN_VENTA_SUBCATEGORIAS).
-  const { data, error } = subcategoria.db
-    ? await base.eq("categoria", subcategoria.db).order("nombre", { ascending: true })
-    : await base.neq("categoria", "vestido").order("nombre", { ascending: true });
+    .neq("estado", "baja_definitiva")
+    .filter("categoria", subcategoria.db ? "eq" : "neq", subcategoria.db ?? "vestido")
+    .order("nombre", { ascending: true });
 
   if (error) throw new Error(error.message);
 
