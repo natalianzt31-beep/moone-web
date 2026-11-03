@@ -21,12 +21,13 @@ function filaHtml(etiqueta: string, valor: string): string {
 }
 
 /**
- * Aviso interno a contacto@moone.com.uy cada vez que se confirma la venta
- * definitiva de un vestido (pago aprobado por Mercado Pago o confirmado a
- * mano desde Reportes). Como es único, para ese momento ya se sacó de la
- * web (estado pasa a baja_definitiva antes de llamar a esta función).
+ * Aviso interno a contacto@moone.com.uy cada vez que se confirma una venta
+ * definitiva (pago aprobado por Mercado Pago o confirmado a mano desde
+ * Reportes). stockRestante indica cuánto queda de esa prenda/talle después
+ * de esta venta: si es 0, ya se sacó de la web; si es mayor, sigue
+ * publicada con el stock actualizado.
  */
-export async function enviarAvisoVentaVestido(params: {
+export async function enviarAvisoVenta(params: {
   sku: string;
   nombre: string;
   talle: string | null;
@@ -34,6 +35,7 @@ export async function enviarAvisoVentaVestido(params: {
   monto: number;
   medioPago: string;
   clienteNombre: string;
+  stockRestante: number;
 }): Promise<{ ok: true } | { ok: false; reason: string }> {
   const detalle = [params.talle, params.color].filter(Boolean).join(" · ");
 
@@ -44,15 +46,16 @@ export async function enviarAvisoVentaVestido(params: {
     filaHtml("Precio", currencyFormatter.format(params.monto)),
     filaHtml("Medio de pago", params.medioPago),
     filaHtml("Clienta", params.clienteNombre),
+    filaHtml("Stock restante", String(params.stockRestante)),
   ].join("");
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 480px;">
       <h1 style="font-family: Georgia, serif; color:#171513; font-size: 20px; font-weight: 500; margin: 0 0 4px;">
-        Se vendió un vestido
+        Se vendió — ${params.stockRestante > 0 ? "sigue en stock" : "sin stock, se sacó de la web"}
       </h1>
       <p style="color:#A49587; font-size: 13px; margin: 0 0 20px;">
-        Venta definitiva confirmada — como es única, ya se sacó de la web.
+        Venta definitiva confirmada.
       </p>
       <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
     </div>

@@ -4,7 +4,7 @@ import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { facturarYEnviar } from "@/lib/facturacion";
 import { enviarMailConfirmacionReserva } from "@/lib/email/reservas";
-import { enviarAvisoVentaVestido } from "@/lib/email/ventas";
+import { enviarAvisoVenta } from "@/lib/email/ventas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 async function procesarPagoAlquiler(
@@ -326,15 +326,43 @@ async function procesarPagoVenta(
     console.error("No se pudo registrar el pago de venta", insertPaymentError);
   }
 
-  // Solo la marcamos vendida si seguía disponible: si ya no lo estaba,
-  // alguien más la vendió mientras esta pagaba — el pago ya está cobrado
-  // así que igual queda registrado arriba, pero requiere revisión manual
-  // (reembolso o reasignación) porque la prenda física ya no está libre.
+  // Lee el stock actual antes de descontar: hay prendas únicas (stock 1,
+  // se sacan de la web apenas se venden) y artículos con varias unidades
+  // del mismo talle (ej. medias), que deben seguir publicados con el
+  // stock restante hasta agotarse.
+  const { data: productoActual, error: fetchError } = await supabase
+    .from("products")
+    .select("id, sku, nombre, categoria, talle, color, estado, stock")
+    .eq("id", productId)
+    .single();
+
+  if (fetchError || !productoActual) {
+    console.error("No se encontró la prenda para descontar stock", { productId, fetchError });
+    return;
+  }
+
+  if (productoActual.estado !== "disponible" || (productoActual.stock ?? 0) <= 0) {
+    console.error(
+      "Pago de venta aprobado pero la prenda ya no estaba disponible — posible doble venta, revisar manualmente",
+      { paymentId: payment.id, productId, clientId }
+    );
+    return;
+  }
+
+  const stockRestante = (productoActual.stock ?? 1) - 1;
+
+  // Optimistic lock sobre el stock leído: si otra venta lo descontó en el
+  // medio, esta actualización no afecta filas y lo tratamos como carrera.
   const { data: actualizado, error: updateError } = await supabase
     .from("products")
-    .update({ estado: "baja_definitiva" })
+    .update({
+      stock: stockRestante,
+      estado: stockRestante > 0 ? "disponible" : "baja_definitiva",
+      disponible: stockRestante > 0,
+      visible_web: stockRestante > 0,
+    })
     .eq("id", productId)
-    .eq("estado", "disponible")
+    .eq("stock", productoActual.stock)
     .select("id, sku, nombre, categoria, talle, color");
 
   if (updateError) {
@@ -344,7 +372,7 @@ async function procesarPagoVenta(
 
   if (!actualizado || actualizado.length === 0) {
     console.error(
-      "Pago de venta aprobado pero la prenda ya no estaba disponible — posible doble venta, revisar manualmente",
+      "Pago de venta aprobado pero el stock cambió antes de poder descontarlo — posible doble venta, revisar manualmente",
       { paymentId: payment.id, productId, clientId }
     );
     return;
@@ -379,17 +407,16 @@ async function procesarPagoVenta(
       })
       .eq("id", pagoInsertado.id);
 
-    if (producto.categoria === "vestido") {
-      await enviarAvisoVentaVestido({
-        sku: producto.sku,
-        nombre: producto.nombre,
-        talle: producto.talle,
-        color: producto.color,
-        monto,
-        medioPago: "Mercado Pago",
-        clienteNombre: cliente?.nombre ?? "Clienta",
-      });
-    }
+    await enviarAvisoVenta({
+      sku: producto.sku,
+      nombre: producto.nombre,
+      talle: producto.talle,
+      color: producto.color,
+      monto,
+      medioPago: "Mercado Pago",
+      clienteNombre: cliente?.nombre ?? "Clienta",
+      stockRestante,
+    });
   }
 }
 

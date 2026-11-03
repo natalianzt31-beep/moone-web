@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/serviceClient";
 import { facturarYEnviar } from "@/lib/facturacion";
-import { enviarAvisoVentaVestido } from "@/lib/email/ventas";
+import { enviarAvisoVenta } from "@/lib/email/ventas";
 
 /**
  * La vendedora confirma desde el backoffice un pago de venta cargado como
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
     .select(
-      "id, confirmado, tipo, monto, product_id, products(sku, nombre, estado, categoria, talle, color), client_id, clients(nombre, email, documento)"
+      "id, confirmado, tipo, monto, product_id, products(sku, nombre, estado, categoria, talle, color, stock), client_id, clients(nombre, email, documento)"
     )
     .eq("id", paymentId)
     .single();
@@ -59,9 +59,17 @@ export async function POST(req: Request) {
   const producto = Array.isArray(payment.products) ? payment.products[0] : payment.products;
   const cliente = Array.isArray(payment.clients) ? payment.clients[0] : payment.clients;
 
+  const stockActual = producto?.stock ?? 1;
+  const stockRestante = stockActual - 1;
+
   const { data: vendida, error: updateProductError } = await supabase
     .from("products")
-    .update({ estado: "baja_definitiva" })
+    .update({
+      stock: stockRestante,
+      estado: stockRestante > 0 ? "disponible" : "baja_definitiva",
+      disponible: stockRestante > 0,
+      visible_web: stockRestante > 0,
+    })
     .eq("id", payment.product_id)
     .eq("estado", "reservado")
     .select("id");
@@ -100,8 +108,8 @@ export async function POST(req: Request) {
     })
     .eq("id", paymentId);
 
-  if (producto?.categoria === "vestido") {
-    await enviarAvisoVentaVestido({
+  if (producto) {
+    await enviarAvisoVenta({
       sku: producto.sku,
       nombre: producto.nombre,
       talle: producto.talle,
@@ -109,6 +117,7 @@ export async function POST(req: Request) {
       monto: payment.monto,
       medioPago,
       clienteNombre: cliente?.nombre ?? "Clienta",
+      stockRestante,
     });
   }
 
