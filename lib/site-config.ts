@@ -73,13 +73,13 @@ export const EN_VENTA_SUBCATEGORIAS = [
     slug: "vestidos",
     label: "Vestidos en venta",
     db: "vestido",
-    portada: "/images/vestidos/vestido-plateado-corset-tajo.jpg",
+    portada: "/images/categorias/vestidos-en-venta.jpg",
   },
   {
     slug: "articulos",
     label: "Otros artículos en venta",
     db: null,
-    portada: "/images/carteras/cartera-negra-brillos.jpg",
+    portada: "/images/categorias/otros-articulos-en-venta.jpg",
   },
 ] as const;
 
