@@ -5,6 +5,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { absoluteUrl } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { CategoriaClient } from "../../[categoria]/CategoriaClient";
+import type { Product } from "@/lib/supabase/types";
 
 export const revalidate = 3600;
 
@@ -40,13 +41,20 @@ export default async function AccesoriosSubcategoriaPage({
     notFound();
   }
 
-  const { data, error } = await getSupabaseClient()
+  let query = getSupabaseClient()
     .from("products")
     .select("*")
     .eq("categoria", subcategoria.db)
     .eq("estado", "disponible")
-    .gt("precio_alquiler", 0)
-    .order("nombre", { ascending: true });
+    .gt("precio_alquiler", 0);
+
+  // "accesorio" es un cajón común a varios tipos de producto (cintos,
+  // pashminas, etc): subcategoria.subcategoria distingue cuál mostrar acá.
+  if (subcategoria.subcategoria) {
+    query = query.eq("subcategoria", subcategoria.subcategoria);
+  }
+
+  const { data, error } = await query.order("nombre", { ascending: true }).returns<Product[]>();
 
   if (error) throw new Error(error.message);
 

@@ -52,13 +52,22 @@ export const ACCESORIOS_SUBCATEGORIAS = [
     slug: "carteras",
     label: "Carteras",
     db: "cartera",
+    subcategoria: null,
     portada: "/images/categorias/carteras.jpg",
   },
   {
     slug: "cintos",
     label: "Cintos",
     db: "accesorio",
+    subcategoria: "cintos",
     portada: "/images/accesorios/cinturon-plateado-strass.jpg",
+  },
+  {
+    slug: "pashminas",
+    label: "Pashminas",
+    db: "accesorio",
+    subcategoria: "pashminas",
+    portada: "/images/accesorios/pashmina-negro-modelo.jpg",
   },
 ] as const;
 
