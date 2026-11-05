@@ -29,7 +29,7 @@ export const CATEGORIAS = [
   { slug: "vestidos", label: "Vestidos", db: "vestido" },
   { slug: "monos", label: "Monos", db: "mono" },
   { slug: "sandalias", label: "Sandalias", db: "sandalias" },
-  { slug: "tapados", label: "Tapados", db: "tapado" },
+  { slug: "tapados", label: "Abrigos", db: "tapado" },
 ] as const;
 
 /**
@@ -42,7 +42,7 @@ export const COLECCION_GRID = [
   { slug: "vestidos", label: "Vestidos" },
   { slug: "monos", label: "Monos" },
   { slug: "sandalias", label: "Sandalias" },
-  { slug: "tapados", label: "Tapados" },
+  { slug: "tapados", label: "Abrigos" },
   { slug: "accesorios", label: "Accesorios" },
   { slug: "en-venta", label: "Artículos y accesorios en venta" },
 ] as const;

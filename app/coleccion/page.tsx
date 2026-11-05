@@ -7,7 +7,7 @@ import { COLECCION_GRID } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "Colección",
   description:
-    "Explorá la colección de Môone: vestidos, monos, sandalias, accesorios y tapados en alquiler, y la sección de artículos y accesorios en venta, para tu próximo evento en Montevideo.",
+    "Explorá la colección de Môone: vestidos, monos, sandalias, accesorios y abrigos en alquiler, y la sección de artículos y accesorios en venta, para tu próximo evento en Montevideo.",
   alternates: { canonical: "/coleccion" },
 };
 

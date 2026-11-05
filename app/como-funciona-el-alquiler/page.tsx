@@ -14,7 +14,7 @@ const PASOS = [
   {
     titulo: "Elegí tu prenda",
     texto:
-      "Recorré la colección de vestidos, monos, sandalias, carteras y tapados, y filtrá por talle, color o largo hasta encontrar la pieza justa para tu evento.",
+      "Recorré la colección de vestidos, monos, sandalias, carteras y abrigos, y filtrá por talle, color o largo hasta encontrar la pieza justa para tu evento.",
   },
   {
     titulo: "Reservá con una seña",

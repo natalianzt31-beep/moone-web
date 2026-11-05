@@ -26,7 +26,7 @@ const DESCRIPCIONES: Record<string, string> = {
   sandalias:
     "Alquilá sandalias de fiesta en Montevideo para combinar con tu look. Variedad de talles y estilos, retiro en Punta Carretas.",
   tapados:
-    "Alquilá tapados de fiesta en Montevideo para tu próximo evento. Variedad de talles y estilos, retiro en Punta Carretas.",
+    "Alquilá abrigos de fiesta en Montevideo para tu próximo evento. Variedad de talles y estilos, retiro en Punta Carretas.",
 };
 
 export async function generateMetadata({

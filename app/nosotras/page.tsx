@@ -55,7 +55,7 @@ export default function NosotrasPage() {
           <p className="mt-4 text-base leading-7 text-chocolate">
             Môone nace para que vivas cada ocasión especial con una prenda
             distinta, sin necesidad de comprarla. Seleccionamos vestidos,
-            monos, sandalias, carteras y tapados de diseño para que armes tu
+            monos, sandalias, carteras y abrigos de diseño para que armes tu
             look ideal y lo devuelvas cuando termine la fiesta.
           </p>
         </section>
