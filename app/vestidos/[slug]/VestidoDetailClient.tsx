@@ -4,7 +4,6 @@ import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
-import { ProductCard } from "@/components/ProductCard";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
 import { ShareButton } from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -60,11 +59,7 @@ export function VestidoDetailClient({ variantes }: { variantes: Product[] }) {
           </div>
 
           <div className="mt-6">
-            {variantes.length > 1 ? (
-              <GroupedProductCard variantes={variantes} tipo={tipo} preload />
-            ) : (
-              <ProductCard product={variantes[0]} tipo={tipo} preload />
-            )}
+            <GroupedProductCard variantes={variantes} tipo={tipo} preload />
           </div>
         </section>
       </main>

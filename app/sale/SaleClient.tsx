@@ -50,10 +50,17 @@ export function SaleClient({ products }: { products: Product[] }) {
     const individuales: Product[] = [];
 
     for (const product of productosFiltrados) {
-      if (product.grupo_producto) {
-        const variantes = gruposMap.get(product.grupo_producto) ?? [];
+      // Vestidos y monos siempre muestran el desplegable de talle, aunque
+      // haya una sola unidad: sin grupo_producto, cada uno arma su propio
+      // grupo de 1 usando su id.
+      const key =
+        product.grupo_producto ??
+        (product.categoria === "vestido" || product.categoria === "mono" ? product.id : null);
+
+      if (key) {
+        const variantes = gruposMap.get(key) ?? [];
         variantes.push(product);
-        gruposMap.set(product.grupo_producto, variantes);
+        gruposMap.set(key, variantes);
       } else {
         individuales.push(product);
       }
