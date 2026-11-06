@@ -292,6 +292,17 @@ export function GroupedProductCard({
           </select>
         </label>
 
+        {tipo === "alquiler" && (
+          <DisponibilidadCalendar
+            key={producto.id}
+            productId={producto.id}
+            onSelect={(retiro, devolucion) => {
+              setFechaRetiro(retiro);
+              setFechaDevolucion(devolucion);
+            }}
+          />
+        )}
+
         {habilitado && (
           <>
             {!authLoading && !user ? (
@@ -312,17 +323,6 @@ export function GroupedProductCard({
               </button>
             ) : (
               <>
-                {tipo === "alquiler" && (
-                  <DisponibilidadCalendar
-                    key={producto.id}
-                    productId={producto.id}
-                    onSelect={(retiro, devolucion) => {
-                      setFechaRetiro(retiro);
-                      setFechaDevolucion(devolucion);
-                    }}
-                  />
-                )}
-
                 {checkoutEnabled && (
                   <>
                     {fechaElegida ? (

@@ -36,11 +36,9 @@ export function DisponibilidadCalendar({
     async function load() {
       const [{ data: reservas }, closed] = await Promise.all([
         getSupabaseClient()
-          .from("reservations")
+          .from("reservations_disponibilidad")
           .select("fecha_retiro, fecha_devolucion")
-          .eq("product_id", productId)
-          .neq("estado", "cancelado")
-          .neq("estado", "devuelto"),
+          .eq("product_id", productId),
         fetchClosedDatesSet(),
       ]);
 

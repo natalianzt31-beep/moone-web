@@ -237,6 +237,16 @@ export function ProductCard({
           </span>
         )}
 
+        {tipo === "alquiler" && (
+          <DisponibilidadCalendar
+            productId={product.id}
+            onSelect={(retiro, devolucion) => {
+              setFechaRetiro(retiro);
+              setFechaDevolucion(devolucion);
+            }}
+          />
+        )}
+
         {habilitado && (
           <>
             {!authLoading && !user ? (
@@ -257,16 +267,6 @@ export function ProductCard({
               </button>
             ) : (
               <>
-                {tipo === "alquiler" && (
-                  <DisponibilidadCalendar
-                    productId={product.id}
-                    onSelect={(retiro, devolucion) => {
-                      setFechaRetiro(retiro);
-                      setFechaDevolucion(devolucion);
-                    }}
-                  />
-                )}
-
                 {checkoutEnabled && (
                   <>
                     {fechaElegida ? (
