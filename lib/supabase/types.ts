@@ -152,6 +152,8 @@ export type ClosedDate = {
   id: string;
   fecha: string;
   motivo: string | null;
+  /** Si es true, ese día solo afecta los turnos de modista (confección a medida); el alquiler abre normal. */
+  solo_modista: boolean;
   created_at: string;
 };
 

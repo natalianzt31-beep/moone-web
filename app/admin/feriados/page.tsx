@@ -18,6 +18,7 @@ function FeriadosContent() {
 
   const [nuevaFecha, setNuevaFecha] = useState(toISODate(new Date()));
   const [nuevoMotivo, setNuevoMotivo] = useState("");
+  const [nuevoSoloModista, setNuevoSoloModista] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -45,7 +46,7 @@ function FeriadosContent() {
     try {
       const { error: insertError } = await getSupabaseClient()
         .from("closed_dates")
-        .insert({ fecha: nuevaFecha, motivo: nuevoMotivo || null });
+        .insert({ fecha: nuevaFecha, motivo: nuevoMotivo || null, solo_modista: nuevoSoloModista });
 
       if (insertError) {
         setError(
@@ -57,6 +58,7 @@ function FeriadosContent() {
       }
 
       setNuevoMotivo("");
+      setNuevoSoloModista(false);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -115,6 +117,16 @@ function FeriadosContent() {
             />
           </label>
 
+          <label className="flex min-h-11 items-center gap-2 text-sm text-negro">
+            <input
+              type="checkbox"
+              checked={nuevoSoloModista}
+              onChange={(e) => setNuevoSoloModista(e.target.checked)}
+              className="h-5 w-5"
+            />
+            Solo afecta turnos de modista (el alquiler abre normal)
+          </label>
+
           {error && <p className="text-sm text-chocolate">{error}</p>}
 
           <button
@@ -144,6 +156,11 @@ function FeriadosContent() {
                   <div>
                     <p className="text-sm font-medium text-negro">{f.fecha}</p>
                     {f.motivo && <p className="text-xs text-taupe">{f.motivo}</p>}
+                    {f.solo_modista && (
+                      <p className="text-xs text-chocolate">
+                        Solo modista — el alquiler abre normal
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"

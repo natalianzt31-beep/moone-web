@@ -11,7 +11,13 @@ export async function fetchClosedDates(): Promise<ClosedDate[]> {
   return data ?? [];
 }
 
+/**
+ * Para el alquiler (retiro/devolución): un cierre marcado "solo_modista" no
+ * cuenta acá, porque ese día el local abre normal para alquiler — solo no
+ * atiende confección a medida (ver citas_modista / lib/citas.ts, que sí
+ * sigue viendo esas fechas al consultar closed_dates directo).
+ */
 export async function fetchClosedDatesSet(): Promise<Set<string>> {
   const dates = await fetchClosedDates();
-  return new Set(dates.map((d) => d.fecha));
+  return new Set(dates.filter((d) => !d.solo_modista).map((d) => d.fecha));
 }
