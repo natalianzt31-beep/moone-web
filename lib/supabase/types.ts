@@ -188,6 +188,75 @@ export type CitaModista = {
   created_at: string;
 };
 
+export type StaffRol = "admin" | "caja" | "modista";
+
+export type EstadoPedidoMedida =
+  | "pendiente_senia"
+  | "en_confeccion"
+  | "terminado"
+  | "pagado"
+  | "entregado"
+  | "cancelado";
+
+export type PedidoMedida = {
+  id: string;
+  numero: number;
+  client_id: string;
+  descripcion: string | null;
+  monto_presupuestado: number;
+  senia_porcentaje: number;
+  senia_requerida: number;
+  estado: EstadoPedidoMedida;
+  fecha_retiro: string | null;
+  factura_numero: string | null;
+  factura_fecha: string | null;
+  entregado_at: string | null;
+  motivo_cancelacion: string | null;
+  created_at: string;
+  clients: { nombre: string; celular: string | null; email: string | null } | null;
+};
+
+export type PedidoMedidaCobro = {
+  id: string;
+  numero: number;
+  estado: EstadoPedidoMedida;
+  descripcion: string | null;
+  fecha_retiro: string | null;
+  monto_presupuestado: number;
+  senia_requerida: number;
+  pagado: number;
+  saldo: number;
+  senia_pendiente: number;
+  factura_numero: string | null;
+  factura_fecha: string | null;
+  created_at: string;
+  client_id: string;
+  nombre: string;
+  ci: string | null;
+  email: string | null;
+  celular: string | null;
+};
+
+export type EstadoArreglo = "pendiente" | "pronto" | "cancelado";
+
+export type ArregloBandeja = {
+  id: string;
+  numero: number;
+  estado: EstadoArreglo;
+  detalle: string;
+  nota_modista: string | null;
+  fecha_retiro_clienta: string;
+  dias_restantes: number;
+  pronto_at: string | null;
+  created_at: string;
+  reservation_id: string | null;
+  product_id: string;
+  sku: string;
+  nombre: string;
+  talle: string | null;
+  foto_url: string | null;
+};
+
 export type LeadPronovias = {
   id: string;
   nombre: string;

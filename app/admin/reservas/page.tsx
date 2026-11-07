@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -592,7 +593,7 @@ type ReservaActiva = {
   saldo_pagado: boolean;
   eticket_generado: boolean;
   eticket_url: string | null;
-  products: { nombre: string } | null;
+  products: { sku: string; nombre: string } | null;
   clients: { nombre: string } | null;
 };
 
@@ -751,7 +752,7 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
     const { data, error } = await getSupabaseClient()
       .from("reservations")
       .select(
-        "id, client_id, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(nombre), clients(nombre)"
+        "id, client_id, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre), clients(nombre)"
       )
       .neq("estado", "cancelado")
       .order("fecha_retiro", { ascending: true });
@@ -821,6 +822,14 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
                 <tr key={r.id}>
                   <td className="px-4 py-3 text-sm font-medium text-negro">
                     {r.products?.nombre ?? "Prenda"}
+                    {r.products?.sku && (
+                      <Link
+                        href={`/admin/arreglos?sku=${encodeURIComponent(r.products.sku)}&reservationId=${r.id}`}
+                        className="mt-1 block text-xs font-normal uppercase tracking-wider text-chocolate underline-offset-2 hover:underline"
+                      >
+                        Cargar arreglo
+                      </Link>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-chocolate">
                     {r.clients?.nombre ?? "Clienta"}

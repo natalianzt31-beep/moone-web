@@ -8,7 +8,9 @@ export type TipoEmailLog =
   | "recordatorio_devolucion"
   | "pedido_resena"
   | "promocion"
-  | "cuenta_existente";
+  | "cuenta_existente"
+  | "pago_recibido"
+  | "alerta_arreglo";
 
 /**
  * Deja constancia en email_log de cada intento de envío (éxito o error),
@@ -20,6 +22,8 @@ export async function registrarEnvioEmail(params: {
   tipo: TipoEmailLog;
   destinatario: string;
   reservationId?: string | null;
+  pedidoMedidaId?: string | null;
+  arregloId?: string | null;
   resultado: { ok: true; id?: string } | { ok: false; reason: string };
 }): Promise<void> {
   try {
@@ -28,6 +32,8 @@ export async function registrarEnvioEmail(params: {
       tipo: params.tipo,
       destinatario: params.destinatario,
       reservation_id: params.reservationId ?? null,
+      pedido_medida_id: params.pedidoMedidaId ?? null,
+      arreglo_id: params.arregloId ?? null,
       estado_envio: params.resultado.ok ? "enviado" : "error",
       fecha_envio: params.resultado.ok ? new Date().toISOString() : null,
       proveedor_msg_id: params.resultado.ok ? (params.resultado.id ?? null) : null,

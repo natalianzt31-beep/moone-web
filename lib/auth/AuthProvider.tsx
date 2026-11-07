@@ -4,12 +4,14 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import type { User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { ensureClientRow } from "@/lib/supabase/account";
-import type { Client } from "@/lib/supabase/types";
+import type { Client, StaffRol } from "@/lib/supabase/types";
 
 type AuthContextValue = {
   user: User | null;
   client: Client | null;
   isStaff: boolean;
+  /** Rol de staff (admin/caja/modista), o null si no es staff. */
+  staffRol: StaffRol | null;
   loading: boolean;
   refreshClient: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -19,6 +21,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   client: null,
   isStaff: false,
+  staffRol: null,
   loading: true,
   refreshClient: async () => {},
   signOut: async () => {},
@@ -34,23 +37,36 @@ async function fetchIsStaff(): Promise<boolean> {
   }
 }
 
+async function fetchStaffRol(): Promise<StaffRol | null> {
+  try {
+    const { data, error } = await getSupabaseClient().rpc("staff_rol");
+    if (error) return null;
+    return (data as StaffRol | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [isStaff, setIsStaff] = useState(false);
+  const [staffRol, setStaffRol] = useState<StaffRol | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadUserContext(u: User) {
-      const [clientResult, staffResult] = await Promise.allSettled([
+      const [clientResult, staffResult, rolResult] = await Promise.allSettled([
         ensureClientRow(u),
         fetchIsStaff(),
+        fetchStaffRol(),
       ]);
       if (cancelled) return;
       setClient(clientResult.status === "fulfilled" ? clientResult.value : null);
       setIsStaff(staffResult.status === "fulfilled" ? staffResult.value : false);
+      setStaffRol(rolResult.status === "fulfilled" ? rolResult.value : null);
     }
 
     async function init() {
@@ -75,6 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             setClient(null);
             setIsStaff(false);
+            setStaffRol(null);
           }
         });
 
@@ -105,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, client, isStaff, loading, refreshClient, signOut }}
+      value={{ user, client, isStaff, staffRol, loading, refreshClient, signOut }}
     >
       {children}
     </AuthContext.Provider>
