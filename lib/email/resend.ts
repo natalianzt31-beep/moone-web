@@ -29,6 +29,7 @@ export function resendConfigurado(): boolean {
 
 export async function enviarEmail(params: {
   to: string | string[];
+  cc?: string | string[];
   subject: string;
   html: string;
   attachments?: EmailAttachment[];
@@ -48,6 +49,7 @@ export async function enviarEmail(params: {
     const { data, error } = await resend.emails.send({
       from,
       to: params.to,
+      cc: params.cc,
       subject: params.subject,
       html: params.html,
       attachments: params.attachments,

@@ -68,7 +68,8 @@ function filaItemHtml(producto: ProductoFila | null): string {
  * pedido, para poder auditar cada una individualmente.
  */
 export async function enviarMailConfirmacionReserva(
-  pedidoId: string
+  pedidoId: string,
+  opciones?: { cc?: string | string[] }
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const supabase = getSupabaseServiceClient();
 
@@ -102,6 +103,7 @@ export async function enviarMailConfirmacionReserva(
 
   const resultado = await enviarEmail({
     to: cliente.email,
+    cc: opciones?.cc,
     subject: "¡Tu reserva en Môone está confirmada!",
     html,
   });
