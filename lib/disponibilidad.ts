@@ -28,8 +28,18 @@ export function nextBusinessDay(iso: string, closedDates: ReadonlySet<string>) {
   return cursor;
 }
 
-/** Sugerencia de devolución: ~4 días desde el retiro, ajustada a día hábil. */
+/**
+ * Sugerencia de devolución: ~4 días desde el retiro, ajustada a día hábil.
+ * Regla fija de Naty: retirando jueves, viernes o sábado, la devolución es
+ * siempre el lunes siguiente (no los ~4 días corridos), para que el lunes de
+ * reapertura concentre las devoluciones de todo el fin de semana.
+ */
 export function sugerirDevolucion(fechaRetiro: string, closedDates: ReadonlySet<string>) {
+  const diaSemana = new Date(`${fechaRetiro}T00:00:00`).getDay();
+  if (diaSemana === 4 || diaSemana === 5 || diaSemana === 6) {
+    const diasHastaElLunes = (8 - diaSemana) % 7;
+    return nextBusinessDay(addDays(fechaRetiro, diasHastaElLunes), closedDates);
+  }
   return nextBusinessDay(addDays(fechaRetiro, 4), closedDates);
 }
 
