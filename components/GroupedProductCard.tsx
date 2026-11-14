@@ -292,7 +292,7 @@ export function GroupedProductCard({
           </select>
         </label>
 
-        {tipo === "alquiler" && (
+        {tipo === "alquiler" && variant !== "grid" && (
           <DisponibilidadCalendar
             key={producto.id}
             productId={producto.id}

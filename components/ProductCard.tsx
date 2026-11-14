@@ -237,7 +237,7 @@ export function ProductCard({
           </span>
         )}
 
-        {tipo === "alquiler" && (
+        {tipo === "alquiler" && variant !== "grid" && (
           <DisponibilidadCalendar
             productId={product.id}
             onSelect={(retiro, devolucion) => {
