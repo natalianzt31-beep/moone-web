@@ -23,14 +23,21 @@ import type { Categoria } from "@/lib/supabase/types";
 //
 // Monos y tapados (solo un puñado de fotos hoy) todavía no pasaron por ese
 // script — sus fotos varían de proporción entre sí según el vuelo/largo de
-// cada prenda. Para esos casos, la grilla del catálogo no las mete en una
-// caja de tamaño fijo: las muestra a su relación de aspecto real, todas al
-// mismo ANCHO (el de la columna), dejando que cada una tenga el alto que le
-// corresponda — como un muro de fotos (estilo Pinterest, vía columns-* en
-// vez de grid). Así ninguna se ve "más chica" que otra y nunca se recorta
-// nada. La ficha de producto (`variant="ficha"`) sigue usando un recuadro
-// fijo con object-contain para estas, porque ahí no compite visualmente con
-// otras tarjetas al lado.
+// cada prenda.
+//
+// Monos: en la grilla no se meten en una caja de tamaño fijo, se muestran a
+// su relación de aspecto real, todas al mismo ANCHO (el de la columna),
+// dejando que cada una tenga el alto que le corresponda — como un muro de
+// fotos (estilo Pinterest). Así ninguna se ve "más chica" que otra y nunca
+// se recorta nada.
+//
+// Tapados: acá la variación de proporción es mucho más marcada (desde
+// capas angostas y muy largas hasta sacos cortos y anchos), así que dejar
+// cada foto a su alto real hacía que una tarjeta se viera varias veces más
+// alta que la de al lado. Para que todas las tarjetas midan lo mismo, la
+// grilla también les da un recuadro fijo con object-contain (sin recortar
+// la prenda, con el margen blanco que haga falta) — el mismo tratamiento
+// que ya usaba su ficha de producto.
 //
 // Las fotos de accesorios (carteras, sandalias, accesorios) sí son casi
 // cuadradas entre sí (ver scripts/normalizar-foto-producto.py), así que en
@@ -39,6 +46,8 @@ import type { Categoria } from "@/lib/supabase/types";
 // corta el producto, como mucho un pelo de fondo).
 const PRENDAS_CUERPO_ENTERO: Categoria[] = ["vestido", "mono", "tapado"];
 const LIENZO_FIJO: Categoria[] = ["vestido"];
+/** Cuerpo entero que además usa recuadro fijo en grilla (no "muro de fotos"). */
+const GRID_CAJA_FIJA: Categoria[] = ["tapado"];
 
 export type ImageVariant = "grid" | "ficha";
 export type ImageDisplayMode = "contain" | "cover" | "cover-top" | "natural";
@@ -54,6 +63,7 @@ export function imageBoxAspectClass(categoria: Categoria): string {
 
 export function imageDisplayMode(categoria: Categoria, variant: ImageVariant): ImageDisplayMode {
   if (LIENZO_FIJO.includes(categoria)) return "cover-top";
-  if (variant === "grid" && esPrendaCuerpoEntero(categoria)) return "natural";
+  if (variant === "grid" && esPrendaCuerpoEntero(categoria) && !GRID_CAJA_FIJA.includes(categoria))
+    return "natural";
   return esPrendaCuerpoEntero(categoria) ? "contain" : "cover";
 }
