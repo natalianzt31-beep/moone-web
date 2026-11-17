@@ -3,3 +3,5 @@ junto con los productos nuevos cargados desde la última impresión.
 
 - VES-00596 — 2026-10-18
 - VES-00423 — 2026-10-18
+- VES-00478 — 2026-11-17
+- VES-00466 — 2026-11-17
