@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
 import { ROLES_ADMIN_CAJA } from "@/lib/adminAccess";
+import { QrScannerModal } from "@/components/QrScannerModal";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import { fetchClosedDatesSet } from "@/lib/supabase/closedDates";
@@ -64,6 +65,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [escaneando, setEscaneando] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -116,6 +118,33 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       setPrecioTotal(String(product.precio_alquiler));
       setSenia(String(Math.round(product.precio_alquiler * 0.5)));
     }
+  }
+
+  /** Las etiquetas codifican la URL de la ficha (ej. .../p/VES-00333) — nos
+   * quedamos con el último segmento, o con el texto tal cual si no es una
+   * URL. */
+  function skuDesdeTextoEscaneado(texto: string): string {
+    const limpio = texto.trim();
+    try {
+      const url = new URL(limpio);
+      const segmentos = url.pathname.split("/").filter(Boolean);
+      if (segmentos.length > 0) return segmentos[segmentos.length - 1].toUpperCase();
+    } catch {
+      // No es una URL completa: seguimos con el texto tal cual.
+    }
+    return limpio.toUpperCase();
+  }
+
+  function handleScan(textoDecodificado: string) {
+    setEscaneando(false);
+    const sku = skuDesdeTextoEscaneado(textoDecodificado);
+    const product = products.find((p) => p.sku.toUpperCase() === sku);
+    if (!product) {
+      setError(`No encontramos ninguna prenda con el SKU "${sku}".`);
+      return;
+    }
+    setError(null);
+    handleProductChange(product.id);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -220,19 +249,37 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className="flex flex-col gap-1 text-sm text-negro">
         Prenda
-        <select
-          value={productId}
-          onChange={(e) => handleProductChange(e.target.value)}
-          className={inputClass}
-        >
-          <option value="">Elegir prenda...</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre} {p.talle ? `(${p.talle})` : ""} — {p.sku}
-            </option>
-          ))}
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={productId}
+            onChange={(e) => handleProductChange(e.target.value)}
+            className={`${inputClass} flex-1`}
+          >
+            <option value="">Elegir prenda...</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre} {p.talle ? `(${p.talle})` : ""} — {p.sku}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setEscaneando(true)}
+            aria-label="Escanear SKU con la cámara"
+            title="Escanear SKU con la cámara"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-[3px] border border-taupe text-negro hover:border-negro"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <path d="M4 7a2 2 0 0 1 2-2h1.2l.9-1.4A1 1 0 0 1 9 3h6a1 1 0 0 1 .9.6L16.8 5H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z" />
+              <circle cx="12" cy="13" r="3.4" />
+            </svg>
+          </button>
+        </div>
       </label>
+
+      {escaneando && (
+        <QrScannerModal onScan={handleScan} onClose={() => setEscaneando(false)} />
+      )}
 
       <div>
         <div className="flex gap-4 text-sm text-negro">
