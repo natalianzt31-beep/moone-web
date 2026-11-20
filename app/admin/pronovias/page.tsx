@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { ROLES_ADMIN_CAJA } from "@/lib/adminAccess";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { LeadPronovias } from "@/lib/supabase/types";
 
@@ -133,7 +134,7 @@ function PronoviasContent() {
 export default function AdminPronoviasPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
-      <RequireStaff>
+      <RequireStaff roles={ROLES_ADMIN_CAJA}>
         <AdminNav />
         <main className="flex-1">
           <PronoviasContent />

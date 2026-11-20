@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { ROLES_ADMIN_CAJA } from "@/lib/adminAccess";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import { compararTalles } from "@/lib/talles";
@@ -780,7 +781,7 @@ function StockContent() {
 export default function AdminStockPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
-      <RequireStaff>
+      <RequireStaff roles={ROLES_ADMIN_CAJA}>
         <AdminNav />
         <main className="flex-1">
           <StockContent />

@@ -3,26 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
-
-const TABS = [
-  { href: "/admin", label: "Inicio" },
-  { href: "/admin/stock", label: "Stock" },
-  { href: "/admin/clientas", label: "Clientas" },
-  { href: "/admin/reportes", label: "Reportes" },
-  { href: "/admin/reservas", label: "Reservas" },
-  { href: "/admin/pedidos-medida", label: "A medida" },
-  { href: "/admin/arreglos", label: "Arreglos" },
-  { href: "/admin/egresadas", label: "Egresadas" },
-  { href: "/admin/pronovias", label: "Pronovias" },
-  { href: "/admin/turnos", label: "Turnos" },
-  { href: "/admin/analitica", label: "Analítica" },
-  { href: "/admin/feriados", label: "Feriados" },
-];
+import { ADMIN_MODULES, puedeAcceder } from "@/lib/adminAccess";
 
 export function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, staffRol, signOut } = useAuth();
+
+  const tabs = ADMIN_MODULES.filter((modulo) => puedeAcceder(modulo.roles, staffRol));
 
   async function handleSignOut() {
     await signOut();
@@ -39,8 +27,8 @@ export function AdminNav() {
           >
             Môone Admin
           </Link>
-          <nav className="flex gap-6">
-            {TABS.map(({ href, label }) => (
+          <nav className="flex flex-wrap gap-6">
+            {tabs.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}

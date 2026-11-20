@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { ROLES_TODOS_LOS_ROLES } from "@/lib/adminAccess";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { horariosPosiblesPara } from "@/lib/citas";
 import { addDays, toISODate } from "@/lib/disponibilidad";
@@ -313,7 +314,7 @@ function TurnosContent() {
 export default function AdminTurnosPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
-      <RequireStaff>
+      <RequireStaff roles={ROLES_TODOS_LOS_ROLES}>
         <AdminNav />
         <main className="flex-1">
           <TurnosContent />

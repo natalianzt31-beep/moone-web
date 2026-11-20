@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { ROLES_TODOS_LOS_ROLES } from "@/lib/adminAccess";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import {
@@ -583,7 +584,7 @@ function PedidosMedidaContent() {
 export default function AdminPedidosMedidaPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
-      <RequireStaff>
+      <RequireStaff roles={ROLES_TODOS_LOS_ROLES}>
         <AdminNav />
         <main className="flex-1">
           <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-10">

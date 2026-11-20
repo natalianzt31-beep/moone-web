@@ -8,6 +8,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import { addDays, toISODate } from "@/lib/disponibilidad";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { ADMIN_MODULES, puedeAcceder } from "@/lib/adminAccess";
 
 type ReservaFila = {
   id: string;
@@ -45,20 +46,6 @@ type CobroMedidaFila = {
   saldo: number;
   fecha_retiro: string | null;
 };
-
-const QUICK_LINKS = [
-  { href: "/admin/reservas", label: "Reservas" },
-  { href: "/admin/stock", label: "Stock" },
-  { href: "/admin/clientas", label: "Clientas" },
-  { href: "/admin/pedidos-medida", label: "A medida" },
-  { href: "/admin/arreglos", label: "Arreglos" },
-  { href: "/admin/turnos", label: "Turnos" },
-  { href: "/admin/reportes", label: "Reportes" },
-  { href: "/admin/analitica", label: "Analítica" },
-  { href: "/admin/egresadas", label: "Egresadas" },
-  { href: "/admin/pronovias", label: "Pronovias" },
-  { href: "/admin/feriados", label: "Feriados" },
-];
 
 function formatFechaCorta(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("es-UY", {
@@ -115,6 +102,9 @@ export default function AdminHomePage() {
 
   const verCaja = staffRol === "caja" || staffRol === "admin" || staffRol === null;
   const verModista = staffRol === "modista" || staffRol === "admin" || staffRol === null;
+  const quickLinks = ADMIN_MODULES.filter(
+    (modulo) => modulo.href !== "/admin" && puedeAcceder(modulo.roles, staffRol)
+  );
 
   useEffect(() => {
     async function cargar() {
@@ -328,7 +318,7 @@ export default function AdminHomePage() {
           Todos los módulos
         </h2>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {QUICK_LINKS.map((link) => (
+          {quickLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}

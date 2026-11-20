@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { ROLES_ADMIN_CAJA } from "@/lib/adminAccess";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 import type { EstadoReserva } from "@/lib/supabase/types";
@@ -328,7 +329,7 @@ function ReporteSeccion({
 export default function AdminReportesPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
-      <RequireStaff>
+      <RequireStaff roles={ROLES_ADMIN_CAJA}>
         <AdminNav />
         <main className="flex-1">
           <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-10">

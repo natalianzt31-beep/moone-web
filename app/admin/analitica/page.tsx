@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { ROLES_SOLO_ADMIN } from "@/lib/adminAccess";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
 
@@ -265,7 +266,7 @@ function AnaliticaContent() {
 export default function AdminAnaliticaPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
-      <RequireStaff>
+      <RequireStaff roles={ROLES_SOLO_ADMIN}>
         <AdminNav />
         <main className="flex-1">
           <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-10">

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { ROLES_ADMIN_CAJA } from "@/lib/adminAccess";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { EgresadaSubmission } from "@/lib/supabase/types";
 
@@ -238,7 +239,7 @@ function EgresadasContent() {
 export default function AdminEgresadasPage() {
   return (
     <div className="flex flex-1 flex-col bg-marfil">
-      <RequireStaff>
+      <RequireStaff roles={ROLES_ADMIN_CAJA}>
         <AdminNav />
         <main className="flex-1">
           <EgresadasContent />
