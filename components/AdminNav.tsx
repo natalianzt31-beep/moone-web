@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
 const TABS = [
+  { href: "/admin", label: "Inicio" },
   { href: "/admin/stock", label: "Stock" },
   { href: "/admin/clientas", label: "Clientas" },
   { href: "/admin/reportes", label: "Reportes" },
@@ -33,7 +34,7 @@ export function AdminNav() {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-8">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <Link
-            href="/admin/stock"
+            href="/admin"
             className="text-sm font-medium uppercase tracking-[0.15em] text-negro"
           >
             Môone Admin

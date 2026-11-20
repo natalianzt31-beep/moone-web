@@ -63,7 +63,7 @@ export default function AdminNuevaContrasenaPage() {
             <p className="mt-8 text-sm text-chocolate">Tu contraseña se actualizó.</p>
             <button
               type="button"
-              onClick={() => router.replace("/admin/stock")}
+              onClick={() => router.replace("/admin")}
               className="mt-4 flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-6 text-sm font-medium text-blanco transition-colors hover:bg-chocolate"
             >
               Ir al backoffice

@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (!loading && user && isStaff) {
-      router.replace("/admin/stock");
+      router.replace("/admin");
     }
   }, [loading, user, isStaff, router]);
 
