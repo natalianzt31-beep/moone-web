@@ -35,6 +35,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [loadingData, setLoadingData] = useState(true);
 
   const [productId, setProductId] = useState("");
+  const [skuInput, setSkuInput] = useState("");
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
   const [clientSearch, setClientSearch] = useState("");
   const [clientId, setClientId] = useState("");
@@ -106,6 +107,24 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
     if (product) {
       setPrecioTotal(String(product.precio_alquiler));
       setSenia(String(Math.round(product.precio_alquiler * 0.5)));
+      setSkuInput(product.sku);
+    }
+  }
+
+  function handleSkuInputChange(value: string) {
+    setSkuInput(value);
+    const sku = value.trim().toUpperCase();
+    if (!sku) {
+      setProductId("");
+      return;
+    }
+    const product = products.find((p) => p.sku.toUpperCase() === sku);
+    if (product) {
+      setProductId(product.id);
+      setPrecioTotal(String(product.precio_alquiler));
+      setSenia(String(Math.round(product.precio_alquiler * 0.5)));
+    } else {
+      setProductId("");
     }
   }
 
@@ -239,18 +258,13 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       <label className="flex flex-col gap-1 text-sm text-negro">
         Prenda
         <div className="flex gap-2">
-          <select
-            value={productId}
-            onChange={(e) => handleProductChange(e.target.value)}
-            className={`${inputClass} flex-1`}
-          >
-            <option value="">Elegir prenda...</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre} {p.talle ? `(${p.talle})` : ""} — {p.sku}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            value={skuInput}
+            onChange={(e) => handleSkuInputChange(e.target.value)}
+            placeholder="SKU (ej. VES-00123)"
+            className={`${inputClass} flex-1 uppercase placeholder:normal-case`}
+          />
           <button
             type="button"
             onClick={() => setEscaneando(true)}
@@ -263,6 +277,30 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
               <circle cx="12" cy="13" r="3.4" />
             </svg>
           </button>
+        </div>
+        {skuInput.trim() && (
+          <p className={`text-xs ${productId ? "text-chocolate" : "text-taupe"}`}>
+            {(() => {
+              const encontrado = products.find((p) => p.sku.toUpperCase() === skuInput.trim().toUpperCase());
+              return encontrado
+                ? `${encontrado.nombre}${encontrado.talle ? ` (${encontrado.talle})` : ""} — ${currencyFormatter.format(encontrado.precio_alquiler)}`
+                : "No encontramos ninguna prenda con ese SKU.";
+            })()}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <select
+            value={productId}
+            onChange={(e) => handleProductChange(e.target.value)}
+            className={`${inputClass} flex-1`}
+          >
+            <option value="">...o elegí de la lista</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre} {p.talle ? `(${p.talle})` : ""} — {p.sku}
+              </option>
+            ))}
+          </select>
         </div>
       </label>
 
