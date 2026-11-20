@@ -11,22 +11,11 @@ import { currencyFormatter } from "@/lib/site-config";
 import { fetchClosedDatesSet } from "@/lib/supabase/closedDates";
 import {
   addDays,
-  getMonthMatrix,
   nextBusinessDay,
   sugerirDevolucion,
   toISODate,
 } from "@/lib/disponibilidad";
 import type { Client, Product } from "@/lib/supabase/types";
-
-type ReservaCalendario = {
-  id: string;
-  product_id: string;
-  fecha_retiro: string;
-  fecha_devolucion: string;
-  estado: string;
-  products: { nombre: string } | null;
-  clients: { nombre: string } | null;
-};
 
 const inputClass =
   "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none";
@@ -468,149 +457,6 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function Calendario() {
-  const [reservas, setReservas] = useState<ReservaCalendario[]>([]);
-  const [loading, setLoading] = useState(true);
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-
-  async function load() {
-    setLoading(true);
-    const { data } = await getSupabaseClient()
-      .from("reservations")
-      .select("id, product_id, fecha_retiro, fecha_devolucion, estado, products(nombre), clients(nombre)")
-      .neq("estado", "cancelado");
-    setReservas((data ?? []) as unknown as ReservaCalendario[]);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const weeks = useMemo(() => getMonthMatrix(year, month), [year, month]);
-
-  function reservasDelDia(iso: string) {
-    return reservas.filter((r) => r.fecha_retiro <= iso && iso <= r.fecha_devolucion);
-  }
-
-  function prevMonth() {
-    if (month === 0) {
-      setYear((y) => y - 1);
-      setMonth(11);
-    } else {
-      setMonth((m) => m - 1);
-    }
-    setSelectedDay(null);
-  }
-
-  function nextMonth() {
-    if (month === 11) {
-      setYear((y) => y + 1);
-      setMonth(0);
-    } else {
-      setMonth((m) => m + 1);
-    }
-    setSelectedDay(null);
-  }
-
-  const nombreMes = new Date(year, month, 1).toLocaleDateString("es-UY", {
-    month: "long",
-    year: "numeric",
-  });
-
-  return (
-    <div>
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={prevMonth}
-          className="flex min-h-11 items-center px-2 text-sm text-negro hover:text-chocolate"
-        >
-          ← Anterior
-        </button>
-        <span className="text-sm font-medium capitalize text-negro">{nombreMes}</span>
-        <button
-          type="button"
-          onClick={nextMonth}
-          className="flex min-h-11 items-center px-2 text-sm text-negro hover:text-chocolate"
-        >
-          Siguiente →
-        </button>
-      </div>
-
-      {loading ? (
-        <p className="mt-4 text-sm text-taupe">Cargando calendario...</p>
-      ) : (
-        <>
-          <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs uppercase tracking-wider text-taupe">
-            {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => (
-              <span key={d}>{d}</span>
-            ))}
-          </div>
-          <div className="mt-1 grid grid-cols-7 gap-1">
-            {weeks.flat().map((date) => {
-              const iso = toISODate(date);
-              const inMonth = date.getMonth() === month;
-              const count = reservasDelDia(iso).length;
-              const isSelected = selectedDay === iso;
-              return (
-                <button
-                  key={iso}
-                  type="button"
-                  onClick={() => setSelectedDay(iso)}
-                  className={`flex aspect-square flex-col items-center justify-center rounded-[3px] border text-xs transition-colors ${
-                    isSelected
-                      ? "border-negro bg-negro text-blanco"
-                      : inMonth
-                        ? "border-arena bg-blanco text-negro hover:border-chocolate"
-                        : "border-arena bg-crema text-taupe"
-                  }`}
-                >
-                  <span>{date.getDate()}</span>
-                  {count > 0 && (
-                    <span
-                      className={`mt-1 h-1.5 w-1.5 rounded-full ${isSelected ? "bg-blanco" : "bg-chocolate"}`}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {selectedDay && (
-        <div className="mt-6">
-          <h3 className="text-sm font-medium uppercase tracking-wider text-taupe">
-            {selectedDay}
-          </h3>
-          {reservasDelDia(selectedDay).length === 0 ? (
-            <p className="mt-2 text-sm text-taupe">Sin reservas ese día.</p>
-          ) : (
-            <div className="mt-2 flex flex-col gap-2">
-              {reservasDelDia(selectedDay).map((r) => (
-                <div
-                  key={r.id}
-                  className="rounded-[3px] border border-arena bg-blanco p-3 text-sm"
-                >
-                  <p className="font-medium text-negro">{r.products?.nombre ?? "Prenda"}</p>
-                  <p className="text-taupe">
-                    {r.clients?.nombre ?? "Clienta"} · {r.fecha_retiro} → {r.fecha_devolucion}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 const ESTADOS_RESERVA = [
   "reservado",
   "confirmado_retiro",
@@ -929,21 +775,12 @@ function ReservasContent() {
 
   return (
     <div className="flex flex-col gap-10">
-      <div className="grid gap-10 lg:grid-cols-2">
-        <section>
-          <h2 className="text-lg font-normal tracking-tight text-negro">Cargar reserva</h2>
-          <div className="mt-4">
-            <CargarReservaForm onCreated={() => setCalendarKey((k) => k + 1)} />
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-normal tracking-tight text-negro">Calendario</h2>
-          <div className="mt-4">
-            <Calendario key={calendarKey} />
-          </div>
-        </section>
-      </div>
+      <section className="max-w-xl">
+        <h2 className="text-lg font-normal tracking-tight text-negro">Cargar reserva</h2>
+        <div className="mt-4">
+          <CargarReservaForm onCreated={() => setCalendarKey((k) => k + 1)} />
+        </div>
+      </section>
 
       <section>
         <h2 className="text-lg font-normal tracking-tight text-negro">Reservas activas</h2>
