@@ -24,8 +24,6 @@ export const ADMIN_MODULES: AdminModule[] = [
   { href: "/admin/reservas", label: "Reservas", roles: ROLES_ADMIN_CAJA },
   { href: "/admin/pedidos-medida", label: "A medida", roles: ROLES_TODOS_LOS_ROLES },
   { href: "/admin/arreglos", label: "Arreglos", roles: ROLES_TODOS_LOS_ROLES },
-  { href: "/admin/egresadas", label: "Egresadas", roles: ROLES_ADMIN_CAJA },
-  { href: "/admin/pronovias", label: "Pronovias", roles: ROLES_ADMIN_CAJA },
   { href: "/admin/turnos", label: "Turnos", roles: ROLES_TODOS_LOS_ROLES },
   { href: "/admin/analitica", label: "Analítica", roles: ROLES_SOLO_ADMIN },
   { href: "/admin/feriados", label: "Feriados", roles: ROLES_SOLO_ADMIN },
