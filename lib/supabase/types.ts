@@ -53,6 +53,7 @@ export type EstadoReserva =
   | "reservado"
   | "confirmado_retiro"
   | "retirado"
+  | "en_limpieza"
   | "devuelto"
   | "vencido"
   | "cancelado";

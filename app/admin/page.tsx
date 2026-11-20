@@ -90,15 +90,57 @@ function FilaVacia({ texto }: { texto: string }) {
   return <p className="px-5 py-6 text-sm text-taupe">{texto}</p>;
 }
 
+function FilaConCheck({
+  titulo,
+  subtitulo,
+  etiqueta,
+  etiquetaClass,
+  checked,
+  disabled,
+  onToggle,
+}: {
+  titulo: string;
+  subtitulo: string;
+  etiqueta: string;
+  etiquetaClass?: string;
+  checked: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-3 px-5 py-3 text-sm hover:bg-crema">
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={onToggle}
+        className="h-4 w-4 shrink-0 accent-negro"
+      />
+      <div className="flex flex-1 items-center justify-between gap-3">
+        <div>
+          <p className="font-medium text-negro">{titulo}</p>
+          <p className="text-xs text-taupe">{subtitulo}</p>
+        </div>
+        <span className={`whitespace-nowrap text-xs uppercase tracking-wider ${etiquetaClass ?? "text-chocolate"}`}>
+          {etiqueta}
+        </span>
+      </div>
+    </label>
+  );
+}
+
 export default function AdminHomePage() {
   const { staffRol } = useAuth();
   const [cargando, setCargando] = useState(true);
   const [retiros, setRetiros] = useState<ReservaFila[]>([]);
   const [devoluciones, setDevoluciones] = useState<ReservaFila[]>([]);
+  const [limpieza, setLimpieza] = useState<ReservaFila[]>([]);
   const [pagosPendientes, setPagosPendientes] = useState<ReservaFila[]>([]);
   const [turnosHoy, setTurnosHoy] = useState<TurnoFila[]>([]);
   const [arreglosListos, setArreglosListos] = useState<ArregloFila[]>([]);
   const [cobrosMedida, setCobrosMedida] = useState<CobroMedidaFila[]>([]);
+  const [actualizandoId, setActualizandoId] = useState<string | null>(null);
+  const [errorEstado, setErrorEstado] = useState<string | null>(null);
 
   const verCaja = staffRol === "caja" || staffRol === "admin" || staffRol === null;
   const verModista = staffRol === "modista" || staffRol === "admin" || staffRol === null;
@@ -118,6 +160,7 @@ export default function AdminHomePage() {
       const [
         { data: retirosData },
         { data: devolucionesData },
+        { data: limpiezaData },
         { data: pagosData },
         { data: turnosData },
         { data: arreglosData },
@@ -126,20 +169,24 @@ export default function AdminHomePage() {
         supabase
           .from("reservations")
           .select(reservaSelect)
-          .eq("estado", "reservado")
+          .in("estado", ["reservado", "confirmado_retiro"])
           .gte("fecha_retiro", hoy)
           .lte("fecha_retiro", manana)
           .order("fecha_retiro"),
         supabase
           .from("reservations")
           .select(reservaSelect)
-          .eq("estado", "reservado")
-          .lte("fecha_devolucion", manana)
+          .eq("estado", "retirado")
           .order("fecha_devolucion"),
         supabase
           .from("reservations")
           .select(reservaSelect)
-          .eq("estado", "reservado")
+          .eq("estado", "en_limpieza")
+          .order("fecha_devolucion"),
+        supabase
+          .from("reservations")
+          .select(reservaSelect)
+          .not("estado", "in", "(devuelto,cancelado,vencido)")
           .eq("saldo_pagado", false)
           .order("fecha_retiro")
           .limit(8),
@@ -165,6 +212,7 @@ export default function AdminHomePage() {
 
       setRetiros((retirosData as unknown as ReservaFila[]) ?? []);
       setDevoluciones((devolucionesData as unknown as ReservaFila[]) ?? []);
+      setLimpieza((limpiezaData as unknown as ReservaFila[]) ?? []);
       setPagosPendientes((pagosData as unknown as ReservaFila[]) ?? []);
       setTurnosHoy(turnosData ?? []);
       setArreglosListos(arreglosData ?? []);
@@ -173,6 +221,32 @@ export default function AdminHomePage() {
     }
     cargar();
   }, []);
+
+  async function cambiarEstado(reserva: ReservaFila, nuevoEstado: string) {
+    setActualizandoId(reserva.id);
+    setErrorEstado(null);
+    const { error } = await getSupabaseClient()
+      .from("reservations")
+      .update({ estado: nuevoEstado })
+      .eq("id", reserva.id);
+
+    if (error) {
+      setErrorEstado(error.message);
+      setActualizandoId(null);
+      return;
+    }
+
+    if (nuevoEstado === "retirado") {
+      setRetiros((prev) => prev.filter((r) => r.id !== reserva.id));
+      setDevoluciones((prev) => [...prev, reserva].sort((a, b) => a.fecha_devolucion.localeCompare(b.fecha_devolucion)));
+    } else if (nuevoEstado === "en_limpieza") {
+      setDevoluciones((prev) => prev.filter((r) => r.id !== reserva.id));
+      setLimpieza((prev) => [...prev, reserva]);
+    } else if (nuevoEstado === "devuelto") {
+      setLimpieza((prev) => prev.filter((r) => r.id !== reserva.id));
+    }
+    setActualizandoId(null);
+  }
 
   const hoy = toISODate(new Date());
 
@@ -202,47 +276,60 @@ export default function AdminHomePage() {
           })}
         </p>
 
+        {errorEstado && (
+          <p className="mt-4 rounded-[3px] border border-chocolate bg-crema px-4 py-2 text-sm text-chocolate">
+            {errorEstado}
+          </p>
+        )}
+
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Seccion titulo="Retiros (hoy y mañana)" cantidad={retiros.length} verMasHref="/admin/reservas">
+          <Seccion titulo="Se va hoy y mañana — tildá cuando retiran" cantidad={retiros.length} verMasHref="/admin/reservas">
             {retiros.length === 0 && <FilaVacia texto="No hay retiros agendados para hoy ni mañana." />}
             {retiros.map((r) => (
-              <div key={r.id} className="flex items-center justify-between px-5 py-3 text-sm">
-                <div>
-                  <p className="font-medium text-negro">{r.clients?.nombre ?? "Clienta"}</p>
-                  <p className="text-xs text-taupe">
-                    {r.products?.sku} · {r.products?.nombre} {r.products?.talle ? `· ${r.products.talle}` : ""}
-                  </p>
-                </div>
-                <span className="whitespace-nowrap text-xs uppercase tracking-wider text-chocolate">
-                  {formatFechaCorta(r.fecha_retiro)}
-                </span>
-              </div>
+              <FilaConCheck
+                key={r.id}
+                titulo={r.clients?.nombre ?? "Clienta"}
+                subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
+                etiqueta={formatFechaCorta(r.fecha_retiro)}
+                checked={false}
+                disabled={actualizandoId === r.id}
+                onToggle={() => cambiarEstado(r, "retirado")}
+              />
             ))}
           </Seccion>
 
-          <Seccion titulo="Devoluciones (atrasadas, hoy y mañana)" cantidad={devoluciones.length} verMasHref="/admin/reservas">
-            {devoluciones.length === 0 && <FilaVacia texto="No hay devoluciones pendientes." />}
+          <Seccion titulo="Devoluciones pendientes — tildá cuando devuelven" cantidad={devoluciones.length} verMasHref="/admin/reservas">
+            {devoluciones.length === 0 && <FilaVacia texto="No hay nada afuera esperando devolución." />}
             {devoluciones.map((r) => {
               const atrasada = r.fecha_devolucion < hoy;
               return (
-                <div key={r.id} className="flex items-center justify-between px-5 py-3 text-sm">
-                  <div>
-                    <p className="font-medium text-negro">{r.clients?.nombre ?? "Clienta"}</p>
-                    <p className="text-xs text-taupe">
-                      {r.products?.sku} · {r.products?.nombre} {r.products?.talle ? `· ${r.products.talle}` : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={`whitespace-nowrap text-xs uppercase tracking-wider ${
-                      atrasada ? "text-red-700" : "text-chocolate"
-                    }`}
-                  >
-                    {atrasada ? "Atrasada · " : ""}
-                    {formatFechaCorta(r.fecha_devolucion)}
-                  </span>
-                </div>
+                <FilaConCheck
+                  key={r.id}
+                  titulo={r.clients?.nombre ?? "Clienta"}
+                  subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
+                  etiqueta={`${atrasada ? "Atrasada · " : ""}${formatFechaCorta(r.fecha_devolucion)}`}
+                  etiquetaClass={atrasada ? "text-red-700" : "text-chocolate"}
+                  checked={false}
+                  disabled={actualizandoId === r.id}
+                  onToggle={() => cambiarEstado(r, "en_limpieza")}
+                />
               );
             })}
+          </Seccion>
+
+          <Seccion titulo="Limpieza — destildá cuando ya está lista" cantidad={limpieza.length} verMasHref="/admin/reservas">
+            {limpieza.length === 0 && <FilaVacia texto="No hay nada esperando limpieza." />}
+            {limpieza.map((r) => (
+              <FilaConCheck
+                key={r.id}
+                titulo={r.clients?.nombre ?? "Clienta"}
+                subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
+                etiqueta="Pendiente"
+                checked={true}
+                disabled={actualizandoId === r.id}
+                onToggle={() => cambiarEstado(r, "devuelto")}
+              />
+            ))}
           </Seccion>
 
           {verCaja && (
