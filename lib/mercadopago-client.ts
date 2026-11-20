@@ -9,10 +9,12 @@ export async function crearPreferenciaReserva({
   productId,
   fechaRetiro,
   fechaDevolucion,
+  tipoPago,
 }: {
   productId: string;
   fechaRetiro: string;
   fechaDevolucion: string;
+  tipoPago?: "senia" | "total";
 }): Promise<string> {
   const { data: sessionData } = await getSupabaseClient().auth.getSession();
   const accessToken = sessionData.session?.access_token;
@@ -23,7 +25,7 @@ export async function crearPreferenciaReserva({
   const res = await fetch("/api/mercadopago/crear-preferencia", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ productId, fechaRetiro, fechaDevolucion }),
+    body: JSON.stringify({ productId, fechaRetiro, fechaDevolucion, tipoPago }),
   });
 
   const json = await res.json();
@@ -45,11 +47,13 @@ export async function crearPreferenciaCarrito({
   fechaRetiro,
   fechaDevolucion,
   promoCode,
+  tipoPago,
 }: {
   productIds: string[];
   fechaRetiro: string;
   fechaDevolucion: string;
   promoCode?: string;
+  tipoPago?: "senia" | "total";
 }): Promise<string> {
   const { data: sessionData } = await getSupabaseClient().auth.getSession();
   const accessToken = sessionData.session?.access_token;
@@ -60,7 +64,7 @@ export async function crearPreferenciaCarrito({
   const res = await fetch("/api/mercadopago/crear-preferencia-carrito", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ productIds, fechaRetiro, fechaDevolucion, promoCode }),
+    body: JSON.stringify({ productIds, fechaRetiro, fechaDevolucion, promoCode, tipoPago }),
   });
 
   const json = await res.json();

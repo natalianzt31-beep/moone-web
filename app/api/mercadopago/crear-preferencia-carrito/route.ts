@@ -39,6 +39,7 @@ export async function POST(req: Request) {
     fechaRetiro?: string;
     fechaDevolucion?: string;
     promoCode?: string;
+    tipoPago?: "senia" | "total";
   };
   try {
     body = await req.json();
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
   }
 
   const { productIds, fechaRetiro, fechaDevolucion, promoCode } = body;
+  const tipoPago = body.tipoPago === "total" ? "total" : "senia";
   if (!productIds || productIds.length === 0 || !fechaRetiro || !fechaDevolucion) {
     return NextResponse.json(
       { error: "Faltan productIds, fechaRetiro o fechaDevolucion." },
@@ -146,7 +148,7 @@ export async function POST(req: Request) {
   const itemsPedido = products.map((p) => {
     const descuentoItem = Math.round((p.precio_alquiler * porcentaje) / 100);
     const precioTotal = p.precio_alquiler - descuentoItem;
-    const senia = Math.round(precioTotal * 0.5);
+    const senia = tipoPago === "total" ? precioTotal : Math.round(precioTotal * 0.5);
     return { productId: p.id, nombre: p.nombre, precioTotal, senia };
   });
 
@@ -154,10 +156,11 @@ export async function POST(req: Request) {
   const pedidoId = crypto.randomUUID();
   const origin = new URL(req.url).origin;
 
+  const etiquetaPago = tipoPago === "total" ? "Total" : "Seña";
   const titulo =
     itemsPedido.length === 1
-      ? `Seña — ${itemsPedido[0].nombre}`
-      : `Seña — ${itemsPedido.length} prendas (Môone)`;
+      ? `${etiquetaPago} — ${itemsPedido[0].nombre}`
+      : `${etiquetaPago} — ${itemsPedido.length} prendas (Môone)`;
 
   try {
     const preference = await new Preference(getMercadoPagoConfig()).create({

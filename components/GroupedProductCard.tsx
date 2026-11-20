@@ -72,6 +72,7 @@ export function GroupedProductCard({
   const [localOk, setLocalOk] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [tipoPago, setTipoPago] = useState<"senia" | "total">("senia");
 
   const loginHref = `/mi-cuenta/login?returnTo=${encodeURIComponent(pathname)}`;
 
@@ -107,7 +108,12 @@ export function GroupedProductCard({
     tipo === "venta" &&
     producto.precio_venta_original != null &&
     producto.precio_venta_original > (precio ?? 0);
-  const cta = tipo === "venta" ? "Comprar" : "Reservar y pagar seña";
+  const cta =
+    tipo === "venta"
+      ? "Comprar"
+      : tipoPago === "total"
+        ? "Reservar y pagar el total"
+        : "Reservar y pagar seña";
   // Con reservas/compra desactivadas (ver lib/features.ts), la ficha muestra
   // el producto pero sin ninguna acción de reservar/comprar/pagar/carrito.
   const habilitado = tipo === "venta" ? checkoutEnabled : bookingEnabled;
@@ -143,6 +149,7 @@ export function GroupedProductCard({
               productId: producto.id,
               fechaRetiro: fechaRetiro!,
               fechaDevolucion: fechaDevolucion!,
+              tipoPago,
             });
       window.location.href = initPoint;
     } catch (err) {
@@ -163,6 +170,7 @@ export function GroupedProductCard({
           productId: producto.id,
           fechaRetiro: fechaRetiro!,
           fechaDevolucion: fechaDevolucion!,
+          tipoPago,
         });
       }
       setLocalOk(true);
@@ -323,8 +331,28 @@ export function GroupedProductCard({
               </button>
             ) : (
               <>
-                {checkoutEnabled && (
+                {habilitado && (
                   <>
+                    {tipo === "alquiler" && (
+                      <div className="flex gap-4 text-xs text-negro">
+                        <label className="flex items-center gap-1.5">
+                          <input
+                            type="radio"
+                            checked={tipoPago === "senia"}
+                            onChange={() => setTipoPago("senia")}
+                          />
+                          Seña (50%)
+                        </label>
+                        <label className="flex items-center gap-1.5">
+                          <input
+                            type="radio"
+                            checked={tipoPago === "total"}
+                            onChange={() => setTipoPago("total")}
+                          />
+                          Total (100%)
+                        </label>
+                      </div>
+                    )}
                     {fechaElegida ? (
                       <button
                         type="button"

@@ -7,6 +7,53 @@ import { enviarMailConfirmacionReserva, enviarAvisoReservaInterno } from "@/lib/
 import { enviarAvisoVenta } from "@/lib/email/ventas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * Factura el alquiler y suma el sellito de fidelidad — "el final" de la
+ * operación. Se usa tanto cuando se paga el saldo por separado más
+ * adelante (procesarPagoSaldo) como cuando la clienta elige pagar el 100%
+ * de entrada (procesarPagoAlquiler / procesarPagoAlquilerMultiple), caso en
+ * el que no hay un pago de saldo posterior que dispare esto.
+ */
+async function facturarAlquilerYSumarFidelidad(
+  supabase: SupabaseClient,
+  params: {
+    reservationId: string;
+    clientId: string;
+    precioTotal: number;
+    productoSku: string | null;
+    productoNombre: string | null;
+    clienteNombre: string;
+    clienteEmail: string | null;
+    clienteDocumento: string | null;
+  }
+) {
+  const resultado = await facturarYEnviar({
+    cliente: { nombre: params.clienteNombre, documento: params.clienteDocumento },
+    clienteEmail: params.clienteEmail,
+    medioPago: "mercado_pago",
+    codigoProducto: params.productoSku ?? "ALQUILER",
+    descripcion: `Alquiler — ${params.productoNombre ?? "prenda"}`,
+    total: params.precioTotal,
+    reservationId: params.reservationId,
+  });
+
+  await supabase
+    .from("reservations")
+    .update({
+      eticket_generado: resultado.eticket_generado,
+      eticket_url: resultado.eticket_url,
+      eticket_numero: resultado.eticket_numero,
+    })
+    .eq("id", params.reservationId);
+
+  const { error: sellitoError } = await supabase.rpc("increment_alquileres_completados_sistema", {
+    p_client_id: params.clientId,
+  });
+  if (sellitoError) {
+    console.error("[sellitos] no se pudo sumar el sellito", sellitoError);
+  }
+}
+
 async function procesarPagoAlquiler(
   supabase: SupabaseClient,
   payment: { id?: string | number; transaction_amount?: number },
@@ -27,6 +74,11 @@ async function procesarPagoAlquiler(
     return;
   }
 
+  // Si pagó el 100% de entrada (en vez de la seña), no queda saldo
+  // pendiente: la reserva ya nace facturada, igual que cuando el saldo se
+  // paga por separado más adelante.
+  const pagoCompleto = senia >= precioTotal;
+
   // La reserva recién se crea acá, con el pago ya aprobado. Si alguien
   // abandona el pago a mitad de camino, nunca llega a este punto y no
   // queda ninguna reserva fantasma bloqueando el producto.
@@ -42,6 +94,8 @@ async function procesarPagoAlquiler(
       senia,
       senia_confirmada: true,
       medio_pago: "mercado_pago",
+      saldo_pagado: pagoCompleto,
+      saldo_pagado_fecha: pagoCompleto ? new Date().toISOString() : null,
     })
     .select("id, pedido_id")
     .single();
@@ -69,6 +123,24 @@ async function procesarPagoAlquiler(
 
   if (insertPaymentError) {
     console.error("No se pudo registrar el pago", insertPaymentError);
+  }
+
+  if (pagoCompleto) {
+    const [{ data: producto }, { data: cliente }] = await Promise.all([
+      supabase.from("products").select("sku, nombre").eq("id", productId).single(),
+      supabase.from("clients").select("nombre, email, documento").eq("id", clientId).single(),
+    ]);
+
+    await facturarAlquilerYSumarFidelidad(supabase, {
+      reservationId: reservation.id,
+      clientId,
+      precioTotal,
+      productoSku: producto?.sku ?? null,
+      productoNombre: producto?.nombre ?? null,
+      clienteNombre: cliente?.nombre ?? "Clienta",
+      clienteEmail: cliente?.email ?? null,
+      clienteDocumento: cliente?.documento ?? null,
+    });
   }
 
   if (reservation.pedido_id) {
@@ -127,7 +199,8 @@ async function procesarPagoAlquilerMultiple(
   }
 
   // La reserva recién se crea acá, con el pago ya aprobado — igual que el
-  // alquiler de un solo producto.
+  // alquiler de un solo producto. Si para algún ítem se pagó el 100% de
+  // entrada (en vez de la seña), esa reserva ya nace sin saldo pendiente.
   const { data: reservas, error: reservasError } = await supabase
     .from("reservations")
     .insert(
@@ -142,6 +215,8 @@ async function procesarPagoAlquilerMultiple(
         senia_confirmada: true,
         medio_pago: "mercado_pago",
         pedido_id: pedidoId,
+        saldo_pagado: item.senia >= item.precio_total,
+        saldo_pagado_fecha: item.senia >= item.precio_total ? new Date().toISOString() : null,
       }))
     )
     .select("id");
@@ -179,6 +254,37 @@ async function procesarPagoAlquilerMultiple(
     });
     if (promoError) {
       console.error("No se pudo registrar el uso del código de descuento", promoError);
+    }
+  }
+
+  const itemsPagadosAlCien = items
+    .map((item, i) => ({ item, reservaId: reservas[i].id }))
+    .filter(({ item }) => item.senia >= item.precio_total);
+
+  if (itemsPagadosAlCien.length > 0) {
+    const [{ data: productos }, { data: cliente }] = await Promise.all([
+      supabase
+        .from("products")
+        .select("id, sku, nombre")
+        .in(
+          "id",
+          itemsPagadosAlCien.map(({ item }) => item.product_id)
+        ),
+      supabase.from("clients").select("nombre, email, documento").eq("id", clientId).single(),
+    ]);
+
+    for (const { item, reservaId } of itemsPagadosAlCien) {
+      const producto = productos?.find((p) => p.id === item.product_id);
+      await facturarAlquilerYSumarFidelidad(supabase, {
+        reservationId: reservaId,
+        clientId,
+        precioTotal: item.precio_total,
+        productoSku: producto?.sku ?? null,
+        productoNombre: producto?.nombre ?? null,
+        clienteNombre: cliente?.nombre ?? "Clienta",
+        clienteEmail: cliente?.email ?? null,
+        clienteDocumento: cliente?.documento ?? null,
+      });
     }
   }
 
@@ -263,33 +369,16 @@ async function procesarPagoSaldo(
   const cliente = Array.isArray(reserva.clients) ? reserva.clients[0] : reserva.clients;
 
   // El saldo es "el final" del alquiler: recién acá se factura.
-  const resultado = await facturarYEnviar({
-    cliente: { nombre: cliente?.nombre ?? "Clienta", documento: cliente?.documento ?? null },
-    clienteEmail: cliente?.email ?? null,
-    medioPago: "mercado_pago",
-    codigoProducto: producto?.sku ?? "ALQUILER",
-    descripcion: `Alquiler — ${producto?.nombre ?? "prenda"}`,
-    total: reserva.precio_total,
+  await facturarAlquilerYSumarFidelidad(supabase, {
     reservationId,
+    clientId: reserva.client_id,
+    precioTotal: reserva.precio_total,
+    productoSku: producto?.sku ?? null,
+    productoNombre: producto?.nombre ?? null,
+    clienteNombre: cliente?.nombre ?? "Clienta",
+    clienteEmail: cliente?.email ?? null,
+    clienteDocumento: cliente?.documento ?? null,
   });
-
-  await supabase
-    .from("reservations")
-    .update({
-      eticket_generado: resultado.eticket_generado,
-      eticket_url: resultado.eticket_url,
-      eticket_numero: resultado.eticket_numero,
-    })
-    .eq("id", reservationId);
-
-  // El sellito de fidelidad se suma acá, al facturar el alquiler — no antes.
-  const { error: sellitoError } = await supabase.rpc(
-    "increment_alquileres_completados_sistema",
-    { p_client_id: reserva.client_id }
-  );
-  if (sellitoError) {
-    console.error("[sellitos] no se pudo sumar el sellito", sellitoError);
-  }
 }
 
 async function procesarPagoVenta(

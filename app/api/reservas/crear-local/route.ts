@@ -23,7 +23,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autenticada." }, { status: 401 });
   }
 
-  let body: { productId?: string; fechaRetiro?: string; fechaDevolucion?: string };
+  let body: {
+    productId?: string;
+    fechaRetiro?: string;
+    fechaDevolucion?: string;
+    tipoPago?: "senia" | "total";
+  };
   try {
     body = await req.json();
   } catch {
@@ -31,6 +36,7 @@ export async function POST(req: Request) {
   }
 
   const { productId, fechaRetiro, fechaDevolucion } = body;
+  const tipoPago = body.tipoPago === "total" ? "total" : "senia";
   if (!productId || !fechaRetiro || !fechaDevolucion) {
     return NextResponse.json(
       { error: "Faltan productId, fechaRetiro o fechaDevolucion." },
@@ -72,7 +78,7 @@ export async function POST(req: Request) {
   }
 
   const precioTotal = product.precio_alquiler;
-  const senia = Math.round(precioTotal * 0.5);
+  const senia = tipoPago === "total" ? precioTotal : Math.round(precioTotal * 0.5);
 
   const { data: reservation, error: reservaError } = await supabase
     .from("reservations")

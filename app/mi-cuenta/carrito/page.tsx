@@ -124,6 +124,7 @@ function CarritoContent() {
   const [fechaRetiro, setFechaRetiro] = useState("");
   const [fechaDevolucion, setFechaDevolucion] = useState("");
   const [devolucionManual, setDevolucionManual] = useState(false);
+  const [tipoPagoAlquiler, setTipoPagoAlquiler] = useState<"senia" | "total">("senia");
   const [payingPedido, setPayingPedido] = useState(false);
   const [pedidoError, setPedidoError] = useState<string | null>(null);
 
@@ -145,6 +146,7 @@ function CarritoContent() {
     : 0;
   const totalAlquiler = subtotalAlquiler - descuentoAlquiler;
   const seniaAlquiler = Math.round(totalAlquiler * 0.5);
+  const montoAPagarAlquiler = tipoPagoAlquiler === "total" ? totalAlquiler : seniaAlquiler;
 
   useEffect(() => {
     if (itemsAlquiler.length === 0 || fechaRetiro) return;
@@ -187,6 +189,7 @@ function CarritoContent() {
         fechaRetiro,
         fechaDevolucion,
         promoCode: promoAplicado?.codigo,
+        tipoPago: tipoPagoAlquiler,
       });
       window.location.href = initPoint;
     } catch (err) {
@@ -472,10 +475,32 @@ function CarritoContent() {
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between font-medium">
-                  <span className="text-negro">Seña a pagar ahora (50%)</span>
-                  <span className="text-negro">{currencyFormatter.format(seniaAlquiler)}</span>
-                </div>
+              </div>
+
+              <div className="mt-4 flex gap-4 text-sm text-negro">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={tipoPagoAlquiler === "senia"}
+                    onChange={() => setTipoPagoAlquiler("senia")}
+                  />
+                  Pagar seña (50%)
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={tipoPagoAlquiler === "total"}
+                    onChange={() => setTipoPagoAlquiler("total")}
+                  />
+                  Pagar el total (100%)
+                </label>
+              </div>
+
+              <div className="mt-2 flex justify-between text-sm font-medium">
+                <span className="text-negro">
+                  {tipoPagoAlquiler === "total" ? "Total a pagar ahora" : "Seña a pagar ahora"}
+                </span>
+                <span className="text-negro">{currencyFormatter.format(montoAPagarAlquiler)}</span>
               </div>
 
               {pedidoError && <p className="mt-3 text-sm text-chocolate">{pedidoError}</p>}
@@ -486,7 +511,11 @@ function CarritoContent() {
                 disabled={!datosCompletos || !fechaRetiro || payingPedido}
                 className="mt-4 flex min-h-11 w-full items-center justify-center rounded-[3px] bg-negro px-6 text-sm font-medium text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
               >
-                {payingPedido ? "Redirigiendo..." : "Pagar seña y reservar con Mercado Pago"}
+                {payingPedido
+                  ? "Redirigiendo..."
+                  : tipoPagoAlquiler === "total"
+                    ? "Pagar el total y reservar con Mercado Pago"
+                    : "Pagar seña y reservar con Mercado Pago"}
               </button>
               {!datosCompletos && (
                 <p className="mt-2 text-xs text-taupe">

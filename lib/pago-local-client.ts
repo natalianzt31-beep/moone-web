@@ -19,17 +19,19 @@ export async function crearReservaLocal({
   productId,
   fechaRetiro,
   fechaDevolucion,
+  tipoPago,
 }: {
   productId: string;
   fechaRetiro: string;
   fechaDevolucion: string;
+  tipoPago?: "senia" | "total";
 }): Promise<void> {
   const accessToken = await getAccessTokenOrThrow();
 
   const res = await fetch("/api/reservas/crear-local", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ productId, fechaRetiro, fechaDevolucion }),
+    body: JSON.stringify({ productId, fechaRetiro, fechaDevolucion, tipoPago }),
   });
 
   const json = await res.json();
