@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/serviceClient";
 import { checkoutEnabled } from "@/lib/features";
+import { enviarAvisoReservaInterno } from "@/lib/email/reservas";
 
 /**
  * Alquiler: la clienta elige "pagar en el local" en vez de Mercado Pago.
@@ -73,16 +74,20 @@ export async function POST(req: Request) {
   const precioTotal = product.precio_alquiler;
   const senia = Math.round(precioTotal * 0.5);
 
-  const { error: reservaError } = await supabase.from("reservations").insert({
-    product_id: productId,
-    client_id: client.id,
-    fecha_retiro: fechaRetiro,
-    fecha_devolucion: fechaDevolucion,
-    precio_total: precioTotal,
-    senia,
-    senia_confirmada: false,
-    medio_pago: null,
-  });
+  const { data: reservation, error: reservaError } = await supabase
+    .from("reservations")
+    .insert({
+      product_id: productId,
+      client_id: client.id,
+      fecha_retiro: fechaRetiro,
+      fecha_devolucion: fechaDevolucion,
+      precio_total: precioTotal,
+      senia,
+      senia_confirmada: false,
+      medio_pago: null,
+    })
+    .select("pedido_id")
+    .single();
 
   if (reservaError) {
     return NextResponse.json(
@@ -94,6 +99,10 @@ export async function POST(req: Request) {
       },
       { status: 409 }
     );
+  }
+
+  if (reservation?.pedido_id) {
+    await enviarAvisoReservaInterno(reservation.pedido_id);
   }
 
   return NextResponse.json({ ok: true });

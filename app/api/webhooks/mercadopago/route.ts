@@ -3,7 +3,7 @@ import { Payment } from "mercadopago";
 import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { facturarYEnviar } from "@/lib/facturacion";
-import { enviarMailConfirmacionReserva } from "@/lib/email/reservas";
+import { enviarMailConfirmacionReserva, enviarAvisoReservaInterno } from "@/lib/email/reservas";
 import { enviarAvisoVenta } from "@/lib/email/ventas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -80,6 +80,7 @@ async function procesarPagoAlquiler(
         senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
       })
       .eq("pedido_id", reservation.pedido_id);
+    await enviarAvisoReservaInterno(reservation.pedido_id);
   }
 }
 
@@ -189,6 +190,7 @@ async function procesarPagoAlquilerMultiple(
       senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
     })
     .eq("pedido_id", pedidoId);
+  await enviarAvisoReservaInterno(pedidoId);
 }
 
 async function procesarPagoSaldo(

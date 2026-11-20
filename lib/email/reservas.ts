@@ -4,6 +4,15 @@ import { registrarEnvioEmail } from "@/lib/email/log";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { currencyFormatter, WHATSAPP_DISPLAY } from "@/lib/site-config";
 import { PLANTILLA_CONFIRMACION_RESERVA } from "@/lib/email/plantillas";
+import { BUSINESS } from "@/lib/site";
+
+function escapeHtml(texto: string): string {
+  return texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function formatFecha(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("es-UY", {
@@ -120,6 +129,91 @@ export async function enviarMailConfirmacionReserva(
   );
 
   return resultado;
+}
+
+function filaAvisoHtml(etiqueta: string, valor: string): string {
+  if (!valor) return "";
+  return `
+    <tr>
+      <td style="padding: 8px 0; color:#A49587; font-size: 13px; vertical-align: top; white-space:nowrap;">${etiqueta}</td>
+      <td style="padding: 8px 0 8px 16px; color:#171513; font-size: 14px;">${valor}</td>
+    </tr>`;
+}
+
+type ClienteConCelular = { nombre: string; email: string | null; celular: string | null };
+type ReservaParaAviso = {
+  id: string;
+  fecha_retiro: string;
+  fecha_devolucion: string;
+  senia: number;
+  precio_total: number;
+  medio_pago: string | null;
+  products: ProductoFila | ProductoFila[] | null;
+  clients: ClienteConCelular | ClienteConCelular[] | null;
+};
+
+/**
+ * Aviso interno a contacto@moone.com.uy cada vez que se crea una reserva
+ * desde la web (con Mercado Pago ya acreditado, o eligiendo pagar en el
+ * local). Junta todas las reservas del mismo pedido_id en un solo mail,
+ * igual que la confirmación que recibe la clienta.
+ */
+export async function enviarAvisoReservaInterno(
+  pedidoId: string
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const supabase = getSupabaseServiceClient();
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .select(
+      "id, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(nombre, talle, color, precio_alquiler), clients(nombre, email, celular)"
+    )
+    .eq("pedido_id", pedidoId);
+
+  const reservas = (data ?? []) as unknown as ReservaParaAviso[];
+  if (error || reservas.length === 0) {
+    return { ok: false, reason: "pedido_no_encontrado" };
+  }
+
+  const cliente = primero(reservas[0].clients);
+  const montoSenia = reservas.reduce((sum, r) => sum + r.senia, 0);
+  const itemsTexto = reservas
+    .map((r) => {
+      const producto = primero(r.products);
+      return escapeHtml([producto?.nombre, producto?.talle, producto?.color].filter(Boolean).join(" · "));
+    })
+    .join("<br/>");
+
+  const medioPagoLabel =
+    reservas[0].medio_pago === "mercado_pago"
+      ? "Mercado Pago — seña ya acreditada"
+      : "Paga en el local — seña pendiente de confirmar";
+
+  const filas = [
+    filaAvisoHtml("Clienta", escapeHtml(cliente?.nombre ?? "—")),
+    filaAvisoHtml("Celular", escapeHtml(cliente?.celular ?? "—")),
+    filaAvisoHtml("Mail", escapeHtml(cliente?.email ?? "—")),
+    filaAvisoHtml("Prenda(s)", itemsTexto),
+    filaAvisoHtml("Retiro", formatFechaConDia(reservas[0].fecha_retiro)),
+    filaAvisoHtml("Devolución", formatFechaConDia(reservas[0].fecha_devolucion)),
+    filaAvisoHtml("Seña", `$${numeroFormatter.format(montoSenia)}`),
+    filaAvisoHtml("Medio de pago", medioPagoLabel),
+  ].join("");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 480px;">
+      <h1 style="font-family: Georgia, serif; color:#171513; font-size: 20px; font-weight: 500; margin: 0 0 4px;">
+        Nueva reserva desde la web
+      </h1>
+      <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
+    </div>
+  `.trim();
+
+  return enviarEmail({
+    to: BUSINESS.email,
+    subject: `Nueva reserva — ${cliente?.nombre ?? "clienta"}`,
+    html,
+  });
 }
 
 export async function enviarRecordatorioRetiro(params: {
