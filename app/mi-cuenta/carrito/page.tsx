@@ -9,7 +9,7 @@ import { MiCuentaNav } from "@/components/MiCuentaNav";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
-import { notifyCartUpdated } from "@/lib/cartEvents";
+import { CART_UPDATED_EVENT, notifyCartUpdated } from "@/lib/cartEvents";
 import { registrarUsoPromoCode, validatePromoCode } from "@/lib/supabase/promo";
 import { crearPreferenciaCarrito, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { crearPedidoLocalVenta } from "@/lib/pago-local-client";
@@ -252,12 +252,13 @@ function CarritoContent() {
     }
 
     let cancelled = false;
+    const clientId = client.id;
 
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchCartItems(client!.id);
+        const data = await fetchCartItems(clientId);
         if (!cancelled) setItems(data);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Error desconocido");
@@ -267,8 +268,13 @@ function CarritoContent() {
     }
 
     load();
+    // Si se agrega otro artículo desde una ficha mientras esta página sigue
+    // viva en el router cache (volver atrás/adelante sin remontar), hay que
+    // volver a pedir el carrito para no quedarnos con una lista vieja.
+    window.addEventListener(CART_UPDATED_EVENT, load);
     return () => {
       cancelled = true;
+      window.removeEventListener(CART_UPDATED_EVENT, load);
     };
   }, [client, authLoading]);
 
