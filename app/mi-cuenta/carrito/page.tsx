@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Nav } from "@/components/Nav";
@@ -302,20 +303,34 @@ function CarritoContent() {
               item.tipo === "venta"
                 ? item.products?.precio_venta
                 : item.products?.precio_alquiler;
+            const foto = item.products?.fotos?.[0] ?? item.products?.foto_url ?? null;
 
             return (
               <div
                 key={item.id}
                 className="flex flex-col gap-4 rounded-[3px] border border-arena bg-blanco p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6"
               >
-                <div>
-                  <p className="text-base font-medium text-negro">
-                    {item.products?.nombre ?? "Prenda"}
-                  </p>
-                  <p className="mt-1 text-sm text-taupe">
-                    {item.tipo === "venta" ? "Venta" : "Alquiler"}
-                    {precio != null && ` · ${currencyFormatter.format(precio)}`}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
+                    {foto && (
+                      <Image
+                        src={foto}
+                        alt={item.products?.nombre ?? "Prenda"}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-base font-medium text-negro">
+                      {item.products?.nombre ?? "Prenda"}
+                    </p>
+                    <p className="mt-1 text-sm text-taupe">
+                      {item.tipo === "venta" ? "Venta" : "Alquiler"}
+                      {precio != null && ` · ${currencyFormatter.format(precio)}`}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex gap-3">
