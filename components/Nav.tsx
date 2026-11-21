@@ -73,12 +73,15 @@ export function Nav() {
               className="flex h-11 w-11 items-center justify-center text-chocolate transition-colors hover:text-negro"
             >
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                <path
-                  d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm9-1-5.2-5.2"
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                <line
+                  x1="16.2"
+                  y1="16.2"
+                  x2="21"
+                  y2="21"
                   stroke="currentColor"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  fill="none"
                 />
               </svg>
             </button>
@@ -144,12 +147,15 @@ export function Nav() {
                 className="flex h-11 w-11 items-center justify-center text-chocolate transition-colors hover:text-negro"
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-                  <path
-                    d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm9-1-5.2-5.2"
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <line
+                    x1="16.2"
+                    y1="16.2"
+                    x2="21"
+                    y2="21"
                     stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="round"
-                    fill="none"
                   />
                 </svg>
               </button>
