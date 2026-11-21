@@ -103,6 +103,7 @@ export async function POST(req: Request) {
         },
         auto_return: "approved",
         notification_url: `${origin}/api/webhooks/mercadopago`,
+        payment_methods: { installments: 3 },
       },
     });
 
