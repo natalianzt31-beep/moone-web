@@ -10,13 +10,12 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
 import { CART_UPDATED_EVENT, notifyCartUpdated } from "@/lib/cartEvents";
-import { registrarUsoPromoCode, validatePromoCode } from "@/lib/supabase/promo";
 import { crearPreferenciaCarrito, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { fetchClosedDatesSet } from "@/lib/supabase/closedDates";
 import { nextBusinessDay, sugerirDevolucion, toISODate } from "@/lib/disponibilidad";
-import { currencyFormatter, WHATSAPP_URL } from "@/lib/site-config";
-import type { Categoria, CartItem, PromoCode } from "@/lib/supabase/types";
+import { currencyFormatter } from "@/lib/site-config";
+import type { CartItem } from "@/lib/supabase/types";
 
 const inputClass =
   "min-h-11 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm text-negro focus:border-negro focus:outline-none";
@@ -116,11 +115,6 @@ function CarritoContent() {
   const [localOkIds, setLocalOkIds] = useState<Set<string>>(new Set());
   const [localError, setLocalError] = useState<{ itemId: string; message: string } | null>(null);
 
-  const [codigoInput, setCodigoInput] = useState("");
-  const [promoAplicado, setPromoAplicado] = useState<PromoCode | null>(null);
-  const [promoError, setPromoError] = useState<string | null>(null);
-  const [validandoPromo, setValidandoPromo] = useState(false);
-
   const [closedDates, setClosedDates] = useState<Set<string>>(new Set());
   const [fechaRetiro, setFechaRetiro] = useState("");
   const [fechaDevolucion, setFechaDevolucion] = useState("");
@@ -129,12 +123,6 @@ function CarritoContent() {
   const [payingPedido, setPayingPedido] = useState(false);
   const [pedidoError, setPedidoError] = useState<string | null>(null);
 
-  const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + (precioItem(item) ?? 0), 0),
-    [items]
-  );
-  const descuento = promoAplicado ? Math.round((subtotal * promoAplicado.porcentaje) / 100) : 0;
-  const totalFinal = subtotal - descuento;
   const datosCompletos = Boolean(client?.celular?.trim());
 
   const itemsAlquiler = useMemo(() => items.filter((i) => i.tipo === "alquiler"), [items]);
@@ -142,10 +130,7 @@ function CarritoContent() {
     () => itemsAlquiler.reduce((sum, item) => sum + (precioItem(item) ?? 0), 0),
     [itemsAlquiler]
   );
-  const descuentoAlquiler = promoAplicado
-    ? Math.round((subtotalAlquiler * promoAplicado.porcentaje) / 100)
-    : 0;
-  const totalAlquiler = subtotalAlquiler - descuentoAlquiler;
+  const totalAlquiler = subtotalAlquiler;
   const seniaAlquiler = Math.round(totalAlquiler * 0.5);
   const montoAPagarAlquiler = tipoPagoAlquiler === "total" ? totalAlquiler : seniaAlquiler;
 
@@ -189,57 +174,12 @@ function CarritoContent() {
         productIds: itemsAlquiler.map((i) => i.product_id),
         fechaRetiro,
         fechaDevolucion,
-        promoCode: promoAplicado?.codigo,
         tipoPago: tipoPagoAlquiler,
       });
       window.location.href = initPoint;
     } catch (err) {
       setPedidoError(err instanceof Error ? err.message : "Error desconocido");
       setPayingPedido(false);
-    }
-  }
-
-  async function handleAplicarCodigo() {
-    setPromoError(null);
-    setValidandoPromo(true);
-    try {
-      const categorias = new Set<Categoria>(
-        items.map((i) => i.products?.categoria).filter((c): c is Categoria => Boolean(c))
-      );
-      const resultado = await validatePromoCode(codigoInput, categorias);
-      if (resultado.ok) {
-        setPromoAplicado(resultado.promo);
-      } else {
-        setPromoAplicado(null);
-        setPromoError(resultado.message);
-      }
-    } catch (err) {
-      setPromoAplicado(null);
-      setPromoError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setValidandoPromo(false);
-    }
-  }
-
-  function handleQuitarCodigo() {
-    setPromoAplicado(null);
-    setPromoError(null);
-    setCodigoInput("");
-  }
-
-  const mensajeWhatsapp = `Hola! Quiero confirmar mi reserva:\n${items
-    .map((item) => `- ${item.products?.nombre ?? "Prenda"} (${item.tipo})`)
-    .join("\n")}\nSubtotal: ${currencyFormatter.format(subtotal)}${
-    promoAplicado
-      ? `\nCódigo ${promoAplicado.codigo.toUpperCase()} (-${promoAplicado.porcentaje}%): -${currencyFormatter.format(descuento)}\nTotal: ${currencyFormatter.format(totalFinal)}`
-      : ""
-  }\n¿Cómo sigo con el pago?`;
-
-  function handleConfirmarClick() {
-    if (promoAplicado) {
-      registrarUsoPromoCode(promoAplicado.codigo).catch(() => {
-        // el uso no se pudo registrar; no bloqueamos la coordinación por WhatsApp
-      });
     }
   }
 
@@ -473,16 +413,6 @@ function CarritoContent() {
                   <span className="text-chocolate">Subtotal alquiler</span>
                   <span className="text-negro">{currencyFormatter.format(subtotalAlquiler)}</span>
                 </div>
-                {promoAplicado && (
-                  <div className="flex justify-between">
-                    <span className="text-chocolate">
-                      Descuento ({promoAplicado.porcentaje}%)
-                    </span>
-                    <span className="text-negro">
-                      -{currencyFormatter.format(descuentoAlquiler)}
-                    </span>
-                  </div>
-                )}
               </div>
 
               <div className="mt-4 flex gap-4 text-sm text-negro">
@@ -532,86 +462,6 @@ function CarritoContent() {
               )}
             </div>
           )}
-
-          <div className="mt-4 rounded-[3px] border border-arena bg-blanco p-4 sm:p-6">
-            <label className="flex flex-col gap-1 text-sm text-negro">
-              Código de descuento
-              {itemsAlquiler.length > 0 && (
-                <span className="text-xs font-normal text-taupe">
-                  Se aplica también a la reserva de arriba.
-                </span>
-              )}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={codigoInput}
-                  onChange={(e) => setCodigoInput(e.target.value)}
-                  placeholder="Ej: VESTIDOSAND"
-                  disabled={Boolean(promoAplicado)}
-                  className="min-h-11 flex-1 rounded-[3px] border border-taupe bg-blanco px-3 py-2 text-sm uppercase text-negro focus:border-negro focus:outline-none disabled:bg-crema"
-                />
-                {promoAplicado ? (
-                  <button
-                    type="button"
-                    onClick={handleQuitarCodigo}
-                    className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate"
-                  >
-                    Quitar
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleAplicarCodigo}
-                    disabled={validandoPromo || !codigoInput.trim()}
-                    className="flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-4 text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60"
-                  >
-                    {validandoPromo ? "Validando..." : "Aplicar"}
-                  </button>
-                )}
-              </div>
-            </label>
-
-            {promoError && <p className="mt-2 text-sm text-chocolate">{promoError}</p>}
-            {promoAplicado && (
-              <p className="mt-2 text-sm text-chocolate">
-                Código {promoAplicado.codigo.toUpperCase()} aplicado: {promoAplicado.porcentaje}%
-                OFF.
-              </p>
-            )}
-
-            <div className="mt-4 flex flex-col gap-2 border-t border-arena pt-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-chocolate">Subtotal</span>
-                <span className="text-negro">{currencyFormatter.format(subtotal)}</span>
-              </div>
-              {promoAplicado && (
-                <div className="flex justify-between">
-                  <span className="text-chocolate">Descuento ({promoAplicado.porcentaje}%)</span>
-                  <span className="text-negro">-{currencyFormatter.format(descuento)}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-medium">
-                <span className="text-negro">Total</span>
-                <span className="text-negro">{currencyFormatter.format(totalFinal)}</span>
-              </div>
-            </div>
-
-            {datosCompletos ? (
-              <a
-                href={`${WHATSAPP_URL}?text=${encodeURIComponent(mensajeWhatsapp)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleConfirmarClick}
-                className="mt-4 flex min-h-11 items-center justify-center rounded-[3px] bg-negro px-6 text-center text-sm font-medium text-blanco transition-colors hover:bg-chocolate"
-              >
-                Confirmar reserva por WhatsApp
-              </a>
-            ) : (
-              <p className="mt-4 text-sm text-chocolate">
-                Completá tus datos abajo para poder confirmar la reserva.
-              </p>
-            )}
-          </div>
 
           {!datosCompletos && client && (
             <DatosClienteForm clientId={client.id} nombreActual={client.nombre} />
