@@ -9,6 +9,7 @@ import { MiCuentaNav } from "@/components/MiCuentaNav";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
+import { notifyCartUpdated } from "@/lib/cartEvents";
 import { registrarUsoPromoCode, validatePromoCode } from "@/lib/supabase/promo";
 import { crearPreferenciaCarrito, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { crearPedidoLocalVenta } from "@/lib/pago-local-client";
@@ -307,6 +308,7 @@ function CarritoContent() {
     try {
       await removeFromCart(itemId);
       setItems((prev) => prev.filter((i) => i.id !== itemId));
+      notifyCartUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
