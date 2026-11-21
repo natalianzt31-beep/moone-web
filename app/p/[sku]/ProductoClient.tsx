@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { ProductCard } from "@/components/ProductCard";
 import { ShareButton } from "@/components/ShareButton";
@@ -10,13 +10,16 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Product } from "@/lib/supabase/types";
 
 /**
- * Ficha de un producto por SKU, para links directos (ej. una etiqueta con
- * QR en el local). Si quien entra es staff, la redirige derecho a editarlo
- * en /admin/stock; si no, muestra la ficha pública normal (la misma
- * ProductCard que ya se usa en el catálogo).
+ * Ficha de un producto por SKU — es la URL que usan las tarjetas del
+ * catálogo para todo lo que no sea vestido (mono, sandalia, cartera,
+ * tapado, accesorio), así que la pisa tanto quien escaneó la etiqueta
+ * física en el local como cualquier clienta navegando el sitio normal, sin
+ * forma de distinguir una cosa de la otra por la URL. Por eso para staff
+ * no redirige sola a /admin/stock (eso rompía la navegación normal del
+ * sitio estando logueada como staff) — solo muestra un acceso directo de
+ * edición arriba de la ficha pública de siempre.
  */
 export function ProductoClient({ sku }: { sku: string }) {
-  const router = useRouter();
   const { isStaff, loading: authLoading } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -55,30 +58,32 @@ export function ProductoClient({ sku }: { sku: string }) {
     };
   }, [sku]);
 
-  useEffect(() => {
-    if (authLoading || !isStaff) return;
-    router.replace(`/admin/stock?sku=${encodeURIComponent(sku)}`);
-  }, [authLoading, isStaff, sku, router]);
-
-  const mostrandoParaStaff = !authLoading && isStaff;
+  const mostrarAccesoStaff = !authLoading && isStaff && !loading && product;
 
   return (
     <div className="flex flex-1 flex-col bg-marfil">
       <Nav />
       <main className="flex-1">
         <section className="mx-auto max-w-sm px-4 py-10 sm:px-8 sm:py-16">
-          {(authLoading || loading || mostrandoParaStaff) && (
-            <p className="text-sm text-taupe">Cargando...</p>
+          {mostrarAccesoStaff && (
+            <Link
+              href={`/admin/stock?sku=${encodeURIComponent(sku)}`}
+              className="mb-4 flex min-h-11 w-fit items-center text-xs uppercase tracking-wider text-chocolate underline-offset-2 hover:underline"
+            >
+              Editar en Stock →
+            </Link>
           )}
 
-          {!authLoading && !loading && !mostrandoParaStaff && (error || !product) && (
+          {(authLoading || loading) && <p className="text-sm text-taupe">Cargando...</p>}
+
+          {!authLoading && !loading && (error || !product) && (
             <p className="text-sm text-chocolate">
               No encontramos ninguna prenda con el código {sku}
               {error ? `: ${error}` : "."}
             </p>
           )}
 
-          {!authLoading && !loading && !mostrandoParaStaff && product && (
+          {!authLoading && !loading && product && (
             product.estado === "baja_definitiva" ? (
               <div>
                 <p className="text-base font-medium text-negro">{product.nombre}</p>
