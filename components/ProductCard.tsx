@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
+import { notifyCartUpdated } from "@/lib/cartEvents";
 import { crearPreferenciaReserva, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { crearReservaLocal, crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { bookingEnabled, checkoutEnabled } from "@/lib/features";
@@ -64,7 +65,10 @@ export function ProductCard({
     if (!pendiente || pendiente.productId !== product.id) return;
     limpiarPedidoPendiente();
     addToCart(client.id, product.id, tipo)
-      .then(() => setCartState("added"))
+      .then(() => {
+        setCartState("added");
+        notifyCartUpdated();
+      })
       .catch(() => setCartState("error"));
   }, [authLoading, client, product.id, tipo]);
 
@@ -98,6 +102,7 @@ export function ProductCard({
     try {
       await addToCart(client.id, product.id, tipo);
       setCartState("added");
+      notifyCartUpdated();
     } catch {
       setCartState("error");
     }
@@ -245,7 +250,7 @@ export function ProductCard({
           </span>
         )}
 
-        {tipo === "alquiler" && variant !== "grid" && (
+        {tipo === "alquiler" && (variant !== "grid" || mostrarReserva) && (
           <DisponibilidadCalendar
             productId={product.id}
             onSelect={(retiro, devolucion) => {

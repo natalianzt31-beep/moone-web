@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { WHATSAPP_URL } from "@/lib/site-config";
-import { turnosEnabled } from "@/lib/features";
+import { checkoutEnabled, turnosEnabled } from "@/lib/features";
+import { fetchCartItems } from "@/lib/supabase/account";
+import { CART_UPDATED_EVENT } from "@/lib/cartEvents";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -17,6 +19,57 @@ const LINKS = [
   ...(turnosEnabled ? [{ href: "/turnos", label: "Modista" }] : []),
   { href: "/faq", label: "FAQ" },
 ];
+
+function CartLink() {
+  const { client } = useAuth();
+  const [cantidad, setCantidad] = useState(0);
+
+  useEffect(() => {
+    if (!checkoutEnabled || !client) return;
+    const clientId = client.id;
+    let cancelled = false;
+    function cargar() {
+      fetchCartItems(clientId)
+        .then((items) => {
+          if (!cancelled) setCantidad(items.length);
+        })
+        .catch(() => {});
+    }
+    cargar();
+    window.addEventListener(CART_UPDATED_EVENT, cargar);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(CART_UPDATED_EVENT, cargar);
+    };
+  }, [client]);
+
+  if (!checkoutEnabled || !client) return null;
+
+  return (
+    <Link
+      href="/mi-cuenta/carrito"
+      aria-label={`Carrito${cantidad > 0 ? ` (${cantidad} artículos)` : ""}`}
+      className="relative flex h-11 w-11 items-center justify-center text-chocolate transition-colors hover:text-negro"
+    >
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path
+          d="M4 7h2.2l.7 2.2M6.9 9.2 8.6 15h9.3l1.6-6H6.9Z"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <circle cx="10" cy="19" r="1.3" fill="currentColor" />
+        <circle cx="16.5" cy="19" r="1.3" fill="currentColor" />
+      </svg>
+      {cantidad > 0 && (
+        <span className="absolute right-0 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-negro px-1 text-[10px] font-medium text-blanco">
+          {cantidad}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export function Nav() {
   const [open, setOpen] = useState(false);
@@ -86,6 +139,8 @@ export function Nav() {
               </svg>
             </button>
           </form>
+
+          <CartLink />
 
           <a
             href={WHATSAPP_URL}

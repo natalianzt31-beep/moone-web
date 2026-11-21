@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
+import { notifyCartUpdated } from "@/lib/cartEvents";
 import { crearPreferenciaReserva, crearPreferenciaVenta } from "@/lib/mercadopago-client";
 import { crearReservaLocal, crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { compararTalles } from "@/lib/talles";
@@ -96,6 +97,7 @@ export function GroupedProductCard({
       .then(() => {
         setTalleSeleccionado(match.talle);
         setCartState("added");
+        notifyCartUpdated();
       })
       .catch(() => {
         setTalleSeleccionado(match.talle);
@@ -132,6 +134,7 @@ export function GroupedProductCard({
     try {
       await addToCart(client.id, producto.id, tipo);
       setCartState("added");
+      notifyCartUpdated();
     } catch {
       setCartState("error");
     }
@@ -300,7 +303,7 @@ export function GroupedProductCard({
           </select>
         </label>
 
-        {tipo === "alquiler" && variant !== "grid" && (
+        {tipo === "alquiler" && (variant !== "grid" || mostrarReserva) && (
           <DisponibilidadCalendar
             key={producto.id}
             productId={producto.id}
