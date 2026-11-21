@@ -352,14 +352,16 @@ function CarritoContent() {
                       >
                         {payingId === item.id ? "Redirigiendo..." : "Comprar con Mercado Pago"}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handlePagarLocalVenta(item)}
-                        disabled={payingId === item.id || payingLocalId === item.id}
-                        className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60 sm:flex-none"
-                      >
-                        {payingLocalId === item.id ? "Registrando..." : "Pagar en el local"}
-                      </button>
+                      {item.products?.categoria !== "vestido" && (
+                        <button
+                          type="button"
+                          onClick={() => handlePagarLocalVenta(item)}
+                          disabled={payingId === item.id || payingLocalId === item.id}
+                          className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60 sm:flex-none"
+                        >
+                          {payingLocalId === item.id ? "Registrando..." : "Pagar en el local"}
+                        </button>
+                      )}
                     </>
                   ) : (
                     <a
