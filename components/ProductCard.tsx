@@ -318,7 +318,7 @@ export function ProductCard({
                     )}
                     {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
 
-                    {!authLoading && user && fechaElegida && !localOk && (
+                    {!authLoading && user && tipo === "venta" && fechaElegida && !localOk && (
                       <button
                         type="button"
                         onClick={handlePagarEnLocal}
