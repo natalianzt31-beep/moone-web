@@ -318,7 +318,7 @@ function CarritoContent() {
                         alt={item.products?.nombre ?? "Prenda"}
                         fill
                         sizes="64px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     )}
                   </div>
