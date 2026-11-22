@@ -404,6 +404,7 @@ function CarritoContent() {
               min={1}
               max={4}
               incluirCarrito={false}
+              excluirIds={items.map((i) => i.product_id)}
             />
           )}
 

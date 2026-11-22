@@ -81,3 +81,10 @@ export const PUNTAJES = {
   destacado: 0.5,
   talleCompatible: 0.5,
 };
+
+/**
+ * Imprescindibles: artículos de VENTA que se ofrecen siempre junto a un
+ * alquiler, sin importar color ni categoría (casi todas los necesitan).
+ * Se identifican por subcategoría del catálogo.
+ */
+export const IMPRESCINDIBLES_SUBCATEGORIAS = ["medias", "pegotes"];

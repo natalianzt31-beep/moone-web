@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { bookingEnabled } from "@/lib/features";
+import { bookingEnabled, checkoutEnabled } from "@/lib/features";
 import { currencyFormatter } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { addToCart, fetchCartItems } from "@/lib/supabase/account";
@@ -17,16 +17,42 @@ import {
 } from "@/lib/pendingCartItem";
 import {
   categoriasFaltantes,
+  imprescindibles,
   rangosSeSuperponen,
   recomendar,
   type Recomendacion,
   type RecoProducto,
 } from "@/lib/recomendaciones/motor";
 import { trackRecomendacion, type OrigenReco } from "@/lib/recomendaciones/tracking";
+import { IMPRESCINDIBLES_SUBCATEGORIAS } from "@/lib/recomendaciones/reglas";
 import type { Categoria } from "@/lib/supabase/types";
 
 const CAMPOS =
-  "id, sku, nombre, categoria, talle, color, precio_alquiler, precio_venta, slug, grupo_producto, estado, foto_url, fotos, created_at, destacado, estilo, ocasiones_uso";
+  "id, sku, nombre, categoria, subcategoria, talle, color, precio_alquiler, precio_venta, slug, grupo_producto, estado, foto_url, fotos, created_at, destacado, estilo, ocasiones_uso";
+
+let cacheImprescindibles: Promise<RecoProducto[]> | null = null;
+
+function cargarImprescindibles(): Promise<RecoProducto[]> {
+  if (!cacheImprescindibles) {
+    cacheImprescindibles = Promise.resolve(
+      getSupabaseClient()
+        .from("products")
+        .select(CAMPOS)
+        .in("subcategoria", IMPRESCINDIBLES_SUBCATEGORIAS)
+        .eq("visible_web", true)
+        .eq("disponible", true)
+        .eq("estado", "disponible")
+        .gt("stock", 0)
+    ).then(({ data, error }) => {
+      if (error) {
+        cacheImprescindibles = null;
+        throw error;
+      }
+      return (data ?? []) as RecoProducto[];
+    });
+  }
+  return cacheImprescindibles;
+}
 
 // El catálogo candidato se pide una sola vez por carga de página y se
 // comparte entre todos los módulos (ficha + carrito, etc.).
@@ -89,6 +115,8 @@ type Props = {
   max?: number;
   /** Sumar el carrito de la clienta a la selección (para no repetir). */
   incluirCarrito?: boolean;
+  /** IDs que ya están en el carrito (cuando incluirCarrito es false). */
+  excluirIds?: string[];
 };
 
 export function CompletaTuLook({
@@ -100,10 +128,13 @@ export function CompletaTuLook({
   min = 3,
   max = 6,
   incluirCarrito = true,
+  excluirIds = [],
 }: Props) {
   const { client, user, loading: authLoading } = useAuth();
   const [catalogo, setCatalogo] = useState<RecoProducto[] | null>(null);
   const [carrito, setCarrito] = useState<RecoProducto[]>([]);
+  const [idsCarrito, setIdsCarrito] = useState<string[]>([]);
+  const [catalogoImprescindibles, setCatalogoImprescindibles] = useState<RecoProducto[] | null>(null);
   const [ocupadosCargados, setOcupadosCargados] = useState<{ clave: string; ids: Set<string> } | null>(
     null
   );
@@ -118,13 +149,14 @@ export function CompletaTuLook({
 
   // Carrito de la clienta: lo ya elegido no se vuelve a ofrecer.
   useEffect(() => {
-    if (!incluirCarrito || !puedeAgregar || authLoading || !client) return;
+    if (!incluirCarrito || !(bookingEnabled || checkoutEnabled) || authLoading || !client) return;
     let cancelled = false;
     const clientId = client.id;
     async function load() {
       try {
         const items = await fetchCartItems(clientId);
         if (!cancelled) {
+          setIdsCarrito(items.map((i) => i.product_id));
           setCarrito(
             items
               .filter((i) => i.tipo === "alquiler" && i.products)
@@ -141,7 +173,34 @@ export function CompletaTuLook({
       cancelled = true;
       window.removeEventListener(CART_UPDATED_EVENT, load);
     };
-  }, [incluirCarrito, puedeAgregar, authLoading, client]);
+  }, [incluirCarrito, authLoading, client]);
+
+  useEffect(() => {
+    let cancelled = false;
+    cargarImprescindibles()
+      .then((data) => {
+        if (!cancelled) setCatalogoImprescindibles(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const claveExcluir = [...excluirIds, ...idsCarrito].join(",");
+  const listaImprescindibles = useMemo(
+    () =>
+      catalogoImprescindibles
+        ? imprescindibles(catalogoImprescindibles, new Set(claveExcluir.split(",").filter(Boolean)))
+        : [],
+    [catalogoImprescindibles, claveExcluir]
+  );
+  // Lo recién agregado sigue a la vista con su ✓.
+  const imprescindiblesVisibles = useMemo(() => {
+    const fijas = fijadas.filter((f) => f.tipo === "venta");
+    const resto = listaImprescindibles.filter((r) => !fijas.some((f) => f.clave === r.clave));
+    return [...fijas, ...resto];
+  }, [listaImprescindibles, fijadas]);
 
   const seleccionCompleta = useMemo(() => {
     const porId = new Map<string, RecoProducto>();
@@ -195,13 +254,18 @@ export function CompletaTuLook({
   }, [catalogo, seleccionCompleta, ocupados, max, min]);
 
   const mostradas = useMemo(() => {
-    const resto = recomendaciones.filter((r) => !fijadas.some((f) => f.clave === r.clave));
-    return [...fijadas, ...resto].slice(0, Math.max(max, fijadas.length));
+    const fijas = fijadas.filter((f) => f.tipo === "alquiler");
+    const resto = recomendaciones.filter((r) => !fijas.some((f) => f.clave === r.clave));
+    return [...fijas, ...resto].slice(0, Math.max(max, fijas.length));
   }, [recomendaciones, fijadas, max]);
 
   function marcarAgregado(productId: string, reco?: Recomendacion) {
     setAgregados((prev) => new Set(prev).add(productId));
-    const encontrada = reco ?? recomendaciones.find((r) => r.variantes.some((v) => v.id === productId));
+    const encontrada =
+      reco ??
+      [...recomendaciones, ...listaImprescindibles].find((r) =>
+        r.variantes.some((v) => v.id === productId)
+      );
     if (encontrada) {
       setFijadas((prev) => (prev.some((f) => f.clave === encontrada.clave) ? prev : [...prev, encontrada]));
     }
@@ -209,24 +273,28 @@ export function CompletaTuLook({
 
   // Evento "mostrada": una vez por módulo y selección.
   const registrado = useRef<string | null>(null);
+  const totalMostradas = mostradas.length + imprescindiblesVisibles.length;
   useEffect(() => {
-    if (mostradas.length === 0) return;
+    if (totalMostradas === 0) return;
     const clave = `${origen}|${claveSeleccion}`;
     if (registrado.current === clave) return;
     registrado.current = clave;
-    trackRecomendacion({ evento: "mostrada", origen, productoBaseId, cantidad: mostradas.length });
-  }, [mostradas.length, origen, claveSeleccion, productoBaseId]);
+    trackRecomendacion({ evento: "mostrada", origen, productoBaseId, cantidad: totalMostradas });
+  }, [totalMostradas, origen, claveSeleccion, productoBaseId]);
 
   // Si la clienta tocó "Agregar" sin sesión, al volver lo sumamos solo.
   const pathname = usePathname();
   useEffect(() => {
-    if (!puedeAgregar || authLoading || !client || !catalogo) return;
+    if (authLoading || !client) return;
     const pendiente = leerPedidoPendiente();
-    if (!pendiente || pendiente.tipo !== "alquiler") return;
-    const match = catalogo.find((p) => p.id === pendiente.productId);
+    if (!pendiente) return;
+    const fuente = pendiente.tipo === "venta" ? catalogoImprescindibles : catalogo;
+    const habilitado = pendiente.tipo === "venta" ? checkoutEnabled : bookingEnabled;
+    if (!habilitado || !fuente) return;
+    const match = fuente.find((p) => p.id === pendiente.productId);
     if (!match) return;
     limpiarPedidoPendiente();
-    addToCart(client.id, match.id, "alquiler")
+    addToCart(client.id, match.id, pendiente.tipo)
       .then(() => {
         marcarAgregado(match.id);
         notifyCartUpdated();
@@ -235,16 +303,17 @@ export function CompletaTuLook({
       .catch(() => {});
     // marcarAgregado solo actualiza estado local; no hace falta re-correr por ella.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puedeAgregar, authLoading, client, catalogo, origen, productoBaseId]);
+  }, [authLoading, client, catalogo, catalogoImprescindibles, origen, productoBaseId]);
 
-  if (mostradas.length === 0) return null;
+  if (totalMostradas === 0) return null;
 
   return (
     <section aria-label={titulo} className="mt-10 border-t border-arena pt-8">
       <h2 className="font-serif text-xl font-normal tracking-tight text-negro">{titulo}</h2>
       <p className="mt-1 text-sm text-chocolate">{subtitulo}</p>
 
-      <div className="-mx-4 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+      {mostradas.length > 0 && (
+        <div className="-mx-4 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         {mostradas.map((reco) => (
           <TarjetaComplemento
             key={reco.clave}
@@ -260,7 +329,34 @@ export function CompletaTuLook({
             onAgregado={(id) => marcarAgregado(id, reco)}
           />
         ))}
-      </div>
+        </div>
+      )}
+
+      {imprescindiblesVisibles.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-negro">
+            Imprescindibles para ese día
+          </h3>
+          <p className="mt-1 text-xs text-taupe">Para comprar: son tuyas y te las llevás.</p>
+          <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+          {imprescindiblesVisibles.map((reco) => (
+          <TarjetaComplemento
+            key={reco.clave}
+            reco={reco}
+            origen={origen}
+            productoBaseId={productoBaseId}
+            puedeAgregar={checkoutEnabled}
+            clientId={client?.id ?? null}
+            haySesion={!authLoading && Boolean(user)}
+            authLoading={authLoading}
+            pathname={pathname}
+            agregado={reco.variantes.some((v) => agregados.has(v.id))}
+            onAgregado={(id) => marcarAgregado(id, reco)}
+          />
+        ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -298,7 +394,8 @@ function TarjetaComplemento({
   const unidad =
     (talle ? reco.variantes.find((v) => v.talle === talle) : null) ??
     (tallesUnicos.length <= 1 ? reco.variantes[0] : null);
-  const precio = Number((unidad ?? reco.variantes[0]).precio_alquiler);
+  const muestra = unidad ?? reco.variantes[0];
+  const precio = Number(reco.tipo === "venta" ? muestra.precio_venta : muestra.precio_alquiler);
   const faltaTalle = tallesUnicos.length > 1 && !unidad;
 
   function registrarClick() {
@@ -309,7 +406,7 @@ function TarjetaComplemento({
     if (!unidad || !clientId) return;
     setEstado("agregando");
     try {
-      await addToCart(clientId, unidad.id, "alquiler");
+      await addToCart(clientId, unidad.id, reco.tipo);
       onAgregado(unidad.id);
       setEstado("idle");
       notifyCartUpdated();
@@ -340,7 +437,9 @@ function TarjetaComplemento({
       </Link>
 
       <span className="text-xs text-negro">
-        {reco.sinCosto ? "Sin costo · te lo prestamos" : `Alquiler ${currencyFormatter.format(precio)}`}
+        {reco.sinCosto
+          ? "Sin costo · te lo prestamos"
+          : `${reco.tipo === "venta" ? "Precio" : "Alquiler"} ${currencyFormatter.format(precio)}`}
       </span>
 
       {tallesUnicos.length === 1 && (
@@ -376,7 +475,9 @@ function TarjetaComplemento({
             Ver detalle
           </Link>
         ) : agregado ? (
-          <span className={`${botonClass} border border-arena text-chocolate`}>En tu look ✓</span>
+          <span className={`${botonClass} border border-arena text-chocolate`}>
+            {reco.tipo === "venta" ? "En tu carrito ✓" : "En tu look ✓"}
+          </span>
         ) : !authLoading && !haySesion ? (
           <Link
             href={`/mi-cuenta/login?returnTo=${encodeURIComponent(pathname)}`}
@@ -385,7 +486,7 @@ function TarjetaComplemento({
                 guardarPedidoPendiente({
                   productId: unidad.id,
                   talle: unidad.talle,
-                  tipo: "alquiler",
+                  tipo: reco.tipo,
                   url: pathname,
                 });
               }
@@ -393,7 +494,7 @@ function TarjetaComplemento({
             aria-disabled={faltaTalle}
             className={`${botonClass} bg-negro text-blanco hover:bg-chocolate ${faltaTalle ? "pointer-events-none opacity-50" : ""}`}
           >
-            {faltaTalle ? "Elegí tu talle" : "Agregar a mi look"}
+            {faltaTalle ? "Elegí tu talle" : reco.tipo === "venta" ? "Agregar" : "Agregar a mi look"}
           </Link>
         ) : (
           <button
@@ -408,7 +509,9 @@ function TarjetaComplemento({
                 ? "Agregando..."
                 : estado === "error"
                   ? "Error, probá de nuevo"
-                  : "Agregar a mi look"}
+                  : reco.tipo === "venta"
+                    ? "Agregar"
+                    : "Agregar a mi look"}
           </button>
         )}
       </div>

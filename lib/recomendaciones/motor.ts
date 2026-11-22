@@ -11,6 +11,7 @@ import {
   COMBINACIONES_IDEALES,
   COMPLEMENTOS,
   PRENDAS_PRINCIPALES,
+  IMPRESCINDIBLES_SUBCATEGORIAS,
   PUNTAJES,
   TALLE_COMPARTIDO,
 } from "./reglas";
@@ -34,6 +35,7 @@ export type RecoProducto = {
   destacado?: boolean | null;
   estilo?: string | null;
   ocasiones_uso?: string | null;
+  subcategoria?: string | null;
 };
 
 export type Recomendacion = {
@@ -50,6 +52,8 @@ export type Recomendacion = {
   talleSugerido: string | null;
   /** Accesorio que Môone presta sin costo (no se cobra ni se reserva). */
   sinCosto: boolean;
+  /** Alquiler (va a la reserva) o venta (imprescindibles: se compran). */
+  tipo: "alquiler" | "venta";
   puntaje: number;
 };
 
@@ -231,6 +235,7 @@ export function recomendar({ seleccion, catalogo, ocupados, max = 6 }: OpcionesM
       variantes,
       talleSugerido,
       sinCosto: esSinCosto(muestra),
+      tipo: "alquiler",
       puntaje,
     };
     const lista = porCategoria.get(muestra.categoria);
@@ -275,4 +280,54 @@ export function rangosSeSuperponen(
   b: { desde: string; hasta: string }
 ) {
   return a.desde <= b.hasta && b.desde <= a.hasta;
+}
+
+/**
+ * Imprescindibles de venta (medias, soutien adhesivo…): se ofrecen siempre,
+ * salvo los modelos que la clienta ya tiene en el carrito.
+ */
+export function imprescindibles(
+  catalogo: RecoProducto[],
+  excluirIds: ReadonlySet<string> = new Set()
+): Recomendacion[] {
+  const modelos = new Map<string, RecoProducto[]>();
+  const modelosExcluidos = new Set<string>();
+  for (const p of catalogo) {
+    if (!p.subcategoria || !IMPRESCINDIBLES_SUBCATEGORIAS.includes(p.subcategoria)) continue;
+    const clave = claveModelo(p);
+    if (excluirIds.has(p.id)) modelosExcluidos.add(clave);
+    if (p.estado !== "disponible" || !(Number(p.precio_venta) > 0)) continue;
+    const lista = modelos.get(clave);
+    if (lista) lista.push(p);
+    else modelos.set(clave, [p]);
+  }
+  const resultado: Recomendacion[] = [];
+  for (const [clave, unidades] of modelos) {
+    if (modelosExcluidos.has(clave)) continue;
+    const variantes = [...unidades].sort((a, b) => compararTalles(a.talle, b.talle));
+    const muestra = variantes[0];
+    const foto =
+      variantes.map((v) => v.fotos?.[0] ?? v.foto_url).find((f): f is string => Boolean(f)) ?? null;
+    if (!foto) continue;
+    resultado.push({
+      clave,
+      categoria: muestra.categoria,
+      nombre: nombreSinTalle(muestra.nombre),
+      color: muestra.color,
+      foto,
+      href: hrefRecomendacion(muestra),
+      variantes,
+      talleSugerido: new Set(variantes.map((v) => v.talle)).size === 1 ? muestra.talle : null,
+      sinCosto: false,
+      tipo: "venta",
+      puntaje: 0,
+    });
+  }
+  // Mismo orden que reglas.ts (medias primero), y dentro, por nombre.
+  return resultado.sort(
+    (a, b) =>
+      IMPRESCINDIBLES_SUBCATEGORIAS.indexOf(a.variantes[0].subcategoria ?? "") -
+        IMPRESCINDIBLES_SUBCATEGORIAS.indexOf(b.variantes[0].subcategoria ?? "") ||
+      a.nombre.localeCompare(b.nombre)
+  );
 }
