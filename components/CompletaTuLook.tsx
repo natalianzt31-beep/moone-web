@@ -244,7 +244,7 @@ export function CompletaTuLook({
       <h2 className="font-serif text-xl font-normal tracking-tight text-negro">{titulo}</h2>
       <p className="mt-1 text-sm text-chocolate">{subtitulo}</p>
 
-      <div className="-mx-4 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+      <div className="-mx-4 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         {mostradas.map((reco) => (
           <TarjetaComplemento
             key={reco.clave}
@@ -323,7 +323,7 @@ function TarjetaComplemento({
     "flex min-h-11 w-full items-center justify-center rounded-[3px] px-3 text-center text-[11px] font-medium uppercase tracking-wider transition-colors disabled:opacity-50";
 
   return (
-    <article className="flex w-[46%] min-w-[150px] shrink-0 snap-start flex-col gap-2 rounded-[3px] border border-arena bg-blanco p-2.5 sm:w-auto">
+    <article className="flex w-[46%] min-w-[150px] max-w-[190px] shrink-0 snap-start flex-col gap-2 rounded-[3px] border border-arena bg-blanco p-2.5">
       <Link href={reco.href} onClick={registrarClick} className="flex flex-col gap-2">
         <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[3px] bg-crema">
           {reco.foto && (
@@ -331,12 +331,12 @@ function TarjetaComplemento({
               src={reco.foto}
               alt={reco.nombre}
               fill
-              sizes="(min-width: 1024px) 200px, (min-width: 640px) 45vw, 46vw"
+              sizes="190px"
               className="object-contain"
             />
           )}
         </div>
-        <span className="line-clamp-2 min-h-[2.5rem] text-xs font-medium text-negro">{reco.nombre}</span>
+        <span className="line-clamp-2 h-8 overflow-hidden text-xs font-medium leading-4 text-negro">{reco.nombre}</span>
       </Link>
 
       <span className="text-xs text-negro">
