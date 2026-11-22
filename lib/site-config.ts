@@ -100,3 +100,13 @@ export const AGENDA_MODISTA = {
   /** Cuántas semanas hacia adelante se muestran para agendarse. */
   semanasVisibles: 6,
 } as const;
+
+/**
+ * Séfora Lencería: marca de lencería y trajes de baño que se vende en Môone.
+ * Sus productos (categoria "accesorio", SKU SEF-xxxxx) se identifican por
+ * products.marca y tienen su propia página, /sefora-lenceria — por eso se
+ * excluyen de /sale, de "Otros artículos en venta" y de "Completá tu look".
+ */
+export const MARCA_SEFORA = "Séfora Lencería";
+/** Filtro PostgREST para `.or(...)`: todo lo que NO es de Séfora (marca null incluida). */
+export const FILTRO_SIN_SEFORA = `marca.is.null,marca.neq."${MARCA_SEFORA}"`;

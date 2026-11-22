@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { EN_VENTA_SUBCATEGORIAS } from "@/lib/site-config";
+import { EN_VENTA_SUBCATEGORIAS, FILTRO_SIN_SEFORA } from "@/lib/site-config";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { absoluteUrl } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
@@ -47,6 +47,8 @@ export default async function EnVentaSubcategoriaPage({
     .not("precio_venta", "is", null)
     .neq("estado", "baja_definitiva")
     .in("categoria", subcategoria.categorias)
+    // Séfora Lencería se lista aparte, en /sefora-lenceria.
+    .or(FILTRO_SIN_SEFORA)
     .order("nombre", { ascending: true })
     .returns<Product[]>();
 

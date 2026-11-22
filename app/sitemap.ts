@@ -19,6 +19,7 @@ const PAGINAS_ESTATICAS = [
   { path: "/faq", changeFrequency: "monthly" as const, priority: 0.5 },
   { path: "/como-funciona-el-alquiler", changeFrequency: "monthly" as const, priority: 0.5 },
   { path: "/nosotras", changeFrequency: "monthly" as const, priority: 0.5 },
+  { path: "/sefora-lenceria", changeFrequency: "weekly" as const, priority: 0.6 },
   { path: "/privacidad", changeFrequency: "yearly" as const, priority: 0.1 },
   { path: "/terminos", changeFrequency: "yearly" as const, priority: 0.1 },
   // Mi Cuenta queda afuera a propósito: son páginas de sesión, no contenido público a indexar.

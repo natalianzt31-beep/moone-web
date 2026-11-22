@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { JsonLd } from "@/components/JsonLd";
 import { PronoviasBanner } from "@/components/PronoviasBanner";
+import { SeforaBanner } from "@/components/SeforaBanner";
 import { DIRECCION } from "@/lib/site-config";
 import { BUSINESS, absoluteUrl } from "@/lib/site";
 
@@ -83,6 +84,8 @@ export default function Home() {
             />
           </div>
         </section>
+
+        <SeforaBanner />
 
         <PronoviasBanner />
 

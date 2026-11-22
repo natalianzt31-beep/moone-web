@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { FILTRO_SIN_SEFORA } from "@/lib/site-config";
 import { SaleClient } from "./SaleClient";
 import type { Product } from "@/lib/supabase/types";
 
@@ -18,6 +19,8 @@ export default async function SalePage() {
     .select("*")
     .not("precio_venta", "is", null)
     .neq("estado", "baja_definitiva")
+    // Séfora Lencería tiene su propia página (no es liquidación).
+    .or(FILTRO_SIN_SEFORA)
     .order("nombre", { ascending: true })
     .returns<Product[]>();
 

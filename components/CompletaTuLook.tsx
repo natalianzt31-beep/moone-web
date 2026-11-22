@@ -25,6 +25,7 @@ import {
 } from "@/lib/recomendaciones/motor";
 import { trackRecomendacion, type OrigenReco } from "@/lib/recomendaciones/tracking";
 import { IMPRESCINDIBLES_SUBCATEGORIAS } from "@/lib/recomendaciones/reglas";
+import { FILTRO_SIN_SEFORA } from "@/lib/site-config";
 import type { Categoria } from "@/lib/supabase/types";
 
 const CAMPOS =
@@ -67,6 +68,8 @@ function cargarCatalogo(categorias: Categoria[]): Promise<RecoProducto[]> {
         .from("products")
         .select(CAMPOS)
         .in("categoria", categorias)
+        // Lencería y trajes de baño de Séfora no completan un look de fiesta.
+        .or(FILTRO_SIN_SEFORA)
         .eq("visible_web", true)
         .eq("disponible", true)
         .eq("estado", "disponible")
