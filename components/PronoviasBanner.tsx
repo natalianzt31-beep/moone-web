@@ -16,7 +16,7 @@ export function PronoviasBanner() {
           </h2>
           <p className="max-w-md text-sm leading-6 text-arena sm:text-base sm:leading-7">
             Probate los vestidos de novia más icónicos de Pronovias con la asesoría exclusiva de
-            Cecilia Méndez — Alta Costura. Viernes 13 de noviembre, cupos muy limitados.
+            Cecilia Méndez — Alta Costura. Jueves 17 de diciembre, cupos muy limitados.
           </p>
           <Link
             href="/pronovias"
