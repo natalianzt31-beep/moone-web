@@ -33,7 +33,7 @@ export function SeforaBanner() {
         </div>
 
         <p className="max-w-md text-sm leading-6 text-chocolate sm:text-base sm:leading-7">
-          Conjuntos, bodies y trajes de baño para completar tu look, por dentro y por fuera.
+          Conjuntos, bodies y trajes de baño.
         </p>
 
         <span className="flex min-h-11 w-fit shrink-0 items-center justify-center rounded-[3px] bg-negro px-6 text-sm font-medium text-blanco transition-colors group-hover:bg-chocolate">
