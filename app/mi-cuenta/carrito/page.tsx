@@ -343,15 +343,17 @@ function CarritoContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  {!datosCompletos ? (
+                  {/* Las prendas de alquiler no tienen botón propio: se
+                      reservan todas juntas en el bloque de abajo. */}
+                  {item.tipo === "alquiler" ? null : !datosCompletos ? (
                     <span className="flex min-h-11 flex-1 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40 sm:flex-none">
-                      {item.tipo === "venta" ? "Comprar con Mercado Pago" : "Continuar reserva"}
+                      Comprar con Mercado Pago
                     </span>
-                  ) : item.tipo === "venta" && localOkIds.has(item.id) ? (
+                  ) : localOkIds.has(item.id) ? (
                     <span className="flex min-h-11 flex-1 items-center justify-center text-center text-xs text-chocolate sm:flex-none">
                       Pedido registrado — pagá en el local ✓
                     </span>
-                  ) : item.tipo === "venta" ? (
+                  ) : (
                     <>
                       <button
                         type="button"
@@ -372,13 +374,6 @@ function CarritoContent() {
                         </button>
                       )}
                     </>
-                  ) : (
-                    <a
-                      href="#reservar-alquiler"
-                      className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate sm:flex-none"
-                    >
-                      Elegir fecha y reservar
-                    </a>
                   )}
                   <button
                     type="button"
