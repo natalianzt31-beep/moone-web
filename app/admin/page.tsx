@@ -170,7 +170,7 @@ export default function AdminHomePage() {
           .from("reservations")
           .select(reservaSelect)
           .in("estado", ["reservado", "confirmado_retiro"])
-          .gte("fecha_retiro", hoy)
+          .gte("fecha_retiro", addDays(hoy, -7))
           .lte("fecha_retiro", manana)
           .order("fecha_retiro"),
         supabase
@@ -285,17 +285,21 @@ export default function AdminHomePage() {
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Seccion titulo="Se va hoy y mañana — tildá cuando retiran" cantidad={retiros.length} verMasHref="/admin/reservas">
             {retiros.length === 0 && <FilaVacia texto="No hay retiros agendados para hoy ni mañana." />}
-            {retiros.map((r) => (
-              <FilaConCheck
-                key={r.id}
-                titulo={r.clients?.nombre ?? "Clienta"}
-                subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
-                etiqueta={formatFechaCorta(r.fecha_retiro)}
-                checked={false}
-                disabled={actualizandoId === r.id}
-                onToggle={() => cambiarEstado(r, "retirado")}
-              />
-            ))}
+            {retiros.map((r) => {
+              const sinMarcar = r.fecha_retiro < hoy;
+              return (
+                <FilaConCheck
+                  key={r.id}
+                  titulo={r.clients?.nombre ?? "Clienta"}
+                  subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
+                  etiqueta={`${sinMarcar ? "Sin marcar · " : ""}${formatFechaCorta(r.fecha_retiro)}`}
+                  etiquetaClass={sinMarcar ? "text-red-700" : "text-chocolate"}
+                  checked={false}
+                  disabled={actualizandoId === r.id}
+                  onToggle={() => cambiarEstado(r, "retirado")}
+                />
+              );
+            })}
           </Seccion>
 
           <Seccion titulo="Devoluciones pendientes — tildá cuando devuelven" cantidad={devoluciones.length} verMasHref="/admin/reservas">
