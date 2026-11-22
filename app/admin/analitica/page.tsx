@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
+import { VentaCruzadaStats } from "@/components/VentaCruzadaStats";
 import { ROLES_SOLO_ADMIN } from "@/lib/adminAccess";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { currencyFormatter } from "@/lib/site-config";
@@ -258,6 +259,8 @@ function AnaliticaContent() {
         )}
       </div>
 
+      <VentaCruzadaStats />
+
       <CarritosAbandonados />
     </div>
   );
@@ -274,7 +277,7 @@ export default function AdminAnaliticaPage() {
               Analítica
             </h1>
             <p className="mt-1 text-sm text-chocolate">
-              Visitas, cuentas nuevas y carritos abandonados.
+              Visitas, cuentas nuevas, venta cruzada y carritos abandonados.
             </p>
             <div className="mt-8">
               <AnaliticaContent />

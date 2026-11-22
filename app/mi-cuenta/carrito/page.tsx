@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { checkoutEnabled } from "@/lib/features";
 import { MiCuentaNav } from "@/components/MiCuentaNav";
+import { CompletaTuLook } from "@/components/CompletaTuLook";
+import type { RecoProducto } from "@/lib/recomendaciones/motor";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
@@ -132,6 +134,13 @@ function CarritoContent() {
     [itemsAlquiler]
   );
   const totalAlquiler = subtotalAlquiler;
+  const seleccionLook = useMemo(
+    () =>
+      itemsAlquiler
+        .map((i) => i.products)
+        .filter((p): p is NonNullable<typeof p> => Boolean(p)) as RecoProducto[],
+    [itemsAlquiler]
+  );
   const seniaAlquiler = Math.round(totalAlquiler * 0.5);
   const montoAPagarAlquiler = tipoPagoAlquiler === "total" ? totalAlquiler : seniaAlquiler;
 
@@ -389,6 +398,19 @@ function CarritoContent() {
               </div>
             );
           })}
+
+          {seleccionLook.length > 0 && (
+            <CompletaTuLook
+              seleccion={seleccionLook}
+              origen="carrito"
+              fechas={fechaRetiro && fechaDevolucion ? { retiro: fechaRetiro, devolucion: fechaDevolucion } : null}
+              titulo="Antes de reservar, ¿le sumamos algo a tu look?"
+              subtitulo="Te sugerimos solo lo que todavía no elegiste."
+              min={1}
+              max={4}
+              incluirCarrito={false}
+            />
+          )}
 
           {itemsAlquiler.length > 0 && (
             <div

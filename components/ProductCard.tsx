@@ -27,12 +27,18 @@ export function ProductCard({
   tipo,
   variant = "ficha",
   preload = false,
+  onFechasChange,
+  onAgregadoAlCarrito,
 }: {
   product: Product;
   tipo: "alquiler" | "venta";
   variant?: ImageVariant;
   /** Para las primeras cards visibles sin scroll (candidatas a LCP). */
   preload?: boolean;
+  /** Avisa las fechas elegidas en el calendario (para "Completá tu look"). */
+  onFechasChange?: (fechas: { retiro: string; devolucion: string } | null) => void;
+  /** Avisa que la prenda se agregó al carrito. */
+  onAgregadoAlCarrito?: () => void;
 }) {
   const { user, client, loading: authLoading } = useAuth();
   const pathname = usePathname();
@@ -68,9 +74,10 @@ export function ProductCard({
       .then(() => {
         setCartState("added");
         notifyCartUpdated();
+        onAgregadoAlCarrito?.();
       })
       .catch(() => setCartState("error"));
-  }, [authLoading, client, product.id, tipo]);
+  }, [authLoading, client, product.id, tipo, onAgregadoAlCarrito]);
 
   const precio = tipo === "venta" ? product.precio_venta : product.precio_alquiler;
   const enOferta =
@@ -103,6 +110,7 @@ export function ProductCard({
       await addToCart(client.id, product.id, tipo);
       setCartState("added");
       notifyCartUpdated();
+      onAgregadoAlCarrito?.();
     } catch {
       setCartState("error");
     }
@@ -256,6 +264,7 @@ export function ProductCard({
             onSelect={(retiro, devolucion) => {
               setFechaRetiro(retiro);
               setFechaDevolucion(devolucion);
+              onFechasChange?.(retiro && devolucion ? { retiro, devolucion } : null);
             }}
           />
         )}

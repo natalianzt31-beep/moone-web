@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { ProductCard } from "@/components/ProductCard";
+import { CompletaTuLook } from "@/components/CompletaTuLook";
 import { ShareButton } from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -25,6 +26,8 @@ export function ProductoClient({ sku }: { sku: string }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fechas, setFechas] = useState<{ retiro: string; devolucion: string } | null>(null);
+  const [agregado, setAgregado] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,7 +100,23 @@ export function ProductoClient({ sku }: { sku: string }) {
                 <ProductCard
                   product={product}
                   tipo={product.precio_venta != null ? "venta" : "alquiler"}
+                  onFechasChange={setFechas}
+                  onAgregadoAlCarrito={() => setAgregado(true)}
                 />
+                {product.precio_venta == null && product.precio_alquiler > 0 && (
+                  <CompletaTuLook
+                    seleccion={[product]}
+                    origen={agregado ? "post_agregar" : "ficha"}
+                    fechas={fechas}
+                    {...(agregado
+                      ? {
+                          titulo: "¡Tu look está tomando forma! ¿Le sumamos el toque final?",
+                          subtitulo: "Sumá complementos sin salir de acá.",
+                          min: 1,
+                        }
+                      : {})}
+                  />
+                )}
               </>
             )
           )}

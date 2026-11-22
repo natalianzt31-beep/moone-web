@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { GroupedProductCard } from "@/components/GroupedProductCard";
+import { CompletaTuLook } from "@/components/CompletaTuLook";
 import { ShareButton } from "@/components/ShareButton";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Product } from "@/lib/supabase/types";
@@ -36,6 +37,14 @@ export function VestidoDetailClient({ variantes }: { variantes: Product[] }) {
   const nombreBase = nombreSinTalle(variantes[0].nombre);
   // precio_alquiler es 0 (no null) en los vestidos que son solo venta definitiva.
   const tipo = variantes[0].precio_alquiler > 0 ? "alquiler" : "venta";
+  const [fechas, setFechas] = useState<{ retiro: string; devolucion: string } | null>(null);
+  const [agregado, setAgregado] = useState(false);
+  // Con varios talles todavía no sabemos cuál va a elegir: no anclamos el
+  // talle de los complementos a ninguno en particular.
+  const seleccion = useMemo(
+    () => (variantes.length === 1 ? variantes : [{ ...variantes[0], talle: null }]),
+    [variantes]
+  );
 
   return (
     <div className="flex flex-1 flex-col bg-marfil">
@@ -59,8 +68,29 @@ export function VestidoDetailClient({ variantes }: { variantes: Product[] }) {
           </div>
 
           <div className="mt-6">
-            <GroupedProductCard variantes={variantes} tipo={tipo} preload />
+            <GroupedProductCard
+              variantes={variantes}
+              tipo={tipo}
+              preload
+              onFechasChange={setFechas}
+              onAgregadoAlCarrito={() => setAgregado(true)}
+            />
           </div>
+
+          {tipo === "alquiler" && (
+            <CompletaTuLook
+              seleccion={seleccion}
+              origen={agregado ? "post_agregar" : "ficha"}
+              fechas={fechas}
+              {...(agregado
+                ? {
+                    titulo: "¡Tu look está tomando forma! ¿Le sumamos el toque final?",
+                    subtitulo: "Sumá complementos sin salir de acá.",
+                    min: 1,
+                  }
+                : {})}
+            />
+          )}
         </section>
       </main>
     </div>

@@ -31,12 +31,18 @@ export function GroupedProductCard({
   tipo,
   variant = "ficha",
   preload = false,
+  onFechasChange,
+  onAgregadoAlCarrito,
 }: {
   variantes: Product[];
   tipo: "alquiler" | "venta";
   variant?: ImageVariant;
   /** Para las primeras cards visibles sin scroll (candidatas a LCP). */
   preload?: boolean;
+  /** Avisa las fechas elegidas en el calendario (para "Completá tu look"). */
+  onFechasChange?: (fechas: { retiro: string; devolucion: string } | null) => void;
+  /** Avisa que la prenda se agregó al carrito. */
+  onAgregadoAlCarrito?: () => void;
 }) {
   const ordenadas = useMemo(
     () => [...variantes].sort((a, b) => compararTalles(a.talle, b.talle)),
@@ -94,12 +100,13 @@ export function GroupedProductCard({
         setTalleSeleccionado(match.talle);
         setCartState("added");
         notifyCartUpdated();
+        onAgregadoAlCarrito?.();
       })
       .catch(() => {
         setTalleSeleccionado(match.talle);
         setCartState("error");
       });
-  }, [authLoading, client, ordenadas, tipo]);
+  }, [authLoading, client, ordenadas, tipo, onAgregadoAlCarrito]);
 
   const precio = tipo === "venta" ? producto.precio_venta : producto.precio_alquiler;
   const enOferta =
@@ -131,6 +138,7 @@ export function GroupedProductCard({
       await addToCart(client.id, producto.id, tipo);
       setCartState("added");
       notifyCartUpdated();
+      onAgregadoAlCarrito?.();
     } catch {
       setCartState("error");
     }
@@ -283,6 +291,7 @@ export function GroupedProductCard({
             onSelect={(retiro, devolucion) => {
               setFechaRetiro(retiro);
               setFechaDevolucion(devolucion);
+              onFechasChange?.(retiro && devolucion ? { retiro, devolucion } : null);
             }}
           />
         )}
