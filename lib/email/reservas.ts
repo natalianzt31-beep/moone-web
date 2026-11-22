@@ -216,6 +216,83 @@ export async function enviarAvisoReservaInterno(
   });
 }
 
+/**
+ * Mail de cancelación para un pedido entero (todas sus reservas, por
+ * ejemplo vestido + sandalias reservados juntos). No cambia el estado de
+ * las reservas: eso lo hace quien llame a esta función antes de invocarla.
+ */
+export async function enviarMailCancelacionReserva(
+  pedidoId: string,
+  opciones?: { cc?: string | string[] }
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const supabase = getSupabaseServiceClient();
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .select(
+      "id, fecha_retiro, fecha_devolucion, products(nombre, talle, color, precio_alquiler), clients(nombre, email)"
+    )
+    .eq("pedido_id", pedidoId);
+
+  const reservas = (data ?? []) as unknown as ReservaDelPedido[];
+  if (error || reservas.length === 0) {
+    return { ok: false, reason: "pedido_no_encontrado" };
+  }
+
+  const cliente = primero(reservas[0].clients);
+  if (!cliente?.email) {
+    return { ok: false, reason: "cliente_sin_email" };
+  }
+
+  const itemsTexto = reservas
+    .map((r) => {
+      const producto = primero(r.products);
+      return escapeHtml(
+        [producto?.nombre, producto?.talle, producto?.color].filter(Boolean).join(" · ")
+      );
+    })
+    .join("<br/>");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 480px;">
+      <h1 style="font-family: Georgia, serif; color:#171513; font-size: 20px; font-weight: 500; margin: 0 0 12px;">
+        Tu reserva fue cancelada
+      </h1>
+      <p style="color:#171513; font-size: 14px; margin: 0 0 12px;">Hola ${escapeHtml(cliente.nombre)},</p>
+      <p style="color:#171513; font-size: 14px; margin: 0 0 12px;">
+        Te confirmamos que cancelamos tu reserva de:
+      </p>
+      <p style="color:#171513; font-size: 14px; margin: 0 0 12px;">${itemsTexto}</p>
+      <p style="color:#171513; font-size: 14px; margin: 0 0 12px;">
+        Retiro ${formatFechaConDia(reservas[0].fecha_retiro)} — devolución ${formatFechaConDia(reservas[0].fecha_devolucion)}.
+      </p>
+      <p style="color:#171513; font-size: 14px;">
+        Cualquier consulta, escribinos por WhatsApp al ${WHATSAPP_DISPLAY}.
+      </p>
+    </div>
+  `.trim();
+
+  const resultado = await enviarEmail({
+    to: cliente.email,
+    cc: opciones?.cc,
+    subject: "Tu reserva en Môone fue cancelada",
+    html,
+  });
+
+  await Promise.all(
+    reservas.map((r) =>
+      registrarEnvioEmail({
+        tipo: "cancelacion_reserva",
+        destinatario: cliente.email!,
+        reservationId: r.id,
+        resultado,
+      })
+    )
+  );
+
+  return resultado;
+}
+
 export async function enviarRecordatorioRetiro(params: {
   reservationId: string;
   clienteEmail: string;

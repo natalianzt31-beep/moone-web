@@ -10,7 +10,8 @@ export type TipoEmailLog =
   | "promocion"
   | "cuenta_existente"
   | "pago_recibido"
-  | "alerta_arreglo";
+  | "alerta_arreglo"
+  | "cancelacion_reserva";
 
 /**
  * Deja constancia en email_log de cada intento de envío (éxito o error),
