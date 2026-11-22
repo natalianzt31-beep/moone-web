@@ -12,6 +12,7 @@ import { ADMIN_MODULES, puedeAcceder } from "@/lib/adminAccess";
 
 type ReservaFila = {
   id: string;
+  client_id: string | null;
   fecha_retiro: string;
   fecha_devolucion: string;
   precio_total: number;
@@ -129,6 +130,76 @@ function FilaConCheck({
   );
 }
 
+type GrupoReservas = {
+  clave: string;
+  nombre: string;
+  celular: string | null;
+  reservas: ReservaFila[];
+};
+
+function agruparPorClienta(reservas: ReservaFila[]): GrupoReservas[] {
+  const grupos = new Map<string, GrupoReservas>();
+  for (const r of reservas) {
+    const clave = r.client_id ?? `sin-clienta-${r.id}`;
+    const grupo = grupos.get(clave);
+    if (grupo) {
+      grupo.reservas.push(r);
+    } else {
+      grupos.set(clave, {
+        clave,
+        nombre: r.clients?.nombre ?? "Clienta",
+        celular: r.clients?.celular ?? null,
+        reservas: [r],
+      });
+    }
+  }
+  return Array.from(grupos.values());
+}
+
+function descripcionPrenda(r: ReservaFila): string {
+  return `${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`;
+}
+
+function GrupoClienta({
+  grupo,
+  textoTildarTodo,
+  disabled,
+  onTildarTodo,
+  children,
+}: {
+  grupo: GrupoReservas;
+  textoTildarTodo?: string;
+  disabled?: boolean;
+  onTildarTodo?: () => void;
+  children: React.ReactNode;
+}) {
+  const cantidad = grupo.reservas.length;
+  return (
+    <div className="py-1">
+      <div className="flex items-center justify-between gap-3 bg-crema/60 px-5 py-2">
+        <div>
+          <p className="text-sm font-medium text-negro">{grupo.nombre}</p>
+          <p className="text-xs text-taupe">
+            {cantidad} {cantidad === 1 ? "prenda" : "prendas"}
+            {grupo.celular ? ` · ${grupo.celular}` : ""}
+          </p>
+        </div>
+        {onTildarTodo && cantidad > 1 && (
+          <button
+            type="button"
+            onClick={onTildarTodo}
+            disabled={disabled}
+            className="min-h-9 whitespace-nowrap rounded-[3px] border border-arena px-3 text-xs uppercase tracking-wider text-chocolate hover:border-chocolate hover:text-negro disabled:opacity-50"
+          >
+            {textoTildarTodo ?? "Tildar todas"}
+          </button>
+        )}
+      </div>
+      <div className="pl-4">{children}</div>
+    </div>
+  );
+}
+
 export default function AdminHomePage() {
   const { staffRol } = useAuth();
   const [cargando, setCargando] = useState(true);
@@ -155,7 +226,7 @@ export default function AdminHomePage() {
       const hoy = toISODate(new Date());
       const manana = addDays(hoy, 1);
 
-      const reservaSelect = "id, fecha_retiro, fecha_devolucion, precio_total, senia, products(sku, nombre, talle), clients(nombre, celular)";
+      const reservaSelect = "id, client_id, fecha_retiro, fecha_devolucion, precio_total, senia, products(sku, nombre, talle), clients(nombre, celular)";
 
       const [
         { data: retirosData },
@@ -189,7 +260,7 @@ export default function AdminHomePage() {
           .not("estado", "in", "(devuelto,cancelado,vencido)")
           .eq("saldo_pagado", false)
           .order("fecha_retiro")
-          .limit(8),
+          .limit(40),
         supabase
           .from("citas_modista")
           .select("id, hora, nombre, celular")
@@ -248,6 +319,12 @@ export default function AdminHomePage() {
     setActualizandoId(null);
   }
 
+  async function cambiarEstadoGrupo(reservas: ReservaFila[], nuevoEstado: string) {
+    for (const r of reservas) {
+      await cambiarEstado(r, nuevoEstado);
+    }
+  }
+
   const hoy = toISODate(new Date());
 
   if (cargando) {
@@ -285,73 +362,114 @@ export default function AdminHomePage() {
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Seccion titulo="Se va hoy y mañana — tildá cuando retiran" cantidad={retiros.length} verMasHref="/admin/reservas">
             {retiros.length === 0 && <FilaVacia texto="No hay retiros agendados para hoy ni mañana." />}
-            {retiros.map((r) => {
-              const sinMarcar = r.fecha_retiro < hoy;
-              return (
-                <FilaConCheck
-                  key={r.id}
-                  titulo={r.clients?.nombre ?? "Clienta"}
-                  subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
-                  etiqueta={`${sinMarcar ? "Sin marcar · " : ""}${formatFechaCorta(r.fecha_retiro)}`}
-                  etiquetaClass={sinMarcar ? "text-red-700" : "text-chocolate"}
-                  checked={false}
-                  disabled={actualizandoId === r.id}
-                  onToggle={() => cambiarEstado(r, "retirado")}
-                />
-              );
-            })}
+            {agruparPorClienta(retiros).map((g) => (
+              <GrupoClienta
+                key={g.clave}
+                grupo={g}
+                textoTildarTodo="Retiró todo"
+                disabled={actualizandoId !== null}
+                onTildarTodo={() => cambiarEstadoGrupo(g.reservas, "retirado")}
+              >
+                {g.reservas.map((r) => {
+                  const sinMarcar = r.fecha_retiro < hoy;
+                  return (
+                    <FilaConCheck
+                      key={r.id}
+                      titulo={descripcionPrenda(r)}
+                      subtitulo={`Retira ${formatFechaCorta(r.fecha_retiro)}`}
+                      etiqueta={sinMarcar ? "Sin marcar" : formatFechaCorta(r.fecha_retiro)}
+                      etiquetaClass={sinMarcar ? "text-red-700" : "text-chocolate"}
+                      checked={false}
+                      disabled={actualizandoId === r.id}
+                      onToggle={() => cambiarEstado(r, "retirado")}
+                    />
+                  );
+                })}
+              </GrupoClienta>
+            ))}
           </Seccion>
 
           <Seccion titulo="Devoluciones pendientes — tildá cuando devuelven" cantidad={devoluciones.length} verMasHref="/admin/reservas">
             {devoluciones.length === 0 && <FilaVacia texto="No hay nada afuera esperando devolución." />}
-            {devoluciones.map((r) => {
-              const atrasada = r.fecha_devolucion < hoy;
-              return (
-                <FilaConCheck
-                  key={r.id}
-                  titulo={r.clients?.nombre ?? "Clienta"}
-                  subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
-                  etiqueta={`${atrasada ? "Atrasada · " : ""}${formatFechaCorta(r.fecha_devolucion)}`}
-                  etiquetaClass={atrasada ? "text-red-700" : "text-chocolate"}
-                  checked={false}
-                  disabled={actualizandoId === r.id}
-                  onToggle={() => cambiarEstado(r, "en_limpieza")}
-                />
-              );
-            })}
+            {agruparPorClienta(devoluciones).map((g) => (
+              <GrupoClienta
+                key={g.clave}
+                grupo={g}
+                textoTildarTodo="Devolvió todo"
+                disabled={actualizandoId !== null}
+                onTildarTodo={() => cambiarEstadoGrupo(g.reservas, "en_limpieza")}
+              >
+                {g.reservas.map((r) => {
+                  const atrasada = r.fecha_devolucion < hoy;
+                  return (
+                    <FilaConCheck
+                      key={r.id}
+                      titulo={descripcionPrenda(r)}
+                      subtitulo={`Devuelve ${formatFechaCorta(r.fecha_devolucion)}`}
+                      etiqueta={atrasada ? "Atrasada" : formatFechaCorta(r.fecha_devolucion)}
+                      etiquetaClass={atrasada ? "text-red-700" : "text-chocolate"}
+                      checked={false}
+                      disabled={actualizandoId === r.id}
+                      onToggle={() => cambiarEstado(r, "en_limpieza")}
+                    />
+                  );
+                })}
+              </GrupoClienta>
+            ))}
           </Seccion>
 
           <Seccion titulo="Limpieza — destildá cuando ya está lista" cantidad={limpieza.length} verMasHref="/admin/reservas">
             {limpieza.length === 0 && <FilaVacia texto="No hay nada esperando limpieza." />}
-            {limpieza.map((r) => (
-              <FilaConCheck
-                key={r.id}
-                titulo={r.clients?.nombre ?? "Clienta"}
-                subtitulo={`${r.products?.sku} · ${r.products?.nombre}${r.products?.talle ? ` · ${r.products.talle}` : ""}`}
-                etiqueta="Pendiente"
-                checked={true}
-                disabled={actualizandoId === r.id}
-                onToggle={() => cambiarEstado(r, "devuelto")}
-              />
+            {agruparPorClienta(limpieza).map((g) => (
+              <GrupoClienta
+                key={g.clave}
+                grupo={g}
+                textoTildarTodo="Todo listo"
+                disabled={actualizandoId !== null}
+                onTildarTodo={() => cambiarEstadoGrupo(g.reservas, "devuelto")}
+              >
+                {g.reservas.map((r) => (
+                  <FilaConCheck
+                    key={r.id}
+                    titulo={descripcionPrenda(r)}
+                    subtitulo="En limpieza"
+                    etiqueta="Pendiente"
+                    checked={true}
+                    disabled={actualizandoId === r.id}
+                    onToggle={() => cambiarEstado(r, "devuelto")}
+                  />
+                ))}
+              </GrupoClienta>
             ))}
           </Seccion>
 
           {verCaja && (
             <Seccion titulo="Pagos pendientes de cobrar" cantidad={pagosPendientes.length} verMasHref="/admin/reservas">
               {pagosPendientes.length === 0 && <FilaVacia texto="No hay saldos pendientes." />}
-              {pagosPendientes.map((r) => (
-                <div key={r.id} className="flex items-center justify-between px-5 py-3 text-sm">
-                  <div>
-                    <p className="font-medium text-negro">{r.clients?.nombre ?? "Clienta"}</p>
-                    <p className="text-xs text-taupe">
-                      {r.products?.sku} · {r.products?.nombre}
-                    </p>
-                  </div>
-                  <span className="whitespace-nowrap text-xs text-negro">
-                    Falta {currencyFormatter.format(Number(r.precio_total) - Number(r.senia))}
-                  </span>
-                </div>
-              ))}
+              {agruparPorClienta(pagosPendientes).map((g) => {
+                const totalFalta = g.reservas.reduce(
+                  (acc, r) => acc + Number(r.precio_total) - Number(r.senia),
+                  0
+                );
+                return (
+                  <GrupoClienta key={g.clave} grupo={g}>
+                    {g.reservas.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between px-5 py-2 text-sm">
+                        <p className="text-xs text-taupe">{descripcionPrenda(r)}</p>
+                        <span className="whitespace-nowrap text-xs text-taupe">
+                          {currencyFormatter.format(Number(r.precio_total) - Number(r.senia))}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between px-5 py-2 text-sm">
+                      <p className="text-xs uppercase tracking-wider text-chocolate">Total a cobrar</p>
+                      <span className="whitespace-nowrap text-sm font-medium text-negro">
+                        {currencyFormatter.format(totalFalta)}
+                      </span>
+                    </div>
+                  </GrupoClienta>
+                );
+              })}
             </Seccion>
           )}
 
