@@ -196,17 +196,21 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
         finalClientId = data.id;
       }
 
-      const { error: reservaError } = await supabase.from("reservations").insert({
-        product_id: productId,
-        client_id: finalClientId,
-        fecha_retiro: fechaRetiro,
-        fecha_devolucion: fechaDevolucion,
-        precio_total: precioTotal ? Number(precioTotal) : 0,
-        senia: senia ? Number(senia) : 0,
-        deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
-        medio_pago: medioPago || null,
-        contrato_aceptado: contratoAceptado,
-      });
+      const { data: reservaCreada, error: reservaError } = await supabase
+        .from("reservations")
+        .insert({
+          product_id: productId,
+          client_id: finalClientId,
+          fecha_retiro: fechaRetiro,
+          fecha_devolucion: fechaDevolucion,
+          precio_total: precioTotal ? Number(precioTotal) : 0,
+          senia: senia ? Number(senia) : 0,
+          deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
+          medio_pago: medioPago || null,
+          contrato_aceptado: contratoAceptado,
+        })
+        .select("id")
+        .single();
 
       if (reservaError) {
         setError(
@@ -215,6 +219,19 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
             : reservaError.message
         );
         return;
+      }
+
+      // Best-effort: si el mail falla (p.ej. clienta sin mail cargado), no
+      // bloqueamos la carga — la reserva ya quedó guardada en la base.
+      try {
+        const accessToken = await getAccessTokenOrThrow();
+        await fetch("/api/admin/reservas/confirmar-nueva", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ reservationId: reservaCreada.id }),
+        });
+      } catch {
+        // Silencioso: la vendedora puede reenviar el mail desde otro lado si hace falta.
       }
 
       setSuccess(true);
