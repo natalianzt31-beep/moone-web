@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/serviceClient";
 import { checkoutEnabled } from "@/lib/features";
 
+const PAGO_LOCAL_VENTA_DESACTIVADO = true;
+
 /**
  * Venta: la clienta elige "pagar en el local" en vez de Mercado Pago.
  * Se marca la prenda como reservada (para que no la compre otra persona
@@ -10,6 +12,16 @@ import { checkoutEnabled } from "@/lib/features";
  * en el que la prenda pasa a baja_definitiva.
  */
 export async function POST(req: Request) {
+  // Desactivado: los artículos en venta se pagan solo con Mercado Pago. Los
+  // pedidos pendientes que ya existían se siguen confirmando desde el
+  // backoffice (app/api/admin/confirmar-pago-venta).
+  if (PAGO_LOCAL_VENTA_DESACTIVADO) {
+    return NextResponse.json(
+      { error: "Los artículos en venta se pagan solo con Mercado Pago." },
+      { status: 410 },
+    );
+  }
+
   if (!checkoutEnabled) {
     return NextResponse.json({ error: "El pago está desactivado." }, { status: 403 });
   }

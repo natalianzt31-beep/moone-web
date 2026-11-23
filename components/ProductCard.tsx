@@ -9,7 +9,6 @@ import { currencyFormatter } from "@/lib/site-config";
 import { addToCart } from "@/lib/supabase/account";
 import { notifyCartUpdated } from "@/lib/cartEvents";
 import { crearPreferenciaReserva, crearPreferenciaVenta } from "@/lib/mercadopago-client";
-import { crearReservaLocal, crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { bookingEnabled, checkoutEnabled } from "@/lib/features";
 import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
@@ -48,9 +47,6 @@ export function ProductCard({
   const [fechaDevolucion, setFechaDevolucion] = useState<string | null>(null);
   const [payingMp, setPayingMp] = useState(false);
   const [mpError, setMpError] = useState<string | null>(null);
-  const [payingLocal, setPayingLocal] = useState(false);
-  const [localOk, setLocalOk] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const [tipoPago, setTipoPago] = useState<"senia" | "total">("senia");
 
@@ -134,29 +130,6 @@ export function ProductCard({
     } catch (err) {
       setMpError(err instanceof Error ? err.message : "Error desconocido");
       setPayingMp(false);
-    }
-  }
-
-  async function handlePagarEnLocal() {
-    if (tipo === "alquiler" && (!fechaRetiro || !fechaDevolucion)) return;
-    setLocalError(null);
-    setPayingLocal(true);
-    try {
-      if (tipo === "venta") {
-        await crearPedidoLocalVenta({ productId: product.id });
-      } else {
-        await crearReservaLocal({
-          productId: product.id,
-          fechaRetiro: fechaRetiro!,
-          fechaDevolucion: fechaDevolucion!,
-          tipoPago,
-        });
-      }
-      setLocalOk(true);
-    } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setPayingLocal(false);
     }
   }
 
@@ -327,22 +300,6 @@ export function ProductCard({
                     )}
                     {mpError && <p className="text-xs text-chocolate">{mpError}</p>}
 
-                    {!authLoading && user && tipo === "venta" && fechaElegida && !localOk && (
-                      <button
-                        type="button"
-                        onClick={handlePagarEnLocal}
-                        disabled={payingLocal || payingMp}
-                        className="flex min-h-11 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60"
-                      >
-                        {payingLocal ? "Registrando..." : "Pagar en el local"}
-                      </button>
-                    )}
-                    {localOk && (
-                      <p className="text-center text-xs text-chocolate">
-                        {tipo === "venta" ? "Pedido registrado" : "Reserva registrada"} — pagá en el local ✓
-                      </p>
-                    )}
-                    {localError && <p className="text-xs text-chocolate">{localError}</p>}
 
                     {!authLoading && user && (
                       <button

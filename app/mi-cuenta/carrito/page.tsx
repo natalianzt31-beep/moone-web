@@ -14,7 +14,6 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchCartItems, removeFromCart, updateClientDatos } from "@/lib/supabase/account";
 import { CART_UPDATED_EVENT, notifyCartUpdated } from "@/lib/cartEvents";
 import { crearPreferenciaCarrito, crearPreferenciaVenta } from "@/lib/mercadopago-client";
-import { crearPedidoLocalVenta } from "@/lib/pago-local-client";
 import { fetchClosedDatesSet } from "@/lib/supabase/closedDates";
 import { nextBusinessDay, sugerirDevolucion, toISODate } from "@/lib/disponibilidad";
 import { currencyFormatter } from "@/lib/site-config";
@@ -114,9 +113,6 @@ function CarritoContent() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payError, setPayError] = useState<{ itemId: string; message: string } | null>(null);
-  const [payingLocalId, setPayingLocalId] = useState<string | null>(null);
-  const [localOkIds, setLocalOkIds] = useState<Set<string>>(new Set());
-  const [localError, setLocalError] = useState<{ itemId: string; message: string } | null>(null);
 
   const [closedDates, setClosedDates] = useState<Set<string>>(new Set());
   const [fechaRetiro, setFechaRetiro] = useState("");
@@ -243,22 +239,6 @@ function CarritoContent() {
     }
   }
 
-  async function handlePagarLocalVenta(item: CartItem) {
-    setLocalError(null);
-    setPayingLocalId(item.id);
-    try {
-      await crearPedidoLocalVenta({ productId: item.product_id });
-      setLocalOkIds((prev) => new Set(prev).add(item.id));
-    } catch (err) {
-      setLocalError({
-        itemId: item.id,
-        message: err instanceof Error ? err.message : "Error desconocido",
-      });
-    } finally {
-      setPayingLocalId(null);
-    }
-  }
-
   async function handleRemove(itemId: string) {
     setRemovingId(itemId);
     try {
@@ -349,31 +329,15 @@ function CarritoContent() {
                     <span className="flex min-h-11 flex-1 cursor-not-allowed items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco opacity-40 sm:flex-none">
                       Comprar con Mercado Pago
                     </span>
-                  ) : localOkIds.has(item.id) ? (
-                    <span className="flex min-h-11 flex-1 items-center justify-center text-center text-xs text-chocolate sm:flex-none">
-                      Pedido registrado — pagá en el local ✓
-                    </span>
                   ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handlePagarVenta(item)}
-                        disabled={payingId === item.id || payingLocalId === item.id}
-                        className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60 sm:flex-none"
-                      >
-                        {payingId === item.id ? "Redirigiendo..." : "Comprar con Mercado Pago"}
-                      </button>
-                      {item.products?.categoria !== "vestido" && (
-                        <button
-                          type="button"
-                          onClick={() => handlePagarLocalVenta(item)}
-                          disabled={payingId === item.id || payingLocalId === item.id}
-                          className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] border border-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-negro transition-colors hover:border-chocolate hover:text-chocolate disabled:opacity-60 sm:flex-none"
-                        >
-                          {payingLocalId === item.id ? "Registrando..." : "Pagar en el local"}
-                        </button>
-                      )}
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => handlePagarVenta(item)}
+                      disabled={payingId === item.id}
+                      className="flex min-h-11 flex-1 items-center justify-center rounded-[3px] bg-negro px-4 text-center text-xs font-medium uppercase tracking-wider text-blanco transition-colors hover:bg-chocolate disabled:opacity-60 sm:flex-none"
+                    >
+                      {payingId === item.id ? "Redirigiendo..." : "Comprar con Mercado Pago"}
+                    </button>
                   )}
                   <button
                     type="button"
@@ -386,9 +350,6 @@ function CarritoContent() {
                 </div>
                 {item.tipo === "venta" && payError?.itemId === item.id && (
                   <p className="text-xs text-chocolate">{payError.message}</p>
-                )}
-                {item.tipo === "venta" && localError?.itemId === item.id && (
-                  <p className="text-xs text-chocolate">{localError.message}</p>
                 )}
               </div>
             );
