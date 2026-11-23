@@ -196,17 +196,21 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
         finalClientId = data.id;
       }
 
-      const { error: reservaError } = await supabase.from("reservations").insert({
-        product_id: productId,
-        client_id: finalClientId,
-        fecha_retiro: fechaRetiro,
-        fecha_devolucion: fechaDevolucion,
-        precio_total: precioTotal ? Number(precioTotal) : 0,
-        senia: senia ? Number(senia) : 0,
-        deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
-        medio_pago: medioPago || null,
-        contrato_aceptado: contratoAceptado,
-      });
+      const { data: reservaCreada, error: reservaError } = await supabase
+        .from("reservations")
+        .insert({
+          product_id: productId,
+          client_id: finalClientId,
+          fecha_retiro: fechaRetiro,
+          fecha_devolucion: fechaDevolucion,
+          precio_total: precioTotal ? Number(precioTotal) : 0,
+          senia: senia ? Number(senia) : 0,
+          deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
+          medio_pago: medioPago || null,
+          contrato_aceptado: contratoAceptado,
+        })
+        .select("id")
+        .single();
 
       if (reservaError) {
         setError(
@@ -216,6 +220,10 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
         );
         return;
       }
+
+      // Aviso por mail (con foto) a contacto@: no bloquea ni falla la carga
+      // de la reserva si el mail no sale.
+      void avisarReservaNueva(reservaCreada.id);
 
       setSuccess(true);
       setProductId("");
@@ -536,6 +544,21 @@ async function getAccessTokenOrThrow(): Promise<string> {
   const accessToken = data.session?.access_token;
   if (!accessToken) throw new Error("Tu sesión expiró. Volvé a iniciar sesión.");
   return accessToken;
+}
+
+/** Pide al servidor el mail de aviso (con foto) de una reserva recién cargada. */
+async function avisarReservaNueva(reservaId: string) {
+  try {
+    const accessToken = await getAccessTokenOrThrow();
+    const res = await fetch("/api/admin/reservas/aviso-nueva", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ reservaId }),
+    });
+    if (!res.ok) console.error("No se pudo enviar el aviso de la reserva", await res.text());
+  } catch (err) {
+    console.error("No se pudo enviar el aviso de la reserva", err);
+  }
 }
 
 function ConfirmarSeniaControl({
