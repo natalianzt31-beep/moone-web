@@ -5,6 +5,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { currencyFormatter, WHATSAPP_DISPLAY } from "@/lib/site-config";
 import { PLANTILLA_CONFIRMACION_RESERVA } from "@/lib/email/plantillas";
 import { BUSINESS } from "@/lib/site";
+import { fotoProductoHtml } from "@/lib/email/fotoProducto";
 
 function escapeHtml(texto: string): string {
   return texto
@@ -36,6 +37,8 @@ type ProductoFila = {
   talle: string | null;
   color: string | null;
   precio_alquiler: number;
+  fotos?: string[] | null;
+  foto_url?: string | null;
 };
 type ClienteFila = { nombre: string; email: string | null };
 type ReservaDelPedido = {
@@ -166,7 +169,7 @@ export async function enviarAvisoReservaInterno(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(nombre, talle, color, precio_alquiler), clients(nombre, email, celular)"
+      "id, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(nombre, talle, color, precio_alquiler, fotos, foto_url), clients(nombre, email, celular)"
     )
     .eq("pedido_id", pedidoId);
 
@@ -205,6 +208,7 @@ export async function enviarAvisoReservaInterno(
       <h1 style="font-family: Georgia, serif; color:#171513; font-size: 20px; font-weight: 500; margin: 0 0 4px;">
         Nueva reserva desde la web
       </h1>
+      ${reservas.map((r) => fotoProductoHtml(primero(r.products))).join("")}
       <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
     </div>
   `.trim();
@@ -212,6 +216,67 @@ export async function enviarAvisoReservaInterno(
   return enviarEmail({
     to: BUSINESS.email,
     subject: `Nueva reserva — ${cliente?.nombre ?? "clienta"}`,
+    html,
+  });
+}
+
+/**
+ * Aviso interno a contacto@moone.com.uy cuando el staff carga una reserva
+ * directo desde el admin (/admin/reservas), con la foto de la prenda. Las
+ * reservas de la web ya avisan con enviarAvisoReservaInterno.
+ */
+export async function enviarAvisoReservaAdmin(
+  reservaId: string
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const supabase = getSupabaseServiceClient();
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .select(
+      "id, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(sku, nombre, talle, color, precio_alquiler, fotos, foto_url), clients(nombre, email, celular)"
+    )
+    .eq("id", reservaId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return { ok: false, reason: "reserva_no_encontrada" };
+  }
+
+  type ProductoConSku = ProductoFila & { sku: string };
+  const reserva = data as unknown as Omit<ReservaParaAviso, "products"> & {
+    products: ProductoConSku | ProductoConSku[] | null;
+  };
+  const producto = primero(reserva.products);
+  const cliente = primero(reserva.clients);
+  const prenda = [producto?.sku, producto?.nombre, producto?.talle, producto?.color]
+    .filter(Boolean)
+    .join(" · ");
+
+  const filas = [
+    filaAvisoHtml("Clienta", escapeHtml(cliente?.nombre ?? "—")),
+    filaAvisoHtml("Celular", escapeHtml(cliente?.celular ?? "—")),
+    filaAvisoHtml("Prenda", escapeHtml(prenda || "—")),
+    filaAvisoHtml("Retiro", formatFechaConDia(reserva.fecha_retiro)),
+    filaAvisoHtml("Devolución", formatFechaConDia(reserva.fecha_devolucion)),
+    filaAvisoHtml("Precio total", `$${numeroFormatter.format(reserva.precio_total)}`),
+    filaAvisoHtml("Seña", `$${numeroFormatter.format(reserva.senia)}`),
+    filaAvisoHtml("Medio de pago", escapeHtml(reserva.medio_pago ?? "—")),
+  ].join("");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 480px;">
+      <h1 style="font-family: Georgia, serif; color:#171513; font-size: 20px; font-weight: 500; margin: 0 0 4px;">
+        Nueva reserva cargada en el admin
+      </h1>
+      <p style="color:#A49587; font-size: 13px; margin: 0 0 16px;">Ingresada desde el local.</p>
+      ${fotoProductoHtml(producto)}
+      <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
+    </div>
+  `.trim();
+
+  return enviarEmail({
+    to: BUSINESS.email,
+    subject: `Nueva reserva (admin) — ${producto?.nombre ?? "prenda"} · ${cliente?.nombre ?? "clienta"}`,
     html,
   });
 }

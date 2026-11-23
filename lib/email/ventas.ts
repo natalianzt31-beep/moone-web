@@ -2,6 +2,8 @@ import "server-only";
 import { enviarEmail } from "@/lib/email/resend";
 import { BUSINESS } from "@/lib/site";
 import { currencyFormatter } from "@/lib/site-config";
+import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
+import { fotoProductoHtml } from "@/lib/email/fotoProducto";
 
 function escapeHtml(texto: string): string {
   return texto
@@ -39,6 +41,14 @@ export async function enviarAvisoVenta(params: {
 }): Promise<{ ok: true } | { ok: false; reason: string }> {
   const detalle = [params.talle, params.color].filter(Boolean).join(" · ");
 
+  // La foto se busca acá por SKU para no tener que pasarla desde cada lugar
+  // que confirma una venta (webhook de Mercado Pago, backoffice).
+  const { data: producto } = await getSupabaseServiceClient()
+    .from("products")
+    .select("nombre, fotos, foto_url")
+    .eq("sku", params.sku)
+    .maybeSingle();
+
   const filas = [
     filaHtml("Prenda", params.nombre),
     filaHtml("SKU", params.sku),
@@ -57,6 +67,7 @@ export async function enviarAvisoVenta(params: {
       <p style="color:#A49587; font-size: 13px; margin: 0 0 20px;">
         Venta definitiva confirmada.
       </p>
+      ${fotoProductoHtml(producto)}
       <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
     </div>
   `.trim();

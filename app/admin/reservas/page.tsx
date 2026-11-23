@@ -221,8 +221,9 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
         return;
       }
 
-      // Best-effort: si el mail falla (p.ej. clienta sin mail cargado), no
-      // bloqueamos la carga — la reserva ya quedó guardada en la base.
+      // Mail de confirmación a la clienta y aviso interno (con foto) a
+      // contacto@: ninguno de los dos bloquea ni hace fallar la carga de la
+      // reserva si el mail no sale.
       try {
         const accessToken = await getAccessTokenOrThrow();
         await fetch("/api/admin/reservas/confirmar-nueva", {
@@ -233,6 +234,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       } catch {
         // Silencioso: la vendedora puede reenviar el mail desde otro lado si hace falta.
       }
+      void avisarReservaNueva(reservaCreada.id);
 
       setSuccess(true);
       setProductId("");
@@ -553,6 +555,21 @@ async function getAccessTokenOrThrow(): Promise<string> {
   const accessToken = data.session?.access_token;
   if (!accessToken) throw new Error("Tu sesión expiró. Volvé a iniciar sesión.");
   return accessToken;
+}
+
+/** Pide al servidor el mail de aviso (con foto) de una reserva recién cargada. */
+async function avisarReservaNueva(reservaId: string) {
+  try {
+    const accessToken = await getAccessTokenOrThrow();
+    const res = await fetch("/api/admin/reservas/aviso-nueva", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ reservaId }),
+    });
+    if (!res.ok) console.error("No se pudo enviar el aviso de la reserva", await res.text());
+  } catch (err) {
+    console.error("No se pudo enviar el aviso de la reserva", err);
+  }
 }
 
 function ConfirmarSeniaControl({
