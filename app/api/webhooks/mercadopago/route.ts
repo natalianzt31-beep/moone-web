@@ -3,7 +3,11 @@ import { Payment } from "mercadopago";
 import { getMercadoPagoConfig } from "@/lib/mercadopago";
 import { getSupabaseServiceClient } from "@/lib/supabase/serviceClient";
 import { facturarYEnviar } from "@/lib/facturacion";
-import { enviarMailConfirmacionReserva, enviarAvisoReservaInterno } from "@/lib/email/reservas";
+import {
+  enviarMailConfirmacionReserva,
+  enviarAvisoReservaInterno,
+  enviarAlertaPagoSinReserva,
+} from "@/lib/email/reservas";
 import { enviarAvisoVenta } from "@/lib/email/ventas";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -104,13 +108,46 @@ async function procesarPagoAlquiler(
   if (reservationError || !reservation) {
     // El pago ya está aprobado (Mercado Pago ya le cobró a la clienta) pero
     // no pudimos crear la reserva (ej. esas fechas se ocuparon mientras
-    // pagaba). Requiere revisión manual: no hay forma automática segura de
-    // reembolsar ni reasignar desde acá.
+    // pagaba, o un reintento del webhook llega después de que el primero
+    // ya tuvo éxito). Requiere revisión manual: no hay forma automática
+    // segura de reembolsar ni reasignar desde acá. Antes esto solo quedaba
+    // en los logs de Vercel — ahora también avisa por mail a contacto@.
     console.error(
       "Pago de Mercado Pago aprobado pero no se pudo crear la reserva — revisar manualmente",
       reservationError,
       { paymentId: payment.id, productId, clientId, fechaRetiro, fechaDevolucion, senia }
     );
+
+    // Mercado Pago reintenta la notificación del mismo pago más de una vez;
+    // si el primer intento ya creó la reserva, este choque contra la
+    // exclusion constraint es un duplicado inofensivo, no una reserva
+    // perdida — no corresponde alertar a Natalia por eso.
+    const { data: yaExistia } = await supabase
+      .from("reservations")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("client_id", clientId)
+      .eq("fecha_retiro", fechaRetiro)
+      .eq("fecha_devolucion", fechaDevolucion)
+      .maybeSingle();
+
+    if (!yaExistia) {
+      const [{ data: productoAlerta }, { data: clienteAlerta }] = await Promise.all([
+        supabase.from("products").select("sku, nombre").eq("id", productId).maybeSingle(),
+        supabase.from("clients").select("nombre, email").eq("id", clientId).maybeSingle(),
+      ]);
+      await enviarAlertaPagoSinReserva({
+        paymentId: payment.id ?? "—",
+        productoSku: productoAlerta?.sku,
+        productoNombre: productoAlerta?.nombre,
+        clienteNombre: clienteAlerta?.nombre,
+        clienteEmail: clienteAlerta?.email,
+        fechaRetiro,
+        fechaDevolucion,
+        monto: senia,
+        motivo: reservationError?.message ?? "Error desconocido",
+      });
+    }
     return;
   }
 
@@ -226,11 +263,35 @@ async function procesarPagoAlquilerMultiple(
   if (reservasError || !reservas || reservas.length !== items.length) {
     // El pago ya está aprobado pero no pudimos crear alguna reserva (ej.
     // esas fechas se ocuparon mientras pagaba). Requiere revisión manual.
+    // Acá sí es un caso real (no un reintento duplicado: eso ya se filtró
+    // arriba con el chequeo de "yaExiste" por pedido_id), así que siempre
+    // avisa por mail a contacto@.
     console.error(
       "Pago de Mercado Pago (alquiler múltiple) aprobado pero no se pudieron crear todas las reservas — revisar manualmente",
       reservasError,
       { paymentId: payment.id, pedidoId, clientId, items }
     );
+
+    const [{ data: productosAlerta }, { data: clienteAlerta }] = await Promise.all([
+      supabase
+        .from("products")
+        .select("sku, nombre")
+        .in(
+          "id",
+          items.map((item) => item.product_id)
+        ),
+      supabase.from("clients").select("nombre, email").eq("id", clientId).maybeSingle(),
+    ]);
+    await enviarAlertaPagoSinReserva({
+      paymentId: payment.id ?? "—",
+      productoNombre: (productosAlerta ?? []).map((p) => `${p.sku} · ${p.nombre}`).join(", "),
+      clienteNombre: clienteAlerta?.nombre,
+      clienteEmail: clienteAlerta?.email,
+      fechaRetiro,
+      fechaDevolucion,
+      monto: items.reduce((suma, item) => suma + item.senia, 0),
+      motivo: reservasError?.message ?? "No se crearon todas las reservas del pedido",
+    });
     return;
   }
 

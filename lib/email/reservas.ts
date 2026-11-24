@@ -282,6 +282,55 @@ export async function enviarAvisoReservaAdmin(
 }
 
 /**
+ * Alerta urgente a contacto@: Mercado Pago ya le cobró a la clienta pero no
+ * pudimos crear la reserva (ej. esas fechas se ocuparon mientras pagaba).
+ * No hay forma automática segura de reembolsar ni reasignar desde el
+ * webhook — hay que resolverlo a mano, y antes esto solo quedaba en los
+ * logs de Vercel, donde nadie del local lo veía.
+ */
+export async function enviarAlertaPagoSinReserva(params: {
+  paymentId: string | number;
+  productoSku?: string | null;
+  productoNombre?: string | null;
+  clienteNombre?: string | null;
+  clienteEmail?: string | null;
+  fechaRetiro: string;
+  fechaDevolucion: string;
+  monto: number;
+  motivo: string;
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const prenda = [params.productoSku, params.productoNombre].filter(Boolean).join(" · ");
+  const filas = [
+    filaAvisoHtml("Pago MP", escapeHtml(String(params.paymentId))),
+    filaAvisoHtml("Clienta", escapeHtml(params.clienteNombre ?? "—")),
+    filaAvisoHtml("Mail", escapeHtml(params.clienteEmail ?? "—")),
+    filaAvisoHtml("Prenda", escapeHtml(prenda || "—")),
+    filaAvisoHtml("Retiro", formatFechaConDia(params.fechaRetiro)),
+    filaAvisoHtml("Devolución", formatFechaConDia(params.fechaDevolucion)),
+    filaAvisoHtml("Monto", `$${numeroFormatter.format(params.monto)}`),
+    filaAvisoHtml("Motivo", escapeHtml(params.motivo)),
+  ].join("");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 480px;">
+      <h1 style="font-family: Georgia, serif; color:#b42318; font-size: 20px; font-weight: 600; margin: 0 0 4px;">
+        Pago aprobado sin reserva creada
+      </h1>
+      <p style="color:#A49587; font-size: 13px; margin: 0 0 16px;">
+        Mercado Pago ya le cobró a la clienta, pero la reserva no se pudo registrar. Revisar a mano cuanto antes.
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
+    </div>
+  `.trim();
+
+  return enviarEmail({
+    to: BUSINESS.email,
+    subject: `Pago aprobado sin reserva — ${params.clienteNombre ?? "clienta"}`,
+    html,
+  });
+}
+
+/**
  * Mail de cancelación para un pedido entero (todas sus reservas, por
  * ejemplo vestido + sandalias reservados juntos). No cambia el estado de
  * las reservas: eso lo hace quien llame a esta función antes de invocarla.
