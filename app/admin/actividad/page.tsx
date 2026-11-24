@@ -32,6 +32,7 @@ type ReservaActividad = {
   precio_total: number;
   medio_pago: string | null;
   estado: EstadoReserva;
+  origen: string | null;
   products: { sku: string; nombre: string } | null;
   clients: { nombre: string } | null;
 };
@@ -70,16 +71,20 @@ function ActividadContent() {
       try {
         const { data, error } = await getSupabaseClient()
           .from("reservations")
-          .select("id, created_at, precio_total, medio_pago, estado, products(sku, nombre), clients(nombre)")
+          .select(
+            "id, created_at, precio_total, medio_pago, estado, origen, products(sku, nombre), clients(nombre)"
+          )
+          // Solo lo que cargó la vendedora a mano desde este mismo
+          // formulario: ni las reservas de la web/pagar-en-el-local, ni las
+          // cargas históricas a posteriori (planillas/chat), que tienen
+          // created_at de hoy aunque el movimiento real sea viejo.
+          .eq("origen", "admin")
           .order("created_at", { ascending: false });
 
         if (cancelled) return;
         if (error) {
           setError(error.message);
         } else {
-          // Las ya devueltas no se muestran acá: muchas se cargan a
-          // posteriori (planillas/chat) con created_at de hoy aunque el
-          // movimiento real sea viejo, y ensucian la actividad del día.
           const activas = ((data ?? []) as unknown as ReservaActividad[]).filter(
             (r) => r.estado !== "devuelto"
           );

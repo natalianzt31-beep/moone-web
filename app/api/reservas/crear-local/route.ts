@@ -91,6 +91,7 @@ export async function POST(req: Request) {
       senia,
       senia_confirmada: false,
       medio_pago: null,
+      origen: "local",
     })
     .select("pedido_id")
     .single();

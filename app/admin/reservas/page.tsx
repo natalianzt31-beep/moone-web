@@ -208,6 +208,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
           deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
           medio_pago: medioPago || null,
           contrato_aceptado: contratoAceptado,
+          origen: "admin",
         })
         .select("id")
         .single();

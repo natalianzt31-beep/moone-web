@@ -96,6 +96,7 @@ async function procesarPagoAlquiler(
       medio_pago: "mercado_pago",
       saldo_pagado: pagoCompleto,
       saldo_pagado_fecha: pagoCompleto ? new Date().toISOString() : null,
+      origen: "web",
     })
     .select("id, pedido_id")
     .single();
@@ -217,6 +218,7 @@ async function procesarPagoAlquilerMultiple(
         pedido_id: pedidoId,
         saldo_pagado: item.senia >= item.precio_total,
         saldo_pagado_fecha: item.senia >= item.precio_total ? new Date().toISOString() : null,
+        origen: "web",
       }))
     )
     .select("id");
