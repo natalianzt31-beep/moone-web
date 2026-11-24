@@ -77,7 +77,13 @@ function ActividadContent() {
         if (error) {
           setError(error.message);
         } else {
-          setReservas((data ?? []) as unknown as ReservaActividad[]);
+          // Las ya devueltas no se muestran acá: muchas se cargan a
+          // posteriori (planillas/chat) con created_at de hoy aunque el
+          // movimiento real sea viejo, y ensucian la actividad del día.
+          const activas = ((data ?? []) as unknown as ReservaActividad[]).filter(
+            (r) => r.estado !== "devuelto"
+          );
+          setReservas(activas);
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Error desconocido");
