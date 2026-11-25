@@ -43,6 +43,7 @@ type ProductoFila = {
 type ClienteFila = { nombre: string; email: string | null };
 type ReservaDelPedido = {
   id: string;
+  numero_pedido: number | null;
   fecha_retiro: string;
   fecha_devolucion: string;
   senia: number;
@@ -89,7 +90,7 @@ export async function enviarMailConfirmacionReserva(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, fecha_retiro, fecha_devolucion, senia, precio_total, products(nombre, talle, color, precio_alquiler), clients(nombre, email)"
+      "id, numero_pedido, fecha_retiro, fecha_devolucion, senia, precio_total, products(nombre, talle, color, precio_alquiler), clients(nombre, email)"
     )
     .eq("pedido_id", pedidoId);
 
@@ -108,6 +109,7 @@ export async function enviarMailConfirmacionReserva(
   const itemsHtml = reservas.map((r) => filaItemHtml(primero(r.products))).join("");
 
   const html = PLANTILLA_CONFIRMACION_RESERVA.replace("{{items_html}}", `<table width="100%" cellpadding="0" cellspacing="0">${itemsHtml}</table>`)
+    .replace("{{numero_pedido}}", String(reservas[0].numero_pedido ?? "—"))
     .replace("{{fecha_retiro}}", formatFechaConDia(reservas[0].fecha_retiro))
     .replace("{{fecha_devolucion}}", formatFechaConDia(reservas[0].fecha_devolucion))
     .replace("{{monto_senia}}", numeroFormatter.format(montoSenia))
@@ -122,10 +124,11 @@ export async function enviarMailConfirmacionReserva(
     .replace("{{label_senia}}", pagoConfirmado ? "Seña pagada" : "Seña a abonar en el local")
     .replaceAll("{{whatsapp_display}}", WHATSAPP_DISPLAY);
 
+  const numeroPedidoTexto = reservas[0].numero_pedido ? ` — Pedido #${reservas[0].numero_pedido}` : "";
   const resultado = await enviarEmail({
     to: cliente.email,
     cc: opciones?.cc,
-    subject: pagoConfirmado ? "¡Tu reserva en Môone está confirmada!" : "¡Tu reserva en Môone quedó registrada!",
+    subject: (pagoConfirmado ? "¡Tu reserva en Môone está confirmada!" : "¡Tu reserva en Môone quedó registrada!") + numeroPedidoTexto,
     html,
   });
 
@@ -155,6 +158,7 @@ function filaAvisoHtml(etiqueta: string, valor: string): string {
 type ClienteConCelular = { nombre: string; email: string | null; celular: string | null };
 type ReservaParaAviso = {
   id: string;
+  numero_pedido: number | null;
   fecha_retiro: string;
   fecha_devolucion: string;
   senia: number;
@@ -178,7 +182,7 @@ export async function enviarAvisoReservaInterno(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(nombre, talle, color, precio_alquiler, fotos, foto_url), clients(nombre, email, celular)"
+      "id, numero_pedido, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(nombre, talle, color, precio_alquiler, fotos, foto_url), clients(nombre, email, celular)"
     )
     .eq("pedido_id", pedidoId);
 
@@ -202,6 +206,7 @@ export async function enviarAvisoReservaInterno(
       : "Paga en el local — seña pendiente de confirmar";
 
   const filas = [
+    filaAvisoHtml("N° de pedido", `#${reservas[0].numero_pedido ?? "—"}`),
     filaAvisoHtml("Clienta", escapeHtml(cliente?.nombre ?? "—")),
     filaAvisoHtml("Celular", escapeHtml(cliente?.celular ?? "—")),
     filaAvisoHtml("Mail", escapeHtml(cliente?.email ?? "—")),
@@ -242,7 +247,7 @@ export async function enviarAvisoReservaAdmin(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(sku, nombre, talle, color, precio_alquiler, fotos, foto_url), clients(nombre, email, celular)"
+      "id, numero_pedido, fecha_retiro, fecha_devolucion, senia, precio_total, medio_pago, products(sku, nombre, talle, color, precio_alquiler, fotos, foto_url), clients(nombre, email, celular)"
     )
     .eq("id", reservaId)
     .maybeSingle();
@@ -262,6 +267,7 @@ export async function enviarAvisoReservaAdmin(
     .join(" · ");
 
   const filas = [
+    filaAvisoHtml("N° de pedido", `#${reserva.numero_pedido ?? "—"}`),
     filaAvisoHtml("Clienta", escapeHtml(cliente?.nombre ?? "—")),
     filaAvisoHtml("Celular", escapeHtml(cliente?.celular ?? "—")),
     filaAvisoHtml("Prenda", escapeHtml(prenda || "—")),

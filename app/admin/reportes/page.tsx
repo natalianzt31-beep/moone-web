@@ -10,6 +10,7 @@ import type { EstadoReserva } from "@/lib/supabase/types";
 
 type ReservaReporte = {
   id: string;
+  numero_pedido: number | null;
   fecha_retiro: string;
   fecha_devolucion: string;
   estado: EstadoReserva;
@@ -310,6 +311,9 @@ function ReporteSeccion({
               <div>
                 <p className="text-sm font-medium text-negro">
                   {r.products?.nombre ?? "Prenda"}
+                  <span className="ml-2 text-xs font-normal uppercase tracking-wider text-chocolate">
+                    Pedido #{r.numero_pedido ?? "—"}
+                  </span>
                 </p>
                 <p className="text-sm text-taupe">
                   {r.clients?.nombre ?? "Clienta"} · {r.clients?.celular ?? ""}

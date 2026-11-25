@@ -538,6 +538,7 @@ const ESTADO_RESERVA_LABEL: Record<(typeof ESTADOS_RESERVA)[number], string> = {
 type ReservaActiva = {
   id: string;
   client_id: string;
+  numero_pedido: number | null;
   fecha_retiro: string;
   fecha_devolucion: string;
   estado: (typeof ESTADOS_RESERVA)[number];
@@ -715,13 +716,14 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busquedaPedido, setBusquedaPedido] = useState("");
 
   async function load() {
     setLoading(true);
     const { data, error } = await getSupabaseClient()
       .from("reservations")
       .select(
-        "id, client_id, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre), clients(nombre)"
+        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre), clients(nombre)"
       )
       .neq("estado", "cancelado")
       .order("fecha_retiro", { ascending: true });
@@ -766,17 +768,31 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
 
   if (loading) return <p className="text-sm text-taupe">Cargando reservas...</p>;
 
+  const reservasFiltradas = busquedaPedido.trim()
+    ? reservas.filter((r) => String(r.numero_pedido ?? "").includes(busquedaPedido.trim()))
+    : reservas;
+
   return (
     <div>
       {error && <p className="mb-3 text-sm text-chocolate">{error}</p>}
-      {reservas.length === 0 ? (
-        <p className="text-sm text-taupe">No hay reservas activas.</p>
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder="Buscar por N° de pedido..."
+        value={busquedaPedido}
+        onChange={(e) => setBusquedaPedido(e.target.value)}
+        className={`${inputClass} mb-3 w-full max-w-xs`}
+      />
+      {reservasFiltradas.length === 0 ? (
+        <p className="text-sm text-taupe">
+          {busquedaPedido.trim() ? "Ningún pedido coincide con esa búsqueda." : "No hay reservas activas."}
+        </p>
       ) : (
         <div className="overflow-x-auto rounded-[3px] border border-arena">
           <table className="min-w-full divide-y divide-arena">
             <thead className="bg-crema">
               <tr>
-                {["Prenda", "Clienta", "Retiro", "Devolución", "Estado", "Seña", "Saldo / Factura"].map((h) => (
+                {["Pedido", "Prenda", "Clienta", "Retiro", "Devolución", "Estado", "Seña", "Saldo / Factura"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-taupe"
@@ -787,8 +803,9 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-arena bg-blanco">
-              {reservas.map((r) => (
+              {reservasFiltradas.map((r) => (
                 <tr key={r.id}>
+                  <td className="px-4 py-3 text-sm text-chocolate">#{r.numero_pedido ?? "—"}</td>
                   <td className="px-4 py-3 text-sm font-medium text-negro">
                     {r.products?.nombre ?? "Prenda"}
                     {r.products?.sku && (

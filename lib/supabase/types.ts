@@ -74,6 +74,7 @@ export type Reservation = {
   saldo_pagado_fecha: string | null;
   recordatorio_retiro_enviado_at: string | null;
   pedido_id: string | null;
+  numero_pedido: number | null;
   deposito_garantia: number | null;
   contrato_aceptado: boolean;
   medio_pago: string | null;

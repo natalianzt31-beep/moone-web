@@ -38,6 +38,10 @@ export const PLANTILLA_CONFIRMACION_RESERVA = `<!DOCTYPE html>
                   <td style="padding: 18px 20px;">
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
+                        <td style="color:#4A3A31; font-size: 14px; padding: 4px 0;">N° de pedido</td>
+                        <td align="right" style="color:#171513; font-size: 14px; font-weight:600; padding: 4px 0;">#{{numero_pedido}}</td>
+                      </tr>
+                      <tr>
                         <td style="color:#4A3A31; font-size: 14px; padding: 4px 0;">Fecha de retiro</td>
                         <td align="right" style="color:#171513; font-size: 14px; font-weight:600; padding: 4px 0;">{{fecha_retiro}}</td>
                       </tr>
