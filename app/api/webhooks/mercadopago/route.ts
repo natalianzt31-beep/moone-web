@@ -190,7 +190,12 @@ async function procesarPagoAlquiler(
         senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
       })
       .eq("pedido_id", reservation.pedido_id);
-    await enviarAvisoReservaInterno(reservation.pedido_id);
+    const avisoInterno = await enviarAvisoReservaInterno(reservation.pedido_id);
+    if (!avisoInterno.ok) {
+      console.error("No se pudo mandar el aviso interno de reserva", avisoInterno.reason, {
+        pedidoId: reservation.pedido_id,
+      });
+    }
   }
 }
 
@@ -359,7 +364,12 @@ async function procesarPagoAlquilerMultiple(
       senia_avisada_fecha: resultado.ok ? new Date().toISOString() : null,
     })
     .eq("pedido_id", pedidoId);
-  await enviarAvisoReservaInterno(pedidoId);
+  const avisoInterno = await enviarAvisoReservaInterno(pedidoId);
+  if (!avisoInterno.ok) {
+    console.error("No se pudo mandar el aviso interno de reserva (pedido múltiple)", avisoInterno.reason, {
+      pedidoId,
+    });
+  }
 }
 
 async function procesarPagoSaldo(
@@ -561,7 +571,7 @@ async function procesarPagoVenta(
       })
       .eq("id", pagoInsertado.id);
 
-    await enviarAvisoVenta({
+    const avisoVenta = await enviarAvisoVenta({
       sku: producto.sku,
       nombre: producto.nombre,
       talle: producto.talle,
@@ -571,6 +581,12 @@ async function procesarPagoVenta(
       clienteNombre: cliente?.nombre ?? "Clienta",
       stockRestante,
     });
+    if (!avisoVenta.ok) {
+      console.error("No se pudo mandar el aviso interno de venta", avisoVenta.reason, {
+        paymentId: payment.id,
+        productId,
+      });
+    }
   }
 }
 
