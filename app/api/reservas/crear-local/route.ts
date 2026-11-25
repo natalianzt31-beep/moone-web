@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServiceClient, getSupabaseUserClient } from "@/lib/supabase/serviceClient";
 import { checkoutEnabled } from "@/lib/features";
-import { enviarAvisoReservaInterno } from "@/lib/email/reservas";
+import { enviarAvisoReservaInterno, enviarMailConfirmacionReserva } from "@/lib/email/reservas";
 
 /**
  * Alquiler: la clienta elige "pagar en el local" en vez de Mercado Pago.
@@ -109,6 +109,10 @@ export async function POST(req: Request) {
   }
 
   if (reservation?.pedido_id) {
+    // A diferencia del flujo con MP, acá todavía no hay pago confirmado —
+    // el mail avisa fechas y prenda, pero aclara que la seña se abona al
+    // retirar en el local, no que ya se pagó.
+    await enviarMailConfirmacionReserva(reservation.pedido_id, { pagoConfirmado: false });
     await enviarAvisoReservaInterno(reservation.pedido_id);
   }
 

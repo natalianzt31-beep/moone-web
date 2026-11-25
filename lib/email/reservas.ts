@@ -81,8 +81,9 @@ function filaItemHtml(producto: ProductoFila | null): string {
  */
 export async function enviarMailConfirmacionReserva(
   pedidoId: string,
-  opciones?: { cc?: string | string[] }
+  opciones?: { cc?: string | string[]; pagoConfirmado?: boolean }
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const pagoConfirmado = opciones?.pagoConfirmado ?? true;
   const supabase = getSupabaseServiceClient();
 
   const { data, error } = await supabase
@@ -111,12 +112,20 @@ export async function enviarMailConfirmacionReserva(
     .replace("{{fecha_devolucion}}", formatFechaConDia(reservas[0].fecha_devolucion))
     .replace("{{monto_senia}}", numeroFormatter.format(montoSenia))
     .replace("{{saldo_pendiente}}", numeroFormatter.format(saldoPendiente))
+    .replace("{{titulo}}", pagoConfirmado ? "¡Reserva confirmada!" : "¡Reserva registrada!")
+    .replace(
+      "{{intro_texto}}",
+      pagoConfirmado
+        ? "Recibimos tu seña."
+        : "Te guardamos las fechas — la seña se abona al retirar, en el local."
+    )
+    .replace("{{label_senia}}", pagoConfirmado ? "Seña pagada" : "Seña a abonar en el local")
     .replaceAll("{{whatsapp_display}}", WHATSAPP_DISPLAY);
 
   const resultado = await enviarEmail({
     to: cliente.email,
     cc: opciones?.cc,
-    subject: "¡Tu reserva en Môone está confirmada!",
+    subject: pagoConfirmado ? "¡Tu reserva en Môone está confirmada!" : "¡Tu reserva en Môone quedó registrada!",
     html,
   });
 

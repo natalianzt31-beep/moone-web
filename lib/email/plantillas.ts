@@ -23,10 +23,10 @@ export const PLANTILLA_CONFIRMACION_RESERVA = `<!DOCTYPE html>
           <tr>
             <td style="padding: 40px 36px;">
               <h1 style="font-family: Georgia, serif; color:#171513; font-size: 24px; font-weight: 500; margin: 0 0 16px;">
-                ¡Reserva confirmada!
+                {{titulo}}
               </h1>
               <p style="color:#4A3A31; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">
-                Recibimos tu seña. Estas son las prendas que reservaste:
+                {{intro_texto}} Estas son las prendas que reservaste:
               </p>
 
               <!-- Items -->
@@ -47,7 +47,7 @@ export const PLANTILLA_CONFIRMACION_RESERVA = `<!DOCTYPE html>
                       </tr>
                       <tr><td colspan="2" style="border-top: 1px solid #D8CCBD; padding-top:8px; margin-top:8px;"></td></tr>
                       <tr>
-                        <td style="color:#4A3A31; font-size: 14px; padding: 4px 0;">Seña pagada</td>
+                        <td style="color:#4A3A31; font-size: 14px; padding: 4px 0;">{{label_senia}}</td>
                         <td align="right" style="color:#171513; font-size: 14px; font-weight:600; padding: 4px 0;">\${{monto_senia}}</td>
                       </tr>
                       <tr>
