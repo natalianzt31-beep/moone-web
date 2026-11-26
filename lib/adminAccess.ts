@@ -19,6 +19,7 @@ export type AdminModule = {
 export const ADMIN_MODULES: AdminModule[] = [
   { href: "/admin", label: "Inicio", roles: null },
   { href: "/admin/stock", label: "Stock", roles: ROLES_ADMIN_CAJA },
+  { href: "/admin/disponibilidad", label: "Disponibilidad", roles: ROLES_ADMIN_CAJA },
   { href: "/admin/clientas", label: "Clientas", roles: ROLES_ADMIN_CAJA },
   { href: "/admin/reportes", label: "Reportes", roles: ROLES_ADMIN_CAJA },
   { href: "/admin/reservas", label: "Reservas", roles: ROLES_ADMIN_CAJA },
