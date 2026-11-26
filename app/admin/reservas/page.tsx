@@ -29,13 +29,25 @@ const MEDIOS_PAGO = [
   { value: "otro", label: "Otro" },
 ];
 
+type ItemCarga = {
+  key: string;
+  productId: string;
+  skuInput: string;
+  precioTotal: string;
+  senia: string;
+};
+
+function itemVacio(): ItemCarga {
+  return { key: crypto.randomUUID(), productId: "", skuInput: "", precioTotal: "", senia: "" };
+}
+
 function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  const [productId, setProductId] = useState("");
-  const [skuInput, setSkuInput] = useState("");
+  const [items, setItems] = useState<ItemCarga[]>([itemVacio()]);
+  const [escaneandoKey, setEscaneandoKey] = useState<string | null>(null);
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
   const [clientSearch, setClientSearch] = useState("");
   const [clientId, setClientId] = useState("");
@@ -46,8 +58,6 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [fechaDevolucion, setFechaDevolucion] = useState("");
   const [devolucionManual, setDevolucionManual] = useState(false);
   const [retiroAjustado, setRetiroAjustado] = useState(false);
-  const [precioTotal, setPrecioTotal] = useState("");
-  const [senia, setSenia] = useState("");
   const [depositoGarantia, setDepositoGarantia] = useState("");
   const [medioPago, setMedioPago] = useState("");
   const [contratoAceptado, setContratoAceptado] = useState(false);
@@ -55,7 +65,6 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [escaneando, setEscaneando] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -101,31 +110,49 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
     setFechaDevolucion(value);
   }
 
-  function handleProductChange(id: string) {
-    setProductId(id);
+  function actualizarItem(key: string, cambios: Partial<ItemCarga>) {
+    setItems((prev) => prev.map((it) => (it.key === key ? { ...it, ...cambios } : it)));
+  }
+
+  function handleProductChangeForItem(key: string, id: string) {
     const product = products.find((p) => p.id === id);
     if (product) {
-      setPrecioTotal(String(product.precio_alquiler));
-      setSenia(String(Math.round(product.precio_alquiler * 0.5)));
-      setSkuInput(product.sku);
+      actualizarItem(key, {
+        productId: id,
+        skuInput: product.sku,
+        precioTotal: String(product.precio_alquiler),
+        senia: String(Math.round(product.precio_alquiler * 0.5)),
+      });
+    } else {
+      actualizarItem(key, { productId: id });
     }
   }
 
-  function handleSkuInputChange(value: string) {
-    setSkuInput(value);
+  function handleSkuInputChangeForItem(key: string, value: string) {
     const sku = value.trim().toUpperCase();
     if (!sku) {
-      setProductId("");
+      actualizarItem(key, { skuInput: value, productId: "" });
       return;
     }
     const product = products.find((p) => p.sku.toUpperCase() === sku);
     if (product) {
-      setProductId(product.id);
-      setPrecioTotal(String(product.precio_alquiler));
-      setSenia(String(Math.round(product.precio_alquiler * 0.5)));
+      actualizarItem(key, {
+        skuInput: value,
+        productId: product.id,
+        precioTotal: String(product.precio_alquiler),
+        senia: String(Math.round(product.precio_alquiler * 0.5)),
+      });
     } else {
-      setProductId("");
+      actualizarItem(key, { skuInput: value, productId: "" });
     }
+  }
+
+  function agregarItem() {
+    setItems((prev) => [...prev, itemVacio()]);
+  }
+
+  function quitarItem(key: string) {
+    setItems((prev) => (prev.length > 1 ? prev.filter((it) => it.key !== key) : prev));
   }
 
   /** Las etiquetas codifican la URL de la ficha (ej. .../p/VES-00333) — nos
@@ -144,7 +171,9 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   }
 
   function handleScan(textoDecodificado: string) {
-    setEscaneando(false);
+    const key = escaneandoKey;
+    setEscaneandoKey(null);
+    if (!key) return;
     const sku = skuDesdeTextoEscaneado(textoDecodificado);
     const product = products.find((p) => p.sku.toUpperCase() === sku);
     if (!product) {
@@ -152,7 +181,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       return;
     }
     setError(null);
-    handleProductChange(product.id);
+    handleProductChangeForItem(key, product.id);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -160,8 +189,13 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
     setError(null);
     setSuccess(false);
 
-    if (!productId) {
-      setError("Elegí una prenda.");
+    const indiceSinPrenda = items.findIndex((it) => !it.productId);
+    if (indiceSinPrenda !== -1) {
+      setError(
+        items.length > 1
+          ? `Elegí una prenda en el artículo ${indiceSinPrenda + 1}.`
+          : "Elegí una prenda."
+      );
       return;
     }
     if (clientMode === "existing" && !clientId) {
@@ -196,55 +230,62 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
         finalClientId = data.id;
       }
 
-      const { data: reservaCreada, error: reservaError } = await supabase
-        .from("reservations")
-        .insert({
-          product_id: productId,
-          client_id: finalClientId,
-          fecha_retiro: fechaRetiro,
-          fecha_devolucion: fechaDevolucion,
-          precio_total: precioTotal ? Number(precioTotal) : 0,
-          senia: senia ? Number(senia) : 0,
-          deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
-          medio_pago: medioPago || null,
-          contrato_aceptado: contratoAceptado,
-          origen: "admin",
-        })
-        .select("id")
-        .single();
+      // Un mismo pedido_id (y por lo tanto un mismo N° de pedido, que lo
+      // asigna solo un trigger) para todos los artículos cargados juntos acá.
+      const pedidoId = crypto.randomUUID();
 
-      if (reservaError) {
+      const { data: reservasCreadas, error: reservaError } = await supabase
+        .from("reservations")
+        .insert(
+          items.map((item) => ({
+            product_id: item.productId,
+            client_id: finalClientId,
+            fecha_retiro: fechaRetiro,
+            fecha_devolucion: fechaDevolucion,
+            precio_total: item.precioTotal ? Number(item.precioTotal) : 0,
+            senia: item.senia ? Number(item.senia) : 0,
+            deposito_garantia: depositoGarantia ? Number(depositoGarantia) : null,
+            medio_pago: medioPago || null,
+            contrato_aceptado: contratoAceptado,
+            origen: "admin",
+            pedido_id: pedidoId,
+          }))
+        )
+        .select("id");
+
+      if (reservaError || !reservasCreadas || reservasCreadas.length === 0) {
         setError(
-          reservaError.code === "23P01"
-            ? "Esa prenda ya tiene una reserva que se superpone con esas fechas."
-            : reservaError.message
+          reservaError?.code === "23P01"
+            ? "Una de esas prendas ya tiene una reserva que se superpone con esas fechas."
+            : (reservaError?.message ?? "No se pudo cargar la reserva.")
         );
         return;
       }
 
-      // Mail de confirmación a la clienta y aviso interno (con foto) a
-      // contacto@: ninguno de los dos bloquea ni hace fallar la carga de la
-      // reserva si el mail no sale.
+      // Mail de confirmación a la clienta (uno solo, junta todo el pedido
+      // por pedido_id) y aviso interno con foto por cada artículo a
+      // contacto@: ninguno de los dos bloquea ni hace fallar la carga si el
+      // mail no sale.
       try {
         const accessToken = await getAccessTokenOrThrow();
         await fetch("/api/admin/reservas/confirmar-nueva", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ reservationId: reservaCreada.id }),
+          body: JSON.stringify({ reservationId: reservasCreadas[0].id }),
         });
       } catch {
         // Silencioso: la vendedora puede reenviar el mail desde otro lado si hace falta.
       }
-      void avisarReservaNueva(reservaCreada.id);
+      for (const reserva of reservasCreadas) {
+        void avisarReservaNueva(reserva.id);
+      }
 
       setSuccess(true);
-      setProductId("");
+      setItems([itemVacio()]);
       setClientId("");
       setClientSearch("");
       setNewNombre("");
       setNewCelular("");
-      setPrecioTotal("");
-      setSenia("");
       setDepositoGarantia("");
       setMedioPago("");
       setContratoAceptado(false);
@@ -275,57 +316,111 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm text-negro">
-        Prenda
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={skuInput}
-            onChange={(e) => handleSkuInputChange(e.target.value)}
-            placeholder="SKU (ej. VES-00123)"
-            className={`${inputClass} flex-1 uppercase placeholder:normal-case`}
-          />
-          <button
-            type="button"
-            onClick={() => setEscaneando(true)}
-            aria-label="Escanear SKU con la cámara"
-            title="Escanear SKU con la cámara"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-[3px] border border-taupe text-negro hover:border-negro"
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6">
-              <path d="M4 7a2 2 0 0 1 2-2h1.2l.9-1.4A1 1 0 0 1 9 3h6a1 1 0 0 1 .9.6L16.8 5H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z" />
-              <circle cx="12" cy="13" r="3.4" />
-            </svg>
-          </button>
-        </div>
-        {skuInput.trim() && (
-          <p className={`text-xs ${productId ? "text-chocolate" : "text-taupe"}`}>
-            {(() => {
-              const encontrado = products.find((p) => p.sku.toUpperCase() === skuInput.trim().toUpperCase());
-              return encontrado
-                ? `${encontrado.nombre}${encontrado.talle ? ` (${encontrado.talle})` : ""} — ${currencyFormatter.format(encontrado.precio_alquiler)}`
-                : "No encontramos ninguna prenda con ese SKU.";
-            })()}
-          </p>
-        )}
-        <div className="flex gap-2">
-          <select
-            value={productId}
-            onChange={(e) => handleProductChange(e.target.value)}
-            className={`${inputClass} flex-1`}
-          >
-            <option value="">...o elegí de la lista</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre} {p.talle ? `(${p.talle})` : ""} — {p.sku}
-              </option>
-            ))}
-          </select>
-        </div>
-      </label>
+      <div className="flex flex-col gap-4">
+        {items.map((item, index) => {
+          const encontrado = item.skuInput.trim()
+            ? products.find((p) => p.sku.toUpperCase() === item.skuInput.trim().toUpperCase())
+            : undefined;
+          return (
+            <div
+              key={item.key}
+              className="flex flex-col gap-3 rounded-[3px] border border-arena p-3"
+            >
+              {items.length > 1 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-taupe">
+                    Artículo {index + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => quitarItem(item.key)}
+                    className="text-xs uppercase tracking-wider text-chocolate hover:text-negro"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              )}
+              <label className="flex flex-col gap-1 text-sm text-negro">
+                Prenda
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={item.skuInput}
+                    onChange={(e) => handleSkuInputChangeForItem(item.key, e.target.value)}
+                    placeholder="SKU (ej. VES-00123)"
+                    className={`${inputClass} flex-1 uppercase placeholder:normal-case`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEscaneandoKey(item.key)}
+                    aria-label="Escanear SKU con la cámara"
+                    title="Escanear SKU con la cámara"
+                    className="flex min-h-11 min-w-11 items-center justify-center rounded-[3px] border border-taupe text-negro hover:border-negro"
+                  >
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <path d="M4 7a2 2 0 0 1 2-2h1.2l.9-1.4A1 1 0 0 1 9 3h6a1 1 0 0 1 .9.6L16.8 5H18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z" />
+                      <circle cx="12" cy="13" r="3.4" />
+                    </svg>
+                  </button>
+                </div>
+                {item.skuInput.trim() && (
+                  <p className={`text-xs ${item.productId ? "text-chocolate" : "text-taupe"}`}>
+                    {encontrado
+                      ? `${encontrado.nombre}${encontrado.talle ? ` (${encontrado.talle})` : ""} — ${currencyFormatter.format(encontrado.precio_alquiler)}`
+                      : "No encontramos ninguna prenda con ese SKU."}
+                  </p>
+                )}
+                <select
+                  value={item.productId}
+                  onChange={(e) => handleProductChangeForItem(item.key, e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">...o elegí de la lista</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre} {p.talle ? `(${p.talle})` : ""} — {p.sku}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-      {escaneando && (
-        <QrScannerModal onScan={handleScan} onClose={() => setEscaneando(false)} />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm text-negro">
+                  Precio total
+                  <input
+                    type="number"
+                    min="0"
+                    value={item.precioTotal}
+                    onChange={(e) => actualizarItem(item.key, { precioTotal: e.target.value })}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-negro">
+                  Seña
+                  <input
+                    type="number"
+                    min="0"
+                    value={item.senia}
+                    onChange={(e) => actualizarItem(item.key, { senia: e.target.value })}
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={agregarItem}
+        className="flex min-h-11 items-center justify-center rounded-[3px] border border-dashed border-taupe text-sm text-chocolate transition-colors hover:border-negro hover:text-negro"
+      >
+        + Agregar otro artículo al mismo pedido
+      </button>
+
+      {escaneandoKey && (
+        <QrScannerModal onScan={handleScan} onClose={() => setEscaneandoKey(null)} />
       )}
 
       <div>
@@ -443,38 +538,17 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <label className="flex flex-col gap-1 text-sm text-negro">
-          Precio total
-          <input
-            type="number"
-            min="0"
-            value={precioTotal}
-            onChange={(e) => setPrecioTotal(e.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-negro">
-          Seña
-          <input
-            type="number"
-            min="0"
-            value={senia}
-            onChange={(e) => setSenia(e.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-negro">
-          Depósito garantía
-          <input
-            type="number"
-            min="0"
-            value={depositoGarantia}
-            onChange={(e) => setDepositoGarantia(e.target.value)}
-            className={inputClass}
-          />
-        </label>
-      </div>
+      <label className="flex max-w-xs flex-col gap-1 text-sm text-negro">
+        Depósito garantía
+        <input
+          type="number"
+          min="0"
+          value={depositoGarantia}
+          onChange={(e) => setDepositoGarantia(e.target.value)}
+          className={inputClass}
+        />
+        <span className="text-xs text-taupe">Uno solo para todo el pedido, si corresponde.</span>
+      </label>
 
       <label className="flex flex-col gap-1 text-sm text-negro">
         Medio de pago
