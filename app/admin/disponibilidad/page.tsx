@@ -6,7 +6,6 @@ import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
 import { ROLES_ADMIN_CAJA } from "@/lib/adminAccess";
 import { QrScannerModal } from "@/components/QrScannerModal";
-import { DisponibilidadCalendar } from "@/components/DisponibilidadCalendar";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { Product } from "@/lib/supabase/types";
 
@@ -25,6 +24,12 @@ const ESTADO_LABEL: Record<string, string> = {
 
 function fotoPrincipal(p: { fotos?: string[] | null; foto_url?: string | null } | null | undefined) {
   return p?.fotos?.[0] ?? p?.foto_url ?? null;
+}
+
+/** "2026-11-27" -> "27/11/26" */
+function formatFechaCorta(iso: string): string {
+  const [anio, mes, dia] = iso.split("-");
+  return `${dia}/${mes}/${anio.slice(2)}`;
 }
 
 /** Etiqueta las etiquetas codifican la URL de la ficha pública del producto. */
@@ -105,8 +110,8 @@ function ReservasDelProducto({ productId }: { productId: string }) {
             <tr key={r.id}>
               <td className="px-4 py-3 text-sm text-chocolate">#{r.numero_pedido ?? "—"}</td>
               <td className="px-4 py-3 text-sm text-negro">{r.clients?.nombre ?? "Clienta"}</td>
-              <td className="px-4 py-3 text-sm text-chocolate">{r.fecha_retiro}</td>
-              <td className="px-4 py-3 text-sm text-chocolate">{r.fecha_devolucion}</td>
+              <td className="px-4 py-3 text-sm text-chocolate">{formatFechaCorta(r.fecha_retiro)}</td>
+              <td className="px-4 py-3 text-sm text-chocolate">{formatFechaCorta(r.fecha_devolucion)}</td>
               <td className="px-4 py-3 text-sm text-chocolate">
                 {ESTADO_LABEL[r.estado] ?? r.estado}
               </td>
@@ -243,19 +248,12 @@ function DisponibilidadContent() {
           </div>
 
           <div>
-            <h2 className="text-sm font-medium uppercase tracking-wider text-chocolate">Calendario</h2>
-            <p className="mt-1 text-xs text-taupe">
-              Los días tachados ya están ocupados (reservados, retirados o en limpieza).
-            </p>
-            <div className="mt-2 max-w-xl">
-              <DisponibilidadCalendar productId={producto.id} onSelect={() => {}} />
-            </div>
-          </div>
-
-          <div>
             <h2 className="text-sm font-medium uppercase tracking-wider text-chocolate">
-              Reservas de esta prenda
+              Fechas en que se va
             </h2>
+            <p className="mt-1 text-xs text-taupe">
+              Retiro y devolución de cada reserva de esta prenda.
+            </p>
             <div className="mt-2">
               <ReservasDelProducto productId={producto.id} />
             </div>
