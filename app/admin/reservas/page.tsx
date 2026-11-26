@@ -623,7 +623,7 @@ type ReservaActiva = {
   saldo_pagado: boolean;
   eticket_generado: boolean;
   eticket_url: string | null;
-  products: { sku: string; nombre: string; fotos: string[] | null; foto_url: string | null } | null;
+  products: { sku: string; nombre: string; talle: string | null; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string } | null;
 };
 
@@ -666,7 +666,7 @@ type ReservaResumen = {
   precio_total: number;
   senia: number;
   saldo_pagado: boolean;
-  products: { sku: string; nombre: string; fotos: string[] | null; foto_url: string | null } | null;
+  products: { sku: string; nombre: string; talle: string | null; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string; celular: string | null } | null;
 };
 
@@ -686,7 +686,7 @@ function PedidosProximos() {
       const { data, error } = await getSupabaseClient()
         .from("reservations")
         .select(
-          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(sku, nombre, fotos, foto_url), clients(nombre, celular)"
+          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(sku, nombre, talle, fotos, foto_url), clients(nombre, celular)"
         )
         .gte("fecha_retiro", hoy)
         .lte("fecha_retiro", limite)
@@ -775,9 +775,13 @@ function PedidosProximos() {
                             </div>
                             <span>
                               {r.products?.nombre ?? "Prenda"}
-                              {r.products?.sku && (
+                              {(r.products?.sku || r.products?.talle) && (
                                 <span className="ml-1 text-xs uppercase tracking-wider text-taupe">
-                                  ({r.products.sku})
+                                  (
+                                  {[r.products?.sku, r.products?.talle ? `talle ${r.products.talle}` : null]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                  )
                                 </span>
                               )}
                               {" · "}
@@ -967,7 +971,7 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
     const { data, error } = await getSupabaseClient()
       .from("reservations")
       .select(
-        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre, fotos, foto_url), clients(nombre)"
+        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre, talle, fotos, foto_url), clients(nombre)"
       )
       .neq("estado", "cancelado")
       .order("fecha_retiro", { ascending: true });
@@ -1069,9 +1073,13 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
                       </div>
                       <div>
                         {r.products?.nombre ?? "Prenda"}
-                        {r.products?.sku && (
+                        {(r.products?.sku || r.products?.talle) && (
                           <span className="ml-1 text-xs font-normal uppercase tracking-wider text-taupe">
-                            ({r.products.sku})
+                            (
+                            {[r.products?.sku, r.products?.talle ? `talle ${r.products.talle}` : null]
+                              .filter(Boolean)
+                              .join(" · ")}
+                            )
                           </span>
                         )}
                         {r.products?.sku && (

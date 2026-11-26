@@ -17,7 +17,7 @@ type ReservaReporte = {
   estado: EstadoReserva;
   precio_total: number;
   medio_pago: string | null;
-  products: { sku: string; nombre: string; fotos: string[] | null; foto_url: string | null } | null;
+  products: { sku: string; nombre: string; talle: string | null; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string; celular: string | null } | null;
 };
 
@@ -186,7 +186,7 @@ function ReportesContent() {
       try {
         const { data, error } = await getSupabaseClient()
           .from("reservations")
-          .select("*, products(sku, nombre, fotos, foto_url), clients(nombre, celular)")
+          .select("*, products(sku, nombre, talle, fotos, foto_url), clients(nombre, celular)")
           .order("fecha_retiro", { ascending: true });
 
         if (cancelled) return;
@@ -328,9 +328,13 @@ function ReporteSeccion({
                 <div>
                   <p className="text-sm font-medium text-negro">
                     {r.products?.nombre ?? "Prenda"}
-                    {r.products?.sku && (
+                    {(r.products?.sku || r.products?.talle) && (
                       <span className="ml-1 text-xs font-normal uppercase tracking-wider text-taupe">
-                        ({r.products.sku})
+                        (
+                        {[r.products?.sku, r.products?.talle ? `talle ${r.products.talle}` : null]
+                          .filter(Boolean)
+                          .join(" · ")}
+                        )
                       </span>
                     )}
                     <span className="ml-2 text-xs font-normal uppercase tracking-wider text-chocolate">
