@@ -17,7 +17,7 @@ type ReservaReporte = {
   estado: EstadoReserva;
   precio_total: number;
   medio_pago: string | null;
-  products: { nombre: string; fotos: string[] | null; foto_url: string | null } | null;
+  products: { sku: string; nombre: string; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string; celular: string | null } | null;
 };
 
@@ -186,7 +186,7 @@ function ReportesContent() {
       try {
         const { data, error } = await getSupabaseClient()
           .from("reservations")
-          .select("*, products(nombre, fotos, foto_url), clients(nombre, celular)")
+          .select("*, products(sku, nombre, fotos, foto_url), clients(nombre, celular)")
           .order("fecha_retiro", { ascending: true });
 
         if (cancelled) return;
@@ -314,13 +314,13 @@ function ReporteSeccion({
               className="flex flex-col gap-1 rounded-[3px] border border-arena bg-blanco p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-center gap-3">
-                <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
+                <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
                   {fotoPrincipal(r.products) && (
                     <Image
                       src={fotoPrincipal(r.products)!}
                       alt={r.products?.nombre ?? ""}
                       fill
-                      sizes="40px"
+                      sizes="80px"
                       className="object-cover"
                     />
                   )}
@@ -328,6 +328,11 @@ function ReporteSeccion({
                 <div>
                   <p className="text-sm font-medium text-negro">
                     {r.products?.nombre ?? "Prenda"}
+                    {r.products?.sku && (
+                      <span className="ml-1 text-xs font-normal uppercase tracking-wider text-taupe">
+                        ({r.products.sku})
+                      </span>
+                    )}
                     <span className="ml-2 text-xs font-normal uppercase tracking-wider text-chocolate">
                       Pedido #{r.numero_pedido ?? "—"}
                     </span>

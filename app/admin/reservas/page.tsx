@@ -666,7 +666,7 @@ type ReservaResumen = {
   precio_total: number;
   senia: number;
   saldo_pagado: boolean;
-  products: { nombre: string; fotos: string[] | null; foto_url: string | null } | null;
+  products: { sku: string; nombre: string; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string; celular: string | null } | null;
 };
 
@@ -686,7 +686,7 @@ function PedidosProximos() {
       const { data, error } = await getSupabaseClient()
         .from("reservations")
         .select(
-          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(nombre, fotos, foto_url), clients(nombre, celular)"
+          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(sku, nombre, fotos, foto_url), clients(nombre, celular)"
         )
         .gte("fecha_retiro", hoy)
         .lte("fecha_retiro", limite)
@@ -757,24 +757,31 @@ function PedidosProximos() {
                         <span className="text-xs text-taupe">{primero.clients.celular}</span>
                       )}
                     </div>
-                    <ul className="mt-2 flex flex-col gap-2">
+                    <ul className="mt-2 flex flex-col gap-3">
                       {grupo.map((r) => {
                         const foto = fotoPrincipal(r.products);
                         return (
-                          <li key={r.id} className="flex items-center gap-2 text-sm text-chocolate">
-                            <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
+                          <li key={r.id} className="flex items-center gap-3 text-sm text-chocolate">
+                            <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
                               {foto && (
                                 <Image
                                   src={foto}
                                   alt={r.products?.nombre ?? ""}
                                   fill
-                                  sizes="36px"
+                                  sizes="80px"
                                   className="object-cover"
                                 />
                               )}
                             </div>
                             <span>
-                              {r.products?.nombre ?? "Prenda"} · {ESTADO_RESERVA_LABEL[r.estado]}
+                              {r.products?.nombre ?? "Prenda"}
+                              {r.products?.sku && (
+                                <span className="ml-1 text-xs uppercase tracking-wider text-taupe">
+                                  ({r.products.sku})
+                                </span>
+                              )}
+                              {" · "}
+                              {ESTADO_RESERVA_LABEL[r.estado]}
                             </span>
                           </li>
                         );
@@ -1048,20 +1055,25 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
                 <tr key={r.id}>
                   <td className="px-4 py-3 text-sm text-chocolate">#{r.numero_pedido ?? "—"}</td>
                   <td className="px-4 py-3 text-sm font-medium text-negro">
-                    <div className="flex items-center gap-2">
-                      <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
                         {fotoPrincipal(r.products) && (
                           <Image
                             src={fotoPrincipal(r.products)!}
                             alt={r.products?.nombre ?? ""}
                             fill
-                            sizes="40px"
+                            sizes="80px"
                             className="object-cover"
                           />
                         )}
                       </div>
                       <div>
                         {r.products?.nombre ?? "Prenda"}
+                        {r.products?.sku && (
+                          <span className="ml-1 text-xs font-normal uppercase tracking-wider text-taupe">
+                            ({r.products.sku})
+                          </span>
+                        )}
                         {r.products?.sku && (
                           <Link
                             href={`/admin/arreglos?sku=${encodeURIComponent(r.products.sku)}&reservationId=${r.id}`}
