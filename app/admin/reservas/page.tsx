@@ -633,6 +633,148 @@ async function getAccessTokenOrThrow(): Promise<string> {
   return accessToken;
 }
 
+const DIAS_SEMANA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+/** Próximo sábado inclusive: si hoy ya es sábado, el rango es solo hoy. */
+function finDeRangoHastaSabado(hoyISO: string) {
+  const diaSemana = new Date(`${hoyISO}T00:00:00`).getDay();
+  const diasHastaSabado = (6 - diaSemana + 7) % 7;
+  return addDays(hoyISO, diasHastaSabado);
+}
+
+function etiquetaFecha(iso: string, hoyISO: string) {
+  const diaSemana = DIAS_SEMANA[new Date(`${iso}T00:00:00`).getDay()];
+  const [, mes, dia] = iso.split("-");
+  const fechaCorta = `${dia}/${mes}`;
+  const diaCapitalizado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+  if (iso === hoyISO) return `Hoy · ${diaCapitalizado} ${fechaCorta}`;
+  if (iso === addDays(hoyISO, 1)) return `Mañana · ${diaCapitalizado} ${fechaCorta}`;
+  return `${diaCapitalizado} ${fechaCorta}`;
+}
+
+type ReservaResumen = {
+  id: string;
+  pedido_id: string | null;
+  numero_pedido: number | null;
+  fecha_retiro: string;
+  estado: (typeof ESTADOS_RESERVA)[number];
+  precio_total: number;
+  senia: number;
+  saldo_pagado: boolean;
+  products: { nombre: string } | null;
+  clients: { nombre: string; celular: string | null } | null;
+};
+
+function PedidosProximos() {
+  const [reservas, setReservas] = useState<ReservaResumen[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      const hoy = toISODate(new Date());
+      const limite = finDeRangoHastaSabado(hoy);
+      const { data, error } = await getSupabaseClient()
+        .from("reservations")
+        .select(
+          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(nombre), clients(nombre, celular)"
+        )
+        .gte("fecha_retiro", hoy)
+        .lte("fecha_retiro", limite)
+        .neq("estado", "cancelado")
+        .order("fecha_retiro", { ascending: true });
+
+      if (cancelled) return;
+      if (error) setError(error.message);
+      setReservas((data ?? []) as unknown as ReservaResumen[]);
+      setLoading(false);
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) return <p className="text-sm text-taupe">Cargando...</p>;
+  if (error) return <p className="text-sm text-chocolate">Error al cargar: {error}</p>;
+  if (reservas.length === 0) {
+    return <p className="text-sm text-taupe">No hay pedidos para retirar entre hoy y el sábado.</p>;
+  }
+
+  const hoy = toISODate(new Date());
+
+  const porDia = new Map<string, ReservaResumen[]>();
+  for (const r of reservas) {
+    const lista = porDia.get(r.fecha_retiro) ?? [];
+    lista.push(r);
+    porDia.set(r.fecha_retiro, lista);
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {[...porDia.entries()].map(([fecha, items]) => {
+        const porPedido = new Map<string, ReservaResumen[]>();
+        for (const r of items) {
+          const key = r.pedido_id ?? r.id;
+          const lista = porPedido.get(key) ?? [];
+          lista.push(r);
+          porPedido.set(key, lista);
+        }
+
+        return (
+          <div key={fecha}>
+            <h3 className="text-sm font-medium uppercase tracking-wider text-chocolate">
+              {etiquetaFecha(fecha, hoy)}
+            </h3>
+            <div className="mt-2 flex flex-col gap-2">
+              {[...porPedido.values()].map((grupo) => {
+                const primero = grupo[0];
+                const totalPedido = grupo.reduce((acc, r) => acc + r.precio_total, 0);
+                const seniaPedido = grupo.reduce((acc, r) => acc + r.senia, 0);
+                const saldoPendiente = totalPedido - seniaPedido;
+                const todoPagado = grupo.every((r) => r.saldo_pagado);
+
+                return (
+                  <div
+                    key={primero.pedido_id ?? primero.id}
+                    className="rounded-[3px] border border-arena bg-blanco p-3"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="text-sm font-medium text-negro">
+                        #{primero.numero_pedido ?? "—"} · {primero.clients?.nombre ?? "Clienta"}
+                      </p>
+                      {primero.clients?.celular && (
+                        <span className="text-xs text-taupe">{primero.clients.celular}</span>
+                      )}
+                    </div>
+                    <ul className="mt-1 text-sm text-chocolate">
+                      {grupo.map((r) => (
+                        <li key={r.id}>
+                          {r.products?.nombre ?? "Prenda"} · {ESTADO_RESERVA_LABEL[r.estado]}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-1 text-xs text-taupe">
+                      {todoPagado
+                        ? "Pagado en su totalidad"
+                        : `Saldo pendiente: ${currencyFormatter.format(saldoPendiente)}`}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Pide al servidor el mail de aviso (con foto) de una reserva recién cargada. */
 async function avisarReservaNueva(reservaId: string) {
   try {
@@ -842,8 +984,13 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
 
   if (loading) return <p className="text-sm text-taupe">Cargando reservas...</p>;
 
-  const reservasFiltradas = busquedaPedido.trim()
-    ? reservas.filter((r) => String(r.numero_pedido ?? "").includes(busquedaPedido.trim()))
+  const busquedaNormalizada = busquedaPedido.trim().toLowerCase();
+  const reservasFiltradas = busquedaNormalizada
+    ? reservas.filter(
+        (r) =>
+          String(r.numero_pedido ?? "").includes(busquedaNormalizada) ||
+          (r.clients?.nombre ?? "").toLowerCase().includes(busquedaNormalizada)
+      )
     : reservas;
 
   return (
@@ -851,8 +998,7 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
       {error && <p className="mb-3 text-sm text-chocolate">{error}</p>}
       <input
         type="text"
-        inputMode="numeric"
-        placeholder="Buscar por N° de pedido..."
+        placeholder="Buscar por N° de pedido o nombre de la clienta..."
         value={busquedaPedido}
         onChange={(e) => setBusquedaPedido(e.target.value)}
         className={`${inputClass} mb-3 w-full max-w-xs`}
@@ -939,6 +1085,17 @@ function ReservasContent() {
 
   return (
     <div className="flex flex-col gap-10">
+      <section>
+        <h2 className="text-lg font-normal tracking-tight text-negro">Pedidos de hoy a sábado</h2>
+        <p className="mt-1 text-sm text-chocolate">
+          Lo que se retira entre hoy y el sábado, agrupado por pedido. Usá esto para preparar
+          las entregas de la semana.
+        </p>
+        <div className="mt-4">
+          <PedidosProximos />
+        </div>
+      </section>
+
       <section className="max-w-xl">
         <h2 className="text-lg font-normal tracking-tight text-negro">Cargar reserva</h2>
         <div className="mt-4">
