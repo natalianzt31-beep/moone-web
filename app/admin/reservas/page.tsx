@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { AdminNav } from "@/components/AdminNav";
 import { RequireStaff } from "@/components/RequireStaff";
@@ -622,9 +623,13 @@ type ReservaActiva = {
   saldo_pagado: boolean;
   eticket_generado: boolean;
   eticket_url: string | null;
-  products: { sku: string; nombre: string } | null;
+  products: { sku: string; nombre: string; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string } | null;
 };
+
+function fotoPrincipal(p: { fotos?: string[] | null; foto_url?: string | null } | null | undefined) {
+  return p?.fotos?.[0] ?? p?.foto_url ?? null;
+}
 
 async function getAccessTokenOrThrow(): Promise<string> {
   const { data } = await getSupabaseClient().auth.getSession();
@@ -661,7 +666,7 @@ type ReservaResumen = {
   precio_total: number;
   senia: number;
   saldo_pagado: boolean;
-  products: { nombre: string } | null;
+  products: { nombre: string; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string; celular: string | null } | null;
 };
 
@@ -681,7 +686,7 @@ function PedidosProximos() {
       const { data, error } = await getSupabaseClient()
         .from("reservations")
         .select(
-          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(nombre), clients(nombre, celular)"
+          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(nombre, fotos, foto_url), clients(nombre, celular)"
         )
         .gte("fecha_retiro", hoy)
         .lte("fecha_retiro", limite)
@@ -752,12 +757,28 @@ function PedidosProximos() {
                         <span className="text-xs text-taupe">{primero.clients.celular}</span>
                       )}
                     </div>
-                    <ul className="mt-1 text-sm text-chocolate">
-                      {grupo.map((r) => (
-                        <li key={r.id}>
-                          {r.products?.nombre ?? "Prenda"} · {ESTADO_RESERVA_LABEL[r.estado]}
-                        </li>
-                      ))}
+                    <ul className="mt-2 flex flex-col gap-2">
+                      {grupo.map((r) => {
+                        const foto = fotoPrincipal(r.products);
+                        return (
+                          <li key={r.id} className="flex items-center gap-2 text-sm text-chocolate">
+                            <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
+                              {foto && (
+                                <Image
+                                  src={foto}
+                                  alt={r.products?.nombre ?? ""}
+                                  fill
+                                  sizes="36px"
+                                  className="object-cover"
+                                />
+                              )}
+                            </div>
+                            <span>
+                              {r.products?.nombre ?? "Prenda"} · {ESTADO_RESERVA_LABEL[r.estado]}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                     <p className="mt-1 text-xs text-taupe">
                       {todoPagado
@@ -939,7 +960,7 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
     const { data, error } = await getSupabaseClient()
       .from("reservations")
       .select(
-        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre), clients(nombre)"
+        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre, fotos, foto_url), clients(nombre)"
       )
       .neq("estado", "cancelado")
       .order("fecha_retiro", { ascending: true });
@@ -1027,15 +1048,30 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
                 <tr key={r.id}>
                   <td className="px-4 py-3 text-sm text-chocolate">#{r.numero_pedido ?? "—"}</td>
                   <td className="px-4 py-3 text-sm font-medium text-negro">
-                    {r.products?.nombre ?? "Prenda"}
-                    {r.products?.sku && (
-                      <Link
-                        href={`/admin/arreglos?sku=${encodeURIComponent(r.products.sku)}&reservationId=${r.id}`}
-                        className="mt-1 block text-xs font-normal uppercase tracking-wider text-chocolate underline-offset-2 hover:underline"
-                      >
-                        Cargar arreglo
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-[3px] border border-arena bg-crema">
+                        {fotoPrincipal(r.products) && (
+                          <Image
+                            src={fotoPrincipal(r.products)!}
+                            alt={r.products?.nombre ?? ""}
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        {r.products?.nombre ?? "Prenda"}
+                        {r.products?.sku && (
+                          <Link
+                            href={`/admin/arreglos?sku=${encodeURIComponent(r.products.sku)}&reservationId=${r.id}`}
+                            className="mt-1 block text-xs font-normal uppercase tracking-wider text-chocolate underline-offset-2 hover:underline"
+                          >
+                            Cargar arreglo
+                          </Link>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-chocolate">
                     {r.clients?.nombre ?? "Clienta"}
