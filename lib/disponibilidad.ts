@@ -29,18 +29,15 @@ export function nextBusinessDay(iso: string, closedDates: ReadonlySet<string>) {
 }
 
 /**
- * Sugerencia de devolución: ~4 días desde el retiro, ajustada a día hábil.
- * Regla fija de Naty: retirando jueves, viernes o sábado, la devolución es
- * siempre el lunes siguiente (no los ~4 días corridos), para que el lunes de
- * reapertura concentre las devoluciones de todo el fin de semana.
+ * Sugerencia de devolución: siempre el lunes siguiente al retiro, sea cual
+ * sea el día de retiro (regla fija de Naty, salvo excepciones que se ajustan
+ * a mano en el formulario). Si el retiro ya es un lunes, se sugiere el lunes
+ * de la semana siguiente, no el mismo día.
  */
 export function sugerirDevolucion(fechaRetiro: string, closedDates: ReadonlySet<string>) {
   const diaSemana = new Date(`${fechaRetiro}T00:00:00`).getDay();
-  if (diaSemana === 4 || diaSemana === 5 || diaSemana === 6) {
-    const diasHastaElLunes = (8 - diaSemana) % 7;
-    return nextBusinessDay(addDays(fechaRetiro, diasHastaElLunes), closedDates);
-  }
-  return nextBusinessDay(addDays(fechaRetiro, 4), closedDates);
+  const diasHastaElLunes = (8 - diaSemana) % 7 || 7;
+  return nextBusinessDay(addDays(fechaRetiro, diasHastaElLunes), closedDates);
 }
 
 export function getMonthMatrix(year: number, month: number) {
