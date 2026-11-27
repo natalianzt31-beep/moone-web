@@ -30,6 +30,9 @@ export type Product = {
   condicion: Condicion | null;
   marca: string | null;
   coleccion: string | null;
+  stock: number | null;
+  disponible: boolean | null;
+  visible_web: boolean | null;
   created_at: string;
 };
 
@@ -75,6 +78,7 @@ export type Reservation = {
   recordatorio_retiro_enviado_at: string | null;
   pedido_id: string | null;
   numero_pedido: number | null;
+  tipo: "alquiler" | "venta";
   deposito_garantia: number | null;
   contrato_aceptado: boolean;
   medio_pago: string | null;

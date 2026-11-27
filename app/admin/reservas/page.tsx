@@ -30,16 +30,38 @@ const MEDIOS_PAGO = [
   { value: "otro", label: "Otro" },
 ];
 
+type TipoItemCarga = "alquiler" | "venta";
+
 type ItemCarga = {
   key: string;
   productId: string;
   skuInput: string;
   precioTotal: string;
   senia: string;
+  tipo: TipoItemCarga;
 };
 
 function itemVacio(): ItemCarga {
-  return { key: crypto.randomUUID(), productId: "", skuInput: "", precioTotal: "", senia: "" };
+  return {
+    key: crypto.randomUUID(),
+    productId: "",
+    skuInput: "",
+    precioTotal: "",
+    senia: "",
+    tipo: "alquiler",
+  };
+}
+
+/** Venta: se cobra el total de una, sin seña — a diferencia del alquiler. */
+function preciosPorDefecto(product: Product, tipo: TipoItemCarga) {
+  if (tipo === "venta") {
+    const precio = product.precio_venta ?? product.precio_alquiler;
+    return { precioTotal: String(precio), senia: String(precio) };
+  }
+  return {
+    precioTotal: String(product.precio_alquiler),
+    senia: String(Math.round(product.precio_alquiler * 0.5)),
+  };
 }
 
 function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
@@ -118,11 +140,11 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   function handleProductChangeForItem(key: string, id: string) {
     const product = products.find((p) => p.id === id);
     if (product) {
+      const item = items.find((it) => it.key === key);
       actualizarItem(key, {
         productId: id,
         skuInput: product.sku,
-        precioTotal: String(product.precio_alquiler),
-        senia: String(Math.round(product.precio_alquiler * 0.5)),
+        ...preciosPorDefecto(product, item?.tipo ?? "alquiler"),
       });
     } else {
       actualizarItem(key, { productId: id });
@@ -137,15 +159,21 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
     }
     const product = products.find((p) => p.sku.toUpperCase() === sku);
     if (product) {
+      const item = items.find((it) => it.key === key);
       actualizarItem(key, {
         skuInput: value,
         productId: product.id,
-        precioTotal: String(product.precio_alquiler),
-        senia: String(Math.round(product.precio_alquiler * 0.5)),
+        ...preciosPorDefecto(product, item?.tipo ?? "alquiler"),
       });
     } else {
       actualizarItem(key, { skuInput: value, productId: "" });
     }
+  }
+
+  function handleTipoChangeForItem(key: string, tipo: TipoItemCarga) {
+    const item = items.find((it) => it.key === key);
+    const product = item ? products.find((p) => p.id === item.productId) : undefined;
+    actualizarItem(key, { tipo, ...(product ? preciosPorDefecto(product, tipo) : {}) });
   }
 
   function agregarItem() {
@@ -250,6 +278,9 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
             contrato_aceptado: contratoAceptado,
             origen: "admin",
             pedido_id: pedidoId,
+            tipo: item.tipo,
+            // Venta: no hay devolución que esperar, queda resuelta al cargarla.
+            estado: item.tipo === "venta" ? "devuelto" : "reservado",
           }))
         )
         .select("id");
@@ -261,6 +292,24 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
             : (reservaError?.message ?? "No se pudo cargar la reserva.")
         );
         return;
+      }
+
+      // Los artículos en venta se dan de baja de stock al cargarlos: no
+      // quedan disponibles para alquilar ni para volver a vender.
+      const itemsVenta = items.filter((it) => it.tipo === "venta");
+      for (const item of itemsVenta) {
+        const producto = products.find((p) => p.id === item.productId);
+        const stockActual = producto?.stock ?? 1;
+        const stockRestante = stockActual - 1;
+        await supabase
+          .from("products")
+          .update({
+            stock: stockRestante,
+            estado: stockRestante > 0 ? "disponible" : "baja_definitiva",
+            disponible: stockRestante > 0,
+            visible_web: stockRestante > 0,
+          })
+          .eq("id", item.productId);
       }
 
       // Mail de confirmación a la clienta (uno solo, junta todo el pedido
@@ -341,6 +390,27 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
                   </button>
                 </div>
               )}
+              <div className="flex gap-1">
+                {(["alquiler", "venta"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => handleTipoChangeForItem(item.key, t)}
+                    className={`min-h-9 flex-1 rounded-[3px] border px-3 text-xs font-medium uppercase tracking-wider transition-colors ${
+                      item.tipo === t
+                        ? "border-negro bg-negro text-blanco"
+                        : "border-taupe text-negro hover:border-negro"
+                    }`}
+                  >
+                    {t === "alquiler" ? "Alquiler" : "Venta"}
+                  </button>
+                ))}
+              </div>
+              {item.tipo === "venta" && (
+                <p className="text-xs text-chocolate">
+                  No se espera devolución: la prenda se da de baja del stock al cargar el pedido.
+                </p>
+              )}
               <label className="flex flex-col gap-1 text-sm text-negro">
                 Prenda
                 <div className="flex gap-2">
@@ -367,7 +437,11 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
                 {item.skuInput.trim() && (
                   <p className={`text-xs ${item.productId ? "text-chocolate" : "text-taupe"}`}>
                     {encontrado
-                      ? `${encontrado.nombre}${encontrado.talle ? ` (${encontrado.talle})` : ""} — ${currencyFormatter.format(encontrado.precio_alquiler)}`
+                      ? `${encontrado.nombre}${encontrado.talle ? ` (${encontrado.talle})` : ""} — ${currencyFormatter.format(
+                          item.tipo === "venta"
+                            ? (encontrado.precio_venta ?? encontrado.precio_alquiler)
+                            : encontrado.precio_alquiler
+                        )}`
                       : "No encontramos ninguna prenda con ese SKU."}
                   </p>
                 )}
@@ -397,7 +471,7 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-negro">
-                  Seña
+                  {item.tipo === "venta" ? "Pagado" : "Seña"}
                   <input
                     type="number"
                     min="0"
@@ -617,6 +691,7 @@ type ReservaActiva = {
   fecha_retiro: string;
   fecha_devolucion: string;
   estado: (typeof ESTADOS_RESERVA)[number];
+  tipo: "alquiler" | "venta";
   senia: number;
   senia_confirmada: boolean;
   precio_total: number;
@@ -663,6 +738,7 @@ type ReservaResumen = {
   numero_pedido: number | null;
   fecha_retiro: string;
   estado: (typeof ESTADOS_RESERVA)[number];
+  tipo: "alquiler" | "venta";
   precio_total: number;
   senia: number;
   saldo_pagado: boolean;
@@ -686,7 +762,7 @@ function PedidosProximos() {
       const { data, error } = await getSupabaseClient()
         .from("reservations")
         .select(
-          "id, pedido_id, numero_pedido, fecha_retiro, estado, precio_total, senia, saldo_pagado, products(sku, nombre, talle, fotos, foto_url), clients(nombre, celular)"
+          "id, pedido_id, numero_pedido, fecha_retiro, estado, tipo, precio_total, senia, saldo_pagado, products(sku, nombre, talle, fotos, foto_url), clients(nombre, celular)"
         )
         .gte("fecha_retiro", hoy)
         .lte("fecha_retiro", limite)
@@ -785,7 +861,7 @@ function PedidosProximos() {
                                 </span>
                               )}
                               {" · "}
-                              {ESTADO_RESERVA_LABEL[r.estado]}
+                              {r.tipo === "venta" ? "Venta — no se devuelve" : ESTADO_RESERVA_LABEL[r.estado]}
                             </span>
                           </li>
                         );
@@ -971,7 +1047,7 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
     const { data, error } = await getSupabaseClient()
       .from("reservations")
       .select(
-        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre, talle, fotos, foto_url), clients(nombre)"
+        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, tipo, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre, talle, fotos, foto_url), clients(nombre)"
       )
       .neq("estado", "cancelado")
       .order("fecha_retiro", { ascending: true });
@@ -1099,20 +1175,26 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
                   <td className="px-4 py-3 text-sm text-chocolate">{r.fecha_retiro}</td>
                   <td className="px-4 py-3 text-sm text-chocolate">{r.fecha_devolucion}</td>
                   <td className="px-4 py-3 text-sm">
-                    <select
-                      value={r.estado}
-                      disabled={updatingId === r.id}
-                      onChange={(e) =>
-                        handleEstadoChange(r, e.target.value as (typeof ESTADOS_RESERVA)[number])
-                      }
-                      className={`${inputClass} py-1`}
-                    >
-                      {ESTADOS_RESERVA.map((estado) => (
-                        <option key={estado} value={estado}>
-                          {ESTADO_RESERVA_LABEL[estado]}
-                        </option>
-                      ))}
-                    </select>
+                    {r.tipo === "venta" ? (
+                      <span className="text-xs uppercase tracking-wider text-taupe">
+                        Venta — no se devuelve
+                      </span>
+                    ) : (
+                      <select
+                        value={r.estado}
+                        disabled={updatingId === r.id}
+                        onChange={(e) =>
+                          handleEstadoChange(r, e.target.value as (typeof ESTADOS_RESERVA)[number])
+                        }
+                        className={`${inputClass} py-1`}
+                      >
+                        {ESTADOS_RESERVA.map((estado) => (
+                          <option key={estado} value={estado}>
+                            {ESTADO_RESERVA_LABEL[estado]}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {r.senia_confirmada ? (

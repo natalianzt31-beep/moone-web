@@ -15,6 +15,7 @@ type ReservaReporte = {
   fecha_retiro: string;
   fecha_devolucion: string;
   estado: EstadoReserva;
+  tipo: "alquiler" | "venta";
   precio_total: number;
   medio_pago: string | null;
   products: { sku: string; nombre: string; talle: string | null; fotos: string[] | null; foto_url: string | null } | null;
@@ -340,6 +341,11 @@ function ReporteSeccion({
                     <span className="ml-2 text-xs font-normal uppercase tracking-wider text-chocolate">
                       Pedido #{r.numero_pedido ?? "—"}
                     </span>
+                    {r.tipo === "venta" && (
+                      <span className="ml-2 text-xs font-normal uppercase tracking-wider text-taupe">
+                        Venta
+                      </span>
+                    )}
                   </p>
                   <p className="text-sm text-taupe">
                     {r.clients?.nombre ?? "Clienta"} · {r.clients?.celular ?? ""}
