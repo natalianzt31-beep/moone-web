@@ -86,6 +86,7 @@ export type Reservation = {
   eticket_generado: boolean;
   eticket_url: string | null;
   eticket_numero: string | null;
+  facturada_at: string | null;
   products: Product | null;
 };
 

@@ -698,6 +698,7 @@ type ReservaActiva = {
   saldo_pagado: boolean;
   eticket_generado: boolean;
   eticket_url: string | null;
+  eticket_numero: string | null;
   products: { sku: string; nombre: string; talle: string | null; fotos: string[] | null; foto_url: string | null } | null;
   clients: { nombre: string } | null;
 };
@@ -989,6 +990,10 @@ function MarcarSaldoControl({
     }
   }
 
+  if (reserva.eticket_numero) {
+    return <span className="text-xs text-taupe">Factura N° {reserva.eticket_numero}</span>;
+  }
+
   if (reserva.eticket_generado) {
     return (
       <a
@@ -1047,7 +1052,7 @@ function ReservasActivas({ refreshKey }: { refreshKey: number }) {
     const { data, error } = await getSupabaseClient()
       .from("reservations")
       .select(
-        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, tipo, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, products(sku, nombre, talle, fotos, foto_url), clients(nombre)"
+        "id, client_id, numero_pedido, fecha_retiro, fecha_devolucion, estado, tipo, senia, senia_confirmada, precio_total, saldo_pagado, eticket_generado, eticket_url, eticket_numero, products(sku, nombre, talle, fotos, foto_url), clients(nombre)"
       )
       .neq("estado", "cancelado")
       .order("fecha_retiro", { ascending: true });
