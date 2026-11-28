@@ -76,6 +76,8 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
   const [clientId, setClientId] = useState("");
   const [newNombre, setNewNombre] = useState("");
   const [newCelular, setNewCelular] = useState("");
+  const [newDocumento, setNewDocumento] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [closedDates, setClosedDates] = useState<Set<string>>(new Set());
   const [fechaRetiro, setFechaRetiroState] = useState(toISODate(new Date()));
   const [fechaDevolucion, setFechaDevolucion] = useState("");
@@ -231,8 +233,8 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       setError("Elegí una clienta o cargá una nueva.");
       return;
     }
-    if (clientMode === "new" && (!newNombre || !newCelular)) {
-      setError("Nombre y celular son obligatorios para una clienta nueva.");
+    if (clientMode === "new" && (!newNombre || !newCelular || !newDocumento)) {
+      setError("Nombre, celular y cédula son obligatorios para una clienta nueva.");
       return;
     }
 
@@ -244,7 +246,12 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       if (clientMode === "new") {
         const { data, error: clientError } = await supabase
           .from("clients")
-          .insert({ nombre: newNombre, celular: newCelular })
+          .insert({
+            nombre: newNombre,
+            celular: newCelular,
+            documento: newDocumento,
+            email: newEmail || null,
+          })
           .select()
           .single();
 
@@ -336,6 +343,8 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
       setClientSearch("");
       setNewNombre("");
       setNewCelular("");
+      setNewDocumento("");
+      setNewEmail("");
       setDepositoGarantia("");
       setMedioPago("");
       setContratoAceptado(false);
@@ -569,6 +578,24 @@ function CargarReservaForm({ onCreated }: { onCreated: () => void }) {
                 type="tel"
                 value={newCelular}
                 onChange={(e) => setNewCelular(e.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-negro">
+              Cédula
+              <input
+                type="text"
+                value={newDocumento}
+                onChange={(e) => setNewDocumento(e.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-negro">
+              Mail (opcional)
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
                 className={inputClass}
               />
             </label>
